@@ -5,11 +5,12 @@ import 'package:intl/intl.dart';
 import '../../../data/services/database/database.dart';
 import '../../../domain/archive.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../core/color_contrast.dart';
 
-/// A collapsible category section: a header plus its rows. Used in both Active
-/// and Archive views; [archived] selects which rows + row behavior to show.
-/// Active rows support swipe-right-to-complete (with haptic) in addition to the
-/// tap fallback.
+/// A collapsible category section: a flat section-label header plus its rows.
+/// Used in both Active and Archive views; [archived] selects which rows + row
+/// behavior to show. Active rows support swipe-right-to-complete (with haptic)
+/// in addition to the tap fallback.
 class CategorySection extends StatelessWidget {
   const CategorySection({
     super.key,
@@ -35,44 +36,78 @@ class CategorySection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     final color = Color(category.color);
+    final nameColor = readableOn(color, scheme.surface);
     final localeName = Localizations.localeOf(context).toString();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        ListTile(
+        // Flat section-label header (intentionally NOT a ListTile row): the
+        // category name in its color (bold), optional icon before it, a muted
+        // count, then the collapse chevron + menu. Tapping toggles collapse.
+        InkWell(
           key: Key('category-header-${category.id}'),
-          leading: CircleAvatar(backgroundColor: color, radius: 12),
-          title: Row(
-            children: [
-              if (category.emoji != null) ...[
-                Text(category.emoji!),
-                const SizedBox(width: 6),
-              ],
-              Expanded(child: Text(category.name)),
-            ],
-          ),
-          subtitle: Text(l10n.openItemsCount(tasks.length)),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(
-                key: Key('category-menu-${category.id}'),
-                icon: const Icon(Icons.more_vert),
-                onPressed: onHeaderMenu,
-              ),
-              Icon(category.collapsed ? Icons.expand_more : Icons.expand_less),
-            ],
-          ),
           onTap: onToggleCollapsed,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 4, 6),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text.rich(
+                    TextSpan(
+                      children: [
+                        if (category.emoji != null)
+                          TextSpan(
+                            text: '${category.emoji!} ',
+                            style: TextStyle(color: color),
+                          ),
+                        TextSpan(
+                          text: category.name,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            color: nameColor,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        TextSpan(
+                          text: '  ·  ${l10n.openItemsCount(tasks.length)}',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Icon(
+                  category.collapsed ? Icons.expand_more : Icons.expand_less,
+                  color: scheme.onSurfaceVariant,
+                ),
+                IconButton(
+                  key: Key('category-menu-${category.id}'),
+                  icon: const Icon(Icons.more_vert),
+                  onPressed: onHeaderMenu,
+                ),
+              ],
+            ),
+          ),
+        ),
+        // Thin colored underline binding the items to their category.
+        Container(
+          margin: const EdgeInsets.only(left: 16, right: 16, bottom: 2),
+          height: 2,
+          color: color.withValues(alpha: 0.25),
         ),
         if (!category.collapsed)
           if (tasks.isEmpty)
             Padding(
-              padding: const EdgeInsets.only(left: 16, bottom: 8),
+              padding: const EdgeInsets.only(left: 16, bottom: 8, top: 4),
               child: Text(
                 archived ? l10n.emptyArchive : l10n.emptyCategory,
-                style: Theme.of(context).textTheme.bodySmall,
+                style: theme.textTheme.bodySmall,
               ),
             )
           else
