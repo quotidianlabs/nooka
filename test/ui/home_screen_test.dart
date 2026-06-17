@@ -151,7 +151,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // 5 active items -> Russian "many" form: "5 дел".
-    expect(find.text('5 дел'), findsOneWidget);
+    expect(find.textContaining('5 дел'), findsOneWidget);
 
     // An archived item shows the Russian countdown with "дней".
     final archivedCat = await db.todoDao.createCategory(
@@ -190,5 +190,57 @@ void main() {
     await tester.tap(find.byKey(Key('category-header-$cat')));
     await tester.pumpAndSettle();
     expect(find.text('Sweep'), findsOneWidget); // expanded again
+  });
+
+  testWidgets('category header is a flat label with no leading circle', (
+    tester,
+  ) async {
+    await db.todoDao.createCategory(name: 'Home', color: 0xFF009688);
+    await tester.pumpWidget(_app(db));
+    await tester.pumpAndSettle();
+
+    // The old header used a CircleAvatar swatch; the flat label has none, and
+    // item rows use icons, so there should be no CircleAvatar on the screen.
+    expect(find.byType(CircleAvatar), findsNothing);
+    // Name + localized count render in the header rich text.
+    expect(find.textContaining('Home'), findsOneWidget);
+    expect(find.textContaining('no items'), findsOneWidget);
+  });
+
+  testWidgets('category header shows the icon before the name when set', (
+    tester,
+  ) async {
+    await db.todoDao.createCategory(
+      name: 'Shopping',
+      color: 0xFF1E88E5,
+      emoji: '🛒',
+    );
+    await tester.pumpWidget(_app(db));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('🛒 Shopping'), findsOneWidget);
+  });
+
+  testWidgets('undo toast is floating and auto-dismisses', (tester) async {
+    final cat = await db.todoDao.createCategory(
+      name: 'Home',
+      color: 0xFF009688,
+    );
+    await db.todoDao.createTask(categoryId: cat, name: 'Sweep');
+    await tester.pumpWidget(_app(db));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.radio_button_unchecked));
+    await tester.pump(); // flush the completeTask await
+    await tester.pump(const Duration(milliseconds: 300)); // snackbar entrance
+    expect(find.text('Item completed'), findsOneWidget);
+    expect(
+      tester.widget<SnackBar>(find.byType(SnackBar)).behavior,
+      SnackBarBehavior.floating,
+    );
+
+    // Advance past duration + backstop; the toast must be gone.
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
+    expect(find.text('Item completed'), findsNothing);
   });
 }

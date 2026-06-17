@@ -134,11 +134,17 @@ abstract class AppLocalizations {
   /// **'Category name'**
   String get categoryNameLabel;
 
-  /// No description provided for @emojiLabel.
+  /// No description provided for @iconLabel.
   ///
   /// In en, this message translates to:
-  /// **'Emoji (optional)'**
-  String get emojiLabel;
+  /// **'Icon (optional)'**
+  String get iconLabel;
+
+  /// No description provided for @iconHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'A single emoji or character shown next to the name.'**
+  String get iconHelper;
 
   /// No description provided for @addTask.
   ///

@@ -27,7 +27,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get categoryNameLabel => 'Название категории';
 
   @override
-  String get emojiLabel => 'Эмодзи (необязательно)';
+  String get iconLabel => 'Иконка (необязательно)';
+
+  @override
+  String get iconHelper => 'Один эмодзи или символ рядом с названием.';
 
   @override
   String get addTask => 'Новое дело';

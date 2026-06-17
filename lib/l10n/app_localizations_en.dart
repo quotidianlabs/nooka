@@ -27,7 +27,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get categoryNameLabel => 'Category name';
 
   @override
-  String get emojiLabel => 'Emoji (optional)';
+  String get iconLabel => 'Icon (optional)';
+
+  @override
+  String get iconHelper =>
+      'A single emoji or character shown next to the name.';
 
   @override
   String get addTask => 'New item';
