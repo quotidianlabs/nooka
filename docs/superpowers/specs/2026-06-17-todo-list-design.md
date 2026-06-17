@@ -1,6 +1,7 @@
-# To-Do List — Design Spec
+# Nooka — To-Do List Design Spec
 
 **Date:** 2026-06-17
+**Name:** Nooka (Dart package `nooka`, org `com.nooka`). Brand name shown as the app title in both locales.
 **Status:** Approved for planning
 **Reference:** The `habbits` Flutter app (`../habbits`) is the architectural and stylistic template for everything below.
 
