@@ -1,0 +1,129 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
+
+import '../../../data/services/database/database.dart';
+import '../../../domain/archive.dart';
+import '../../../l10n/app_localizations.dart';
+
+/// A collapsible category section: a header plus its rows. Used in both Active
+/// and Archive views; [archived] selects which rows + row behavior to show.
+/// Active rows support swipe-right-to-complete (with haptic) in addition to the
+/// tap fallback.
+class CategorySection extends StatelessWidget {
+  const CategorySection({
+    super.key,
+    required this.category,
+    required this.tasks,
+    required this.archived,
+    required this.onToggleCollapsed,
+    required this.onHeaderMenu,
+    required this.onTaskTap,
+    required this.onTaskMenu,
+    required this.now,
+  });
+
+  final Category category;
+  final List<Task> tasks;
+  final bool archived;
+  final VoidCallback onToggleCollapsed;
+  final VoidCallback onHeaderMenu;
+  final void Function(Task) onTaskTap;
+  final void Function(Task)? onTaskMenu;
+  final DateTime now;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final color = Color(category.color);
+    final localeName = Localizations.localeOf(context).toString();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ListTile(
+          key: Key('category-header-${category.id}'),
+          leading: CircleAvatar(backgroundColor: color, radius: 12),
+          title: Row(
+            children: [
+              if (category.emoji != null) ...[
+                Text(category.emoji!),
+                const SizedBox(width: 6),
+              ],
+              Expanded(child: Text(category.name)),
+            ],
+          ),
+          subtitle: Text(l10n.openItemsCount(tasks.length)),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                key: Key('category-menu-${category.id}'),
+                icon: const Icon(Icons.more_vert),
+                onPressed: onHeaderMenu,
+              ),
+              Icon(category.collapsed ? Icons.expand_more : Icons.expand_less),
+            ],
+          ),
+          onTap: onToggleCollapsed,
+        ),
+        if (!category.collapsed)
+          if (tasks.isEmpty)
+            Padding(
+              padding: const EdgeInsets.only(left: 16, bottom: 8),
+              child: Text(
+                archived ? l10n.emptyArchive : l10n.emptyCategory,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            )
+          else
+            for (final task in tasks)
+              Builder(
+                builder: (context) {
+                  final tile = ListTile(
+                    key: Key('task-${task.id}'),
+                    leading: Icon(
+                      archived
+                          ? Icons.check_circle
+                          : Icons.radio_button_unchecked,
+                      color: archived ? color : null,
+                    ),
+                    title: Text(task.name),
+                    subtitle: archived
+                        ? Text(
+                            '${l10n.completedOn(DateFormat.yMMMd(localeName).format(task.archivedAt!))}'
+                            ' · ${l10n.autoRemovesIn(daysRemaining(task.archivedAt!, now))}',
+                          )
+                        : null,
+                    trailing: onTaskMenu == null
+                        ? null
+                        : IconButton(
+                            key: Key('task-menu-${task.id}'),
+                            icon: const Icon(Icons.more_vert),
+                            onPressed: () => onTaskMenu!(task),
+                          ),
+                    onTap: () => onTaskTap(task),
+                  );
+                  if (archived) return tile;
+                  // Active rows: swipe right to complete (tap still works too).
+                  return Dismissible(
+                    key: ValueKey('dismiss-${task.id}'),
+                    direction: DismissDirection.startToEnd,
+                    background: Container(
+                      color: color,
+                      alignment: Alignment.centerLeft,
+                      padding: const EdgeInsets.only(left: 24),
+                      child: const Icon(Icons.check, color: Colors.white),
+                    ),
+                    confirmDismiss: (_) async {
+                      HapticFeedback.mediumImpact();
+                      onTaskTap(task); // completes; stream removes the row
+                      return false; // don't let Dismissible remove it itself
+                    },
+                    child: tile,
+                  );
+                },
+              ),
+      ],
+    );
+  }
+}
