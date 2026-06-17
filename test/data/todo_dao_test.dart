@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart' show OrderingTerm;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nooka/data/services/database/database.dart';
@@ -32,6 +33,37 @@ void main() {
         db.categories,
       )..where((c) => c.id.equals(cat))).getSingle();
       expect(row.collapsed, isTrue);
+    });
+  });
+
+  group('reordering', () {
+    test('reorderCategories persists the new order', () async {
+      final aId = await db.todoDao.createCategory(name: 'A', color: 1);
+      final bId = await db.todoDao.createCategory(name: 'B', color: 2);
+      final cId = await db.todoDao.createCategory(name: 'C', color: 3);
+
+      await db.todoDao.reorderCategories([cId, aId, bId]);
+
+      final rows = await (db.select(
+        db.categories,
+      )..orderBy([(c) => OrderingTerm(expression: c.sortOrder)])).get();
+      expect(rows.map((c) => c.name), ['C', 'A', 'B']);
+      expect(rows.map((c) => c.sortOrder), [0, 1, 2]);
+    });
+
+    test('reorderTasks persists the new order within a category', () async {
+      final cat = await db.todoDao.createCategory(name: 'Home', color: 1);
+      final t1 = await db.todoDao.createTask(categoryId: cat, name: 't1');
+      final t2 = await db.todoDao.createTask(categoryId: cat, name: 't2');
+      final t3 = await db.todoDao.createTask(categoryId: cat, name: 't3');
+
+      await db.todoDao.reorderTasks([t3, t1, t2]);
+
+      final rows = await (db.select(
+        db.tasks,
+      )..orderBy([(t) => OrderingTerm(expression: t.sortOrder)])).get();
+      expect(rows.map((t) => t.name), ['t3', 't1', 't2']);
+      expect(rows.map((t) => t.sortOrder), [0, 1, 2]);
     });
   });
 

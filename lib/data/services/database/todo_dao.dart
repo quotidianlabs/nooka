@@ -52,6 +52,12 @@ class TodoDao extends DatabaseAccessor<AppDatabase> with _$TodoDaoMixin {
         CategoriesCompanion(collapsed: Value(collapsed)),
       );
 
+  /// Persists a new order by writing each id's index in [orderedIds] as its
+  /// sortOrder, in one transaction.
+  ///
+  /// Callers MUST pass the complete set of category ids. Ids omitted from
+  /// [orderedIds] keep their old sortOrder and may then collide with the
+  /// renumbered rows; unknown ids are silently ignored.
   Future<void> reorderCategories(List<int> orderedIds) async {
     await transaction(() async {
       for (var i = 0; i < orderedIds.length; i++) {
@@ -122,6 +128,13 @@ class TodoDao extends DatabaseAccessor<AppDatabase> with _$TodoDaoMixin {
     );
   }
 
+  /// Persists a new order by writing each id's index in [orderedIds] as its
+  /// sortOrder, in one transaction.
+  ///
+  /// Callers MUST pass the complete set of active task ids for the category
+  /// being reordered. Ids omitted from [orderedIds] keep their old sortOrder
+  /// and may then collide with the renumbered rows; unknown ids are silently
+  /// ignored.
   Future<void> reorderTasks(List<int> orderedIds) async {
     await transaction(() async {
       for (var i = 0; i < orderedIds.length; i++) {
