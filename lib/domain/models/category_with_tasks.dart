@@ -8,11 +8,14 @@ class CategoryWithTasks {
   final List<Task> tasks;
 
   /// Active (not yet archived) tasks, in sortOrder.
-  List<Task> get activeTasks =>
-      [for (final t in tasks) if (t.archivedAt == null) t];
+  List<Task> get activeTasks => [
+    for (final t in tasks)
+      if (t.archivedAt == null) t,
+  ];
 
   /// Archived tasks, newest-completed first.
-  List<Task> get archivedTasks =>
-      [for (final t in tasks) if (t.archivedAt != null) t]
-        ..sort((a, b) => b.archivedAt!.compareTo(a.archivedAt!));
+  List<Task> get archivedTasks => [
+    for (final t in tasks)
+      if (t.archivedAt != null) t,
+  ]..sort((a, b) => b.archivedAt!.compareTo(a.archivedAt!));
 }

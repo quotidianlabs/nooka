@@ -33,20 +33,24 @@ class TodoDao extends DatabaseAccessor<AppDatabase> with _$TodoDaoMixin {
   }
 
   Future<void> renameCategory(int id, String name) =>
-      (update(categories)..where((c) => c.id.equals(id)))
-          .write(CategoriesCompanion(name: Value(name)));
+      (update(categories)..where((c) => c.id.equals(id))).write(
+        CategoriesCompanion(name: Value(name)),
+      );
 
   Future<void> setCategoryColor(int id, int color) =>
-      (update(categories)..where((c) => c.id.equals(id)))
-          .write(CategoriesCompanion(color: Value(color)));
+      (update(categories)..where((c) => c.id.equals(id))).write(
+        CategoriesCompanion(color: Value(color)),
+      );
 
   Future<void> setCategoryEmoji(int id, String? emoji) =>
-      (update(categories)..where((c) => c.id.equals(id)))
-          .write(CategoriesCompanion(emoji: Value(emoji)));
+      (update(categories)..where((c) => c.id.equals(id))).write(
+        CategoriesCompanion(emoji: Value(emoji)),
+      );
 
   Future<void> setCollapsed(int id, bool collapsed) =>
-      (update(categories)..where((c) => c.id.equals(id)))
-          .write(CategoriesCompanion(collapsed: Value(collapsed)));
+      (update(categories)..where((c) => c.id.equals(id))).write(
+        CategoriesCompanion(collapsed: Value(collapsed)),
+      );
 
   Future<void> reorderCategories(List<int> orderedIds) async {
     await transaction(() async {
@@ -63,15 +67,20 @@ class TodoDao extends DatabaseAccessor<AppDatabase> with _$TodoDaoMixin {
   // ---- Tasks ----
 
   Future<int> _nextTaskOrder(int categoryId) async {
-    final active = await (select(tasks)
-          ..where((t) => t.categoryId.equals(categoryId) & t.archivedAt.isNull()))
-        .get();
+    final active =
+        await (select(tasks)..where(
+              (t) => t.categoryId.equals(categoryId) & t.archivedAt.isNull(),
+            ))
+            .get();
     return active.isEmpty
         ? 0
         : active.map((t) => t.sortOrder).reduce((a, b) => a > b ? a : b) + 1;
   }
 
-  Future<int> createTask({required int categoryId, required String name}) async {
+  Future<int> createTask({
+    required int categoryId,
+    required String name,
+  }) async {
     return into(tasks).insert(
       TasksCompanion.insert(
         categoryId: categoryId,
@@ -82,9 +91,9 @@ class TodoDao extends DatabaseAccessor<AppDatabase> with _$TodoDaoMixin {
     );
   }
 
-  Future<void> renameTask(int id, String name) =>
-      (update(tasks)..where((t) => t.id.equals(id)))
-          .write(TasksCompanion(name: Value(name)));
+  Future<void> renameTask(int id, String name) => (update(
+    tasks,
+  )..where((t) => t.id.equals(id))).write(TasksCompanion(name: Value(name)));
 
   Future<void> moveTask(int id, int newCategoryId) async {
     await (update(tasks)..where((t) => t.id.equals(id))).write(
@@ -96,12 +105,14 @@ class TodoDao extends DatabaseAccessor<AppDatabase> with _$TodoDaoMixin {
   }
 
   Future<void> completeTask(int id, DateTime now) =>
-      (update(tasks)..where((t) => t.id.equals(id)))
-          .write(TasksCompanion(archivedAt: Value(now)));
+      (update(tasks)..where((t) => t.id.equals(id))).write(
+        TasksCompanion(archivedAt: Value(now)),
+      );
 
   Future<void> restoreTask(int id) async {
-    final task = await (select(tasks)..where((t) => t.id.equals(id)))
-        .getSingleOrNull();
+    final task = await (select(
+      tasks,
+    )..where((t) => t.id.equals(id))).getSingleOrNull();
     if (task == null) return;
     await (update(tasks)..where((t) => t.id.equals(id))).write(
       TasksCompanion(
@@ -114,18 +125,21 @@ class TodoDao extends DatabaseAccessor<AppDatabase> with _$TodoDaoMixin {
   Future<void> reorderTasks(List<int> orderedIds) async {
     await transaction(() async {
       for (var i = 0; i < orderedIds.length; i++) {
-        await (update(tasks)..where((t) => t.id.equals(orderedIds[i])))
-            .write(TasksCompanion(sortOrder: Value(i)));
+        await (update(tasks)..where((t) => t.id.equals(orderedIds[i]))).write(
+          TasksCompanion(sortOrder: Value(i)),
+        );
       }
     });
   }
 
   /// Deletes every archived task whose retention window has elapsed as of [now].
-  Future<int> purgeExpired(DateTime now) => (delete(tasks)
-        ..where((t) =>
-            t.archivedAt.isNotNull() &
-            t.archivedAt.isSmallerOrEqualValue(archiveCutoff(now))))
-      .go();
+  Future<int> purgeExpired(DateTime now) =>
+      (delete(tasks)..where(
+            (t) =>
+                t.archivedAt.isNotNull() &
+                t.archivedAt.isSmallerOrEqualValue(archiveCutoff(now)),
+          ))
+          .go();
 
   /// Deletes every archived task regardless of age (manual "Clear archive").
   Future<int> clearArchive() =>
@@ -149,13 +163,13 @@ class TodoDao extends DatabaseAccessor<AppDatabase> with _$TodoDaoMixin {
   /// Reactive stream of every category with its tasks, categories ordered by
   /// sortOrder and tasks by sortOrder. Emits on any change to either table.
   Stream<List<CategoryWithTasks>> watchCategoriesWithTasks() {
-    final q = select(categories).join([
-      leftOuterJoin(tasks, tasks.categoryId.equalsExp(categories.id)),
-    ])
-      ..orderBy([
-        OrderingTerm(expression: categories.sortOrder),
-        OrderingTerm(expression: tasks.sortOrder),
-      ]);
+    final q =
+        select(categories).join([
+          leftOuterJoin(tasks, tasks.categoryId.equalsExp(categories.id)),
+        ])..orderBy([
+          OrderingTerm(expression: categories.sortOrder),
+          OrderingTerm(expression: tasks.sortOrder),
+        ]);
     return q.watch().map(_group);
   }
 }
