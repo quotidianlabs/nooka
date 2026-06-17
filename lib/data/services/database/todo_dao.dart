@@ -1,0 +1,188 @@
+import 'package:drift/drift.dart';
+
+import '../../../domain/archive.dart';
+import '../../../domain/models/category_with_tasks.dart';
+import 'database.dart';
+
+part 'todo_dao.g.dart';
+
+@DriftAccessor(tables: [Categories, Tasks])
+class TodoDao extends DatabaseAccessor<AppDatabase> with _$TodoDaoMixin {
+  TodoDao(super.db);
+
+  // ---- Categories ----
+
+  Future<int> createCategory({
+    required String name,
+    required int color,
+    String? emoji,
+  }) async {
+    final existing = await select(categories).get();
+    final nextOrder = existing.isEmpty
+        ? 0
+        : existing.map((c) => c.sortOrder).reduce((a, b) => a > b ? a : b) + 1;
+    return into(categories).insert(
+      CategoriesCompanion.insert(
+        name: name,
+        color: color,
+        emoji: Value(emoji),
+        sortOrder: nextOrder,
+        createdAt: DateTime.now(),
+      ),
+    );
+  }
+
+  Future<void> renameCategory(int id, String name) =>
+      (update(categories)..where((c) => c.id.equals(id))).write(
+        CategoriesCompanion(name: Value(name)),
+      );
+
+  Future<void> setCategoryColor(int id, int color) =>
+      (update(categories)..where((c) => c.id.equals(id))).write(
+        CategoriesCompanion(color: Value(color)),
+      );
+
+  Future<void> setCategoryEmoji(int id, String? emoji) =>
+      (update(categories)..where((c) => c.id.equals(id))).write(
+        CategoriesCompanion(emoji: Value(emoji)),
+      );
+
+  Future<void> setCollapsed(int id, bool collapsed) =>
+      (update(categories)..where((c) => c.id.equals(id))).write(
+        CategoriesCompanion(collapsed: Value(collapsed)),
+      );
+
+  /// Persists a new order by writing each id's index in [orderedIds] as its
+  /// sortOrder, in one transaction.
+  ///
+  /// Callers MUST pass the complete set of category ids. Ids omitted from
+  /// [orderedIds] keep their old sortOrder and may then collide with the
+  /// renumbered rows; unknown ids are silently ignored.
+  Future<void> reorderCategories(List<int> orderedIds) async {
+    await transaction(() async {
+      for (var i = 0; i < orderedIds.length; i++) {
+        await (update(categories)..where((c) => c.id.equals(orderedIds[i])))
+            .write(CategoriesCompanion(sortOrder: Value(i)));
+      }
+    });
+  }
+
+  Future<void> deleteCategory(int id) =>
+      (delete(categories)..where((c) => c.id.equals(id))).go();
+
+  // ---- Tasks ----
+
+  Future<int> _nextTaskOrder(int categoryId) async {
+    final active =
+        await (select(tasks)..where(
+              (t) => t.categoryId.equals(categoryId) & t.archivedAt.isNull(),
+            ))
+            .get();
+    return active.isEmpty
+        ? 0
+        : active.map((t) => t.sortOrder).reduce((a, b) => a > b ? a : b) + 1;
+  }
+
+  Future<int> createTask({
+    required int categoryId,
+    required String name,
+  }) async {
+    return into(tasks).insert(
+      TasksCompanion.insert(
+        categoryId: categoryId,
+        name: name,
+        sortOrder: await _nextTaskOrder(categoryId),
+        createdAt: DateTime.now(),
+      ),
+    );
+  }
+
+  Future<void> renameTask(int id, String name) => (update(
+    tasks,
+  )..where((t) => t.id.equals(id))).write(TasksCompanion(name: Value(name)));
+
+  Future<void> moveTask(int id, int newCategoryId) async {
+    await (update(tasks)..where((t) => t.id.equals(id))).write(
+      TasksCompanion(
+        categoryId: Value(newCategoryId),
+        sortOrder: Value(await _nextTaskOrder(newCategoryId)),
+      ),
+    );
+  }
+
+  Future<void> completeTask(int id, DateTime now) =>
+      (update(tasks)..where((t) => t.id.equals(id))).write(
+        TasksCompanion(archivedAt: Value(now)),
+      );
+
+  Future<void> restoreTask(int id) async {
+    final task = await (select(
+      tasks,
+    )..where((t) => t.id.equals(id))).getSingleOrNull();
+    if (task == null) return;
+    await (update(tasks)..where((t) => t.id.equals(id))).write(
+      TasksCompanion(
+        archivedAt: const Value(null),
+        sortOrder: Value(await _nextTaskOrder(task.categoryId)),
+      ),
+    );
+  }
+
+  /// Persists a new order by writing each id's index in [orderedIds] as its
+  /// sortOrder, in one transaction.
+  ///
+  /// Callers MUST pass the complete set of active task ids for the category
+  /// being reordered. Ids omitted from [orderedIds] keep their old sortOrder
+  /// and may then collide with the renumbered rows; unknown ids are silently
+  /// ignored.
+  Future<void> reorderTasks(List<int> orderedIds) async {
+    await transaction(() async {
+      for (var i = 0; i < orderedIds.length; i++) {
+        await (update(tasks)..where((t) => t.id.equals(orderedIds[i]))).write(
+          TasksCompanion(sortOrder: Value(i)),
+        );
+      }
+    });
+  }
+
+  /// Deletes every archived task whose retention window has elapsed as of [now].
+  Future<int> purgeExpired(DateTime now) =>
+      (delete(tasks)..where(
+            (t) =>
+                t.archivedAt.isNotNull() &
+                t.archivedAt.isSmallerOrEqualValue(archiveCutoff(now)),
+          ))
+          .go();
+
+  /// Deletes every archived task regardless of age (manual "Clear archive").
+  Future<int> clearArchive() =>
+      (delete(tasks)..where((t) => t.archivedAt.isNotNull())).go();
+
+  List<CategoryWithTasks> _group(List<TypedResult> rows) {
+    final byId = <int, CategoryWithTasks>{};
+    final order = <int>[];
+    for (final row in rows) {
+      final category = row.readTable(categories);
+      if (!byId.containsKey(category.id)) {
+        byId[category.id] = CategoryWithTasks(category, <Task>[]);
+        order.add(category.id);
+      }
+      final task = row.readTableOrNull(tasks);
+      if (task != null) byId[category.id]!.tasks.add(task);
+    }
+    return [for (final id in order) byId[id]!];
+  }
+
+  /// Reactive stream of every category with its tasks, categories ordered by
+  /// sortOrder and tasks by sortOrder. Emits on any change to either table.
+  Stream<List<CategoryWithTasks>> watchCategoriesWithTasks() {
+    final q =
+        select(categories).join([
+          leftOuterJoin(tasks, tasks.categoryId.equalsExp(categories.id)),
+        ])..orderBy([
+          OrderingTerm(expression: categories.sortOrder),
+          OrderingTerm(expression: tasks.sortOrder),
+        ]);
+    return q.watch().map(_group);
+  }
+}

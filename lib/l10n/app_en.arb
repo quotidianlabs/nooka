@@ -1,0 +1,60 @@
+{
+  "@@locale": "en",
+  "appTitle": "Nooka",
+  "activeTab": "Active",
+  "archiveTab": "Archive",
+  "addCategory": "Add category",
+  "editCategory": "Edit category",
+  "categoryNameLabel": "Category name",
+  "emojiLabel": "Emoji (optional)",
+  "addTask": "New item",
+  "editTask": "Edit item",
+  "taskNameLabel": "Item name",
+  "categoryLabel": "Category",
+  "save": "Save",
+  "add": "Add",
+  "cancel": "Cancel",
+  "delete": "Delete",
+  "done": "Done",
+  "markDoneLabel": "Mark done",
+  "clearArchiveTitle": "Clear archive?",
+  "clearArchiveBody": "Permanently delete {count, plural, =0{no archived items} one{{count} archived item} other{{count} archived items}}?",
+  "@clearArchiveBody": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "completedOn": "Completed {date}",
+  "@completedOn": {
+    "placeholders": { "date": { "type": "String" } }
+  },
+  "deleteCategoryTitle": "Delete category?",
+  "deleteCategoryBody": "Permanently delete \"{name}\" and {count, plural, =0{no items} one{{count} item} other{{count} items}}?",
+  "@deleteCategoryBody": {
+    "placeholders": {
+      "name": { "type": "String" },
+      "count": { "type": "int" }
+    }
+  },
+  "autoRemovesIn": "Auto-removes in {count, plural, =0{under a day} one{{count} day} other{{count} days}}",
+  "@autoRemovesIn": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "openItemsCount": "{count, plural, =0{no items} one{{count} item} other{{count} items}}",
+  "@openItemsCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "emptyNoCategories": "No categories yet — add one",
+  "emptyCategory": "No items",
+  "emptyArchive": "Nothing archived",
+  "undoCompleteMessage": "Item completed",
+  "undoRestoreMessage": "Item restored",
+  "undoAction": "Undo",
+  "settingsTitle": "Settings",
+  "themeLabel": "Theme",
+  "languageLabel": "Language",
+  "themeSystem": "System",
+  "themeLight": "Light",
+  "themeDark": "Dark",
+  "langSystem": "System",
+  "langEnglish": "English",
+  "langRussian": "Russian"
+}

@@ -1,0 +1,289 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../data/services/database/database.dart';
+import '../../domain/models/category_with_tasks.dart';
+import '../../l10n/app_localizations.dart';
+import '../settings/settings_screen.dart';
+import '../widgets/category_dialog.dart';
+import '../widgets/confirm_delete_dialog.dart';
+import '../widgets/task_dialog.dart';
+import 'home_view_model.dart';
+import 'widgets/category_section.dart';
+
+enum _View { active, archive }
+
+class HomeScreen extends ConsumerStatefulWidget {
+  const HomeScreen({super.key});
+
+  @override
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  _View _view = _View.active;
+  int? _lastCategoryId; // remembered default for quick add
+
+  HomeViewModel get _vm => ref.read(homeViewModelProvider.notifier);
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final state = ref.watch(homeViewModelProvider);
+    final now = DateTime.now();
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(l10n.appTitle),
+        actions: [
+          if (_view == _View.archive)
+            IconButton(
+              key: const Key('clear-archive-button'),
+              icon: const Icon(Icons.delete_sweep),
+              onPressed: () => _clearArchive(state.value ?? const []),
+            ),
+          IconButton(
+            key: const Key('add-category-button'),
+            icon: const Icon(Icons.create_new_folder),
+            onPressed: _addCategory,
+          ),
+          IconButton(
+            key: const Key('settings-button'),
+            icon: const Icon(Icons.settings),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const SettingsScreen()),
+            ),
+          ),
+        ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(56),
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: SegmentedButton<_View>(
+              segments: [
+                ButtonSegment(value: _View.active, label: Text(l10n.activeTab)),
+                ButtonSegment(
+                  value: _View.archive,
+                  label: Text(l10n.archiveTab),
+                ),
+              ],
+              selected: {_view},
+              onSelectionChanged: (s) {
+                setState(() => _view = s.first);
+                if (s.first == _View.archive) _vm.purgeExpired();
+              },
+            ),
+          ),
+        ),
+      ),
+      floatingActionButton: _view == _View.active
+          ? FloatingActionButton(
+              key: const Key('add-task-fab'),
+              onPressed: () => _addTask(state.value ?? const []),
+              child: const Icon(Icons.add),
+            )
+          : null,
+      body: state.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(child: Text('$e')),
+        data: (cats) => _body(cats, now),
+      ),
+    );
+  }
+
+  Widget _body(List<CategoryWithTasks> cats, DateTime now) {
+    final l10n = AppLocalizations.of(context);
+    if (cats.isEmpty) {
+      return Center(child: Text(l10n.emptyNoCategories));
+    }
+    final archived = _view == _View.archive;
+    final visible = archived
+        ? [
+            for (final cwt in cats)
+              if (cwt.archivedTasks.isNotEmpty) cwt,
+          ]
+        : cats;
+    if (archived && visible.isEmpty) {
+      return Center(child: Text(l10n.emptyArchive));
+    }
+    return ListView(
+      children: [
+        for (final cwt in visible)
+          CategorySection(
+            category: cwt.category,
+            tasks: archived ? cwt.archivedTasks : cwt.activeTasks,
+            archived: archived,
+            now: now,
+            onToggleCollapsed: () =>
+                _vm.toggleCollapsed(cwt.category.id, !cwt.category.collapsed),
+            onHeaderMenu: () => _categoryMenu(cwt),
+            onTaskTap: (t) => archived ? _restore(t) : _complete(t),
+            onTaskMenu: archived ? null : (t) => _taskMenu(cats, t),
+          ),
+        const SizedBox(height: 80),
+      ],
+    );
+  }
+
+  // ---- commands + toasts ----
+
+  Future<void> _complete(Task task) async {
+    final l10n = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    await _vm.completeTask(task.id);
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(l10n.undoCompleteMessage),
+          action: SnackBarAction(
+            label: l10n.undoAction,
+            onPressed: () => _vm.restoreTask(task.id),
+          ),
+        ),
+      );
+  }
+
+  Future<void> _restore(Task task) async {
+    final l10n = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    await _vm.restoreTask(task.id);
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(l10n.undoRestoreMessage),
+          action: SnackBarAction(
+            label: l10n.undoAction,
+            onPressed: () => _vm.completeTask(task.id),
+          ),
+        ),
+      );
+  }
+
+  Future<void> _addTask(List<CategoryWithTasks> cats) async {
+    if (cats.isEmpty) return;
+    final ids = {for (final c in cats) c.category.id};
+    final initial = (_lastCategoryId != null && ids.contains(_lastCategoryId))
+        ? _lastCategoryId!
+        : cats.first.category.id;
+    await showQuickAddDialog(
+      context,
+      categories: [for (final c in cats) c.category],
+      initialCategoryId: initial,
+      onAdd: (name, categoryId) async {
+        _lastCategoryId = categoryId;
+        await _vm.addTask(categoryId, name);
+      },
+    );
+  }
+
+  Future<void> _clearArchive(List<CategoryWithTasks> cats) async {
+    final count = cats.fold<int>(0, (sum, c) => sum + c.archivedTasks.length);
+    if (count == 0) return;
+    final ok = await confirmClearArchive(context, count: count);
+    if (ok) await _vm.clearArchive();
+  }
+
+  Future<void> _addCategory() async {
+    final result = await showCategoryDialog(context);
+    if (result != null) {
+      await _vm.addCategory(
+        result.name,
+        color: result.color,
+        emoji: result.emoji,
+      );
+    }
+  }
+
+  Future<void> _categoryMenu(CategoryWithTasks cwt) async {
+    final l10n = AppLocalizations.of(context);
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.edit),
+              title: Text(l10n.editCategory),
+              onTap: () => Navigator.pop(context, 'edit'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.add),
+              title: Text(l10n.addTask),
+              onTap: () => Navigator.pop(context, 'add'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete),
+              title: Text(l10n.delete),
+              onTap: () => Navigator.pop(context, 'delete'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (!mounted) return;
+    switch (choice) {
+      case 'edit':
+        final r = await showCategoryDialog(
+          context,
+          initialName: cwt.category.name,
+          initialColor: cwt.category.color,
+          initialEmoji: cwt.category.emoji,
+        );
+        if (r != null) {
+          await _vm.renameCategory(cwt.category.id, r.name);
+          await _vm.setCategoryColor(cwt.category.id, r.color);
+          await _vm.setCategoryEmoji(cwt.category.id, r.emoji);
+        }
+      case 'add':
+        await showQuickAddDialog(
+          context,
+          categories: [cwt.category],
+          initialCategoryId: cwt.category.id,
+          onAdd: (name, categoryId) => _vm.addTask(categoryId, name),
+        );
+      case 'delete':
+        final ok = await confirmDeleteCategory(
+          context,
+          name: cwt.category.name,
+          itemCount: cwt.tasks.length,
+        );
+        if (ok) await _vm.deleteCategory(cwt.category.id);
+    }
+  }
+
+  Future<void> _taskMenu(List<CategoryWithTasks> cats, Task task) async {
+    final l10n = AppLocalizations.of(context);
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.edit),
+              title: Text(l10n.editTask),
+              onTap: () => Navigator.pop(context, 'edit'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (!mounted || choice != 'edit') return;
+    final r = await showTaskDialog(
+      context,
+      categories: [for (final c in cats) c.category],
+      initialCategoryId: task.categoryId,
+      initialName: task.name,
+    );
+    if (r != null) {
+      await _vm.renameTask(task.id, r.name);
+      if (r.categoryId != task.categoryId) {
+        await _vm.moveTask(task.id, r.categoryId);
+      }
+    }
+  }
+}
