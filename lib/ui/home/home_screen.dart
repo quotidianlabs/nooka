@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -23,6 +25,15 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   _View _view = _View.active;
   int? _lastCategoryId; // remembered default for quick add
+  Timer? _toastTimer;
+
+  static const _toastDuration = Duration(seconds: 4);
+
+  @override
+  void dispose() {
+    _toastTimer?.cancel();
+    super.dispose();
+  }
 
   HomeViewModel get _vm => ref.read(homeViewModelProvider.notifier);
 
@@ -128,38 +139,42 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   // ---- commands + toasts ----
 
-  Future<void> _complete(Task task) async {
+  /// Shows a floating undo toast that reliably auto-dismisses. The built-in
+  /// SnackBar timer only arms after the entrance animation completes, so on
+  /// devices with animations disabled it never fires and the toast lingers
+  /// forever. We add a backstop timer that closes it regardless of animation.
+  void _showUndoToast(String message, VoidCallback onUndo) {
     final l10n = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+    _toastTimer?.cancel();
+    final controller = messenger.showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        duration: _toastDuration,
+        content: Text(message),
+        action: SnackBarAction(label: l10n.undoAction, onPressed: onUndo),
+      ),
+    );
+    var closed = false;
+    controller.closed.then((_) => closed = true);
+    _toastTimer = Timer(_toastDuration + const Duration(milliseconds: 300), () {
+      if (!closed) controller.close();
+    });
+  }
+
+  Future<void> _complete(Task task) async {
+    final message = AppLocalizations.of(context).undoCompleteMessage;
     await _vm.completeTask(task.id);
-    messenger
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(l10n.undoCompleteMessage),
-          action: SnackBarAction(
-            label: l10n.undoAction,
-            onPressed: () => _vm.restoreTask(task.id),
-          ),
-        ),
-      );
+    if (!mounted) return;
+    _showUndoToast(message, () => _vm.restoreTask(task.id));
   }
 
   Future<void> _restore(Task task) async {
-    final l10n = AppLocalizations.of(context);
-    final messenger = ScaffoldMessenger.of(context);
+    final message = AppLocalizations.of(context).undoRestoreMessage;
     await _vm.restoreTask(task.id);
-    messenger
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(l10n.undoRestoreMessage),
-          action: SnackBarAction(
-            label: l10n.undoAction,
-            onPressed: () => _vm.completeTask(task.id),
-          ),
-        ),
-      );
+    if (!mounted) return;
+    _showUndoToast(message, () => _vm.completeTask(task.id));
   }
 
   Future<void> _addTask(List<CategoryWithTasks> cats) async {

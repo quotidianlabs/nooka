@@ -217,7 +217,30 @@ void main() {
     );
     await tester.pumpWidget(_app(db));
     await tester.pumpAndSettle();
-    expect(find.textContaining('🛒'), findsOneWidget);
-    expect(find.textContaining('Shopping'), findsOneWidget);
+    expect(find.textContaining('🛒 Shopping'), findsOneWidget);
+  });
+
+  testWidgets('undo toast is floating and auto-dismisses', (tester) async {
+    final cat = await db.todoDao.createCategory(
+      name: 'Home',
+      color: 0xFF009688,
+    );
+    await db.todoDao.createTask(categoryId: cat, name: 'Sweep');
+    await tester.pumpWidget(_app(db));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.radio_button_unchecked));
+    await tester.pump(); // flush the completeTask await
+    await tester.pump(const Duration(milliseconds: 300)); // snackbar entrance
+    expect(find.text('Item completed'), findsOneWidget);
+    expect(
+      tester.widget<SnackBar>(find.byType(SnackBar)).behavior,
+      SnackBarBehavior.floating,
+    );
+
+    // Advance past duration + backstop; the toast must be gone.
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
+    expect(find.text('Item completed'), findsNothing);
   });
 }
