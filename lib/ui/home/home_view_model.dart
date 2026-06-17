@@ -16,8 +16,11 @@ class HomeViewModel extends _$HomeViewModel {
 
   TodoRepository get _repo => ref.read(todoRepositoryProvider);
 
-  Future<void> addCategory(String name, {int color = kDefaultCategoryColor, String? emoji}) =>
-      _repo.createCategory(name: name, color: color, emoji: emoji);
+  Future<void> addCategory(
+    String name, {
+    int color = kDefaultCategoryColor,
+    String? emoji,
+  }) => _repo.createCategory(name: name, color: color, emoji: emoji);
   Future<void> renameCategory(int id, String name) =>
       _repo.renameCategory(id, name);
   Future<void> setCategoryColor(int id, int color) =>
