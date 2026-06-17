@@ -134,12 +134,6 @@ abstract class AppLocalizations {
   /// **'Category name'**
   String get categoryNameLabel;
 
-  /// No description provided for @colorLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Color'**
-  String get colorLabel;
-
   /// No description provided for @emojiLabel.
   ///
   /// In en, this message translates to:
@@ -170,12 +164,6 @@ abstract class AppLocalizations {
   /// **'Category'**
   String get categoryLabel;
 
-  /// No description provided for @moveToCategory.
-  ///
-  /// In en, this message translates to:
-  /// **'Move to category'**
-  String get moveToCategory;
-
   /// No description provided for @save.
   ///
   /// In en, this message translates to:
@@ -200,35 +188,17 @@ abstract class AppLocalizations {
   /// **'Delete'**
   String get delete;
 
-  /// No description provided for @edit.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit'**
-  String get edit;
-
-  /// No description provided for @rename.
-  ///
-  /// In en, this message translates to:
-  /// **'Rename'**
-  String get rename;
-
-  /// No description provided for @restore.
-  ///
-  /// In en, this message translates to:
-  /// **'Restore'**
-  String get restore;
-
   /// No description provided for @done.
   ///
   /// In en, this message translates to:
   /// **'Done'**
   String get done;
 
-  /// No description provided for @clearArchive.
+  /// No description provided for @markDoneLabel.
   ///
   /// In en, this message translates to:
-  /// **'Clear archive'**
-  String get clearArchive;
+  /// **'Mark done'**
+  String get markDoneLabel;
 
   /// No description provided for @clearArchiveTitle.
   ///

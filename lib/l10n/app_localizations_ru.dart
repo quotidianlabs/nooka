@@ -27,9 +27,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get categoryNameLabel => 'Название категории';
 
   @override
-  String get colorLabel => 'Цвет';
-
-  @override
   String get emojiLabel => 'Эмодзи (необязательно)';
 
   @override
@@ -45,9 +42,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get categoryLabel => 'Категория';
 
   @override
-  String get moveToCategory => 'Переместить в категорию';
-
-  @override
   String get save => 'Сохранить';
 
   @override
@@ -60,19 +54,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get delete => 'Удалить';
 
   @override
-  String get edit => 'Изменить';
-
-  @override
-  String get rename => 'Переименовать';
-
-  @override
-  String get restore => 'Вернуть';
-
-  @override
   String get done => 'Готово';
 
   @override
-  String get clearArchive => 'Очистить архив';
+  String get markDoneLabel => 'Отметить выполненным';
 
   @override
   String get clearArchiveTitle => 'Очистить архив?';

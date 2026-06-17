@@ -7,15 +7,16 @@ import 'package:nooka/data/services/database/database_providers.dart';
 import 'package:nooka/l10n/app_localizations.dart';
 import 'package:nooka/ui/home/home_screen.dart';
 
-Widget _app(AppDatabase db) => ProviderScope(
-  overrides: [appDatabaseProvider.overrideWithValue(db)],
-  child: const MaterialApp(
-    locale: Locale('en'),
-    localizationsDelegates: AppLocalizations.localizationsDelegates,
-    supportedLocales: AppLocalizations.supportedLocales,
-    home: HomeScreen(),
-  ),
-);
+Widget _app(AppDatabase db, {Locale locale = const Locale('en')}) =>
+    ProviderScope(
+      overrides: [appDatabaseProvider.overrideWithValue(db)],
+      child: MaterialApp(
+        locale: locale,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: const HomeScreen(),
+      ),
+    );
 
 void main() {
   late AppDatabase db;
@@ -137,5 +138,57 @@ void main() {
     await tester.tap(find.byKey(const Key('confirm-clear-archive')));
     await tester.pumpAndSettle();
     expect(find.text('Sweep'), findsNothing);
+  });
+
+  testWidgets('Russian locale renders the 4-form plural correctly', (
+    tester,
+  ) async {
+    final cat = await db.todoDao.createCategory(name: 'Дом', color: 0xFF009688);
+    for (var i = 0; i < 5; i++) {
+      await db.todoDao.createTask(categoryId: cat, name: 'Дело $i');
+    }
+    await tester.pumpWidget(_app(db, locale: const Locale('ru')));
+    await tester.pumpAndSettle();
+
+    // 5 active items -> Russian "many" form: "5 дел".
+    expect(find.text('5 дел'), findsOneWidget);
+
+    // An archived item shows the Russian countdown with "дней".
+    final archivedCat = await db.todoDao.createCategory(
+      name: 'Работа',
+      color: 0xFF3F51B5,
+    );
+    final id = await db.todoDao.createTask(
+      categoryId: archivedCat,
+      name: 'Отчёт',
+    );
+    await db.todoDao.completeTask(id, DateTime.now());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Архив'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('дней'), findsOneWidget);
+  });
+
+  testWidgets('tapping a category header collapses and expands its rows', (
+    tester,
+  ) async {
+    final cat = await db.todoDao.createCategory(
+      name: 'Home',
+      color: 0xFF009688,
+    );
+    await db.todoDao.createTask(categoryId: cat, name: 'Sweep');
+    await tester.pumpWidget(_app(db));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Sweep'), findsOneWidget);
+
+    await tester.tap(find.byKey(Key('category-header-$cat')));
+    await tester.pumpAndSettle();
+    expect(find.text('Sweep'), findsNothing); // collapsed
+
+    await tester.tap(find.byKey(Key('category-header-$cat')));
+    await tester.pumpAndSettle();
+    expect(find.text('Sweep'), findsOneWidget); // expanded again
   });
 }

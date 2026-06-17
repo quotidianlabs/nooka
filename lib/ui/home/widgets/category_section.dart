@@ -81,12 +81,13 @@ class CategorySection extends StatelessWidget {
                 builder: (context) {
                   final tile = ListTile(
                     key: Key('task-${task.id}'),
-                    leading: Icon(
-                      archived
-                          ? Icons.check_circle
-                          : Icons.radio_button_unchecked,
-                      color: archived ? color : null,
-                    ),
+                    leading: archived
+                        ? Icon(Icons.check_circle, color: color)
+                        : Semantics(
+                            button: true,
+                            label: l10n.markDoneLabel,
+                            child: const Icon(Icons.radio_button_unchecked),
+                          ),
                     title: Text(task.name),
                     subtitle: archived
                         ? Text(

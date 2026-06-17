@@ -27,9 +27,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get categoryNameLabel => 'Category name';
 
   @override
-  String get colorLabel => 'Color';
-
-  @override
   String get emojiLabel => 'Emoji (optional)';
 
   @override
@@ -45,9 +42,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get categoryLabel => 'Category';
 
   @override
-  String get moveToCategory => 'Move to category';
-
-  @override
   String get save => 'Save';
 
   @override
@@ -60,19 +54,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get delete => 'Delete';
 
   @override
-  String get edit => 'Edit';
-
-  @override
-  String get rename => 'Rename';
-
-  @override
-  String get restore => 'Restore';
-
-  @override
   String get done => 'Done';
 
   @override
-  String get clearArchive => 'Clear archive';
+  String get markDoneLabel => 'Mark done';
 
   @override
   String get clearArchiveTitle => 'Clear archive?';

@@ -98,9 +98,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       return Center(child: Text(l10n.emptyNoCategories));
     }
     final archived = _view == _View.archive;
+    final visible = archived
+        ? [
+            for (final cwt in cats)
+              if (cwt.archivedTasks.isNotEmpty) cwt,
+          ]
+        : cats;
+    if (archived && visible.isEmpty) {
+      return Center(child: Text(l10n.emptyArchive));
+    }
     return ListView(
       children: [
-        for (final cwt in cats)
+        for (final cwt in visible)
           CategorySection(
             category: cwt.category,
             tasks: archived ? cwt.archivedTasks : cwt.activeTasks,
