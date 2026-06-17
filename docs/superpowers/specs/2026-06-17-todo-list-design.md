@@ -19,6 +19,9 @@ This is deliberately a *simple to-do list*, not a task manager. Features that tu
 - Auto-remove archived items 30 days after completion.
 - Light/dark theme (system-aware) and English/Russian localization.
 - A handful of low-cost polish features: undo toast, optional category emoji, drag-to-reorder, collapsible categories.
+- **Fast capture**: keep-keyboard-open rapid add (add several items in a row without re-opening the dialog) into the current/last-used category.
+- **Swipe-to-complete**: swipe an active item right to complete it (with haptic feedback), keeping the tap checkbox as an accessible fallback.
+- **Legible archive**: each archived item shows its completion date alongside "auto-removes in N days", plus a manual "Clear archive now" action.
 
 ## Non-Goals (v1)
 
@@ -67,6 +70,7 @@ Tasks                              // a "to-do item"
 - **Complete** sets `archivedAt = now`. **Restore** sets `archivedAt = null`; the item reappears in its category's active list (uncheck-to-restore pattern).
 - **30-day clock** starts at `archivedAt` (the completion instant).
 - **Cleanup**: delete tasks where `archivedAt` is older than `now − 30 days`. Triggered (a) on app startup and (b) when the Archive view is opened. No background timer — pragmatic, reliable, matches habbits' avoidance of background work.
+- **Manual clear**: a "Clear archive now" action deletes *all* archived tasks (`archivedAt != null`), regardless of age, after confirmation.
 - **Cascade delete**: deleting a category removes all its tasks (active and archived) via FK `onDelete: cascade`. Confirmed via a dialog stating the counts. No orphaned tasks can exist, so restore never targets a missing category.
 - **Ordering**: each category has a unique `sortOrder`; each task has a unique `sortOrder` within its category's active list. Reorders run in a single transaction that rewrites the affected `sortOrder` values to `0..n-1`, exactly like habbits' `reorderHabits`.
 - `schemaVersion = 1`; `beforeOpen` enables foreign keys.
@@ -78,9 +82,9 @@ A single home screen with a top **segmented switcher: Active ▸ Archive**. Both
 ### Active view (default)
 
 - Items grouped under colored, collapsible **category headers**. Header = color swatch + optional emoji + name + open-item count + collapse chevron. Tapping the header toggles `collapsed`.
-- **Item row**: a tap-target completion circle + the item name. Completing animates the row out and shows an **undo toast (~5s)**; on timeout the item is archived (`archivedAt = now`). Undo restores it in place.
+- **Item row**: a tap-target completion circle + the item name. Completing (via tap or **swipe-right**, with haptic feedback) archives the item (`archivedAt = now`) and shows an **undo toast (~5s)** that restores it. The tap checkbox is always present as an accessible fallback to the swipe.
 - **Drag-to-reorder**: items within a category; category sections via header drag.
-- **Add item**: FAB → dialog with name field + category picker (defaults to last-used category).
+- **Add item**: FAB → **keep-keyboard-open quick add**: the name field stays focused after each Add so several items can be entered in a row, all into the current/last-used category (a category picker is available to change it); a Done button closes. The last-used category is remembered for the next quick add.
 - **Add category**: app-bar action → dialog with name + color (from palette) + optional emoji.
 - **Edit**: trailing menu / long-press on an item → rename or move to another category; on a category header → rename, recolor, change emoji, or delete (cascade, count-confirm dialog).
 - **Empty states**: no categories ("No categories yet — add one"); a category with no active items shows a short hint.
@@ -88,8 +92,9 @@ A single home screen with a top **segmented switcher: Active ▸ Archive**. Both
 ### Archive view
 
 - Same grouped, collapsible layout. Within each category, items are ordered newest-first by `archivedAt`.
-- Each archived item shows **"auto-removes in N days"** (computed from `archivedAt + 30d − now`), localized with correct plural forms.
+- Each archived item shows its **completion date** (locale-formatted) and **"auto-removes in N days"** (computed from `archivedAt + 30d − now`), localized with correct plural forms.
 - Tapping an item **restores** it (`archivedAt = null`); it returns to its category in the Active view, with an undo toast.
+- **Clear archive now**: an app-bar action (visible in Archive view) deletes all archived items after a confirmation dialog.
 - **Empty state**: "Nothing archived".
 
 ## Cross-Cutting Concerns
