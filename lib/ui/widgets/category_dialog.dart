@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../core/category_colors.dart';
@@ -8,7 +9,7 @@ class CategoryDialogResult {
   CategoryDialogResult(this.name, this.color, this.emoji);
   final String name;
   final int color;
-  final String? emoji;
+  final String? emoji; // a single grapheme, or null
 }
 
 /// Shows a dialog to create or edit a category. Returns null on cancel.
@@ -46,7 +47,7 @@ class _CategoryDialogState extends State<_CategoryDialog> {
   late final TextEditingController _name = TextEditingController(
     text: widget.initialName,
   );
-  late final TextEditingController _emoji = TextEditingController(
+  late final TextEditingController _icon = TextEditingController(
     text: widget.initialEmoji ?? '',
   );
   late int _color = widget.initialColor;
@@ -54,7 +55,7 @@ class _CategoryDialogState extends State<_CategoryDialog> {
   @override
   void dispose() {
     _name.dispose();
-    _emoji.dispose();
+    _icon.dispose();
     super.dispose();
   }
 
@@ -74,10 +75,24 @@ class _CategoryDialogState extends State<_CategoryDialog> {
             decoration: InputDecoration(labelText: l10n.categoryNameLabel),
           ),
           TextField(
-            key: const Key('category-emoji-field'),
-            controller: _emoji,
-            maxLength: 2,
-            decoration: InputDecoration(labelText: l10n.emojiLabel),
+            key: const Key('category-icon-field'),
+            controller: _icon,
+            decoration: InputDecoration(
+              labelText: l10n.iconLabel,
+              helperText: l10n.iconHelper,
+            ),
+            inputFormatters: [
+              // Keep at most one user-perceived character (grapheme), so a
+              // multi-codepoint emoji counts as one and a word can't be typed.
+              TextInputFormatter.withFunction((oldValue, newValue) {
+                if (newValue.text.characters.length <= 1) return newValue;
+                final clipped = newValue.text.characters.take(1).toString();
+                return TextEditingValue(
+                  text: clipped,
+                  selection: TextSelection.collapsed(offset: clipped.length),
+                );
+              }),
+            ],
           ),
           const SizedBox(height: 8),
           Wrap(
@@ -108,10 +123,10 @@ class _CategoryDialogState extends State<_CategoryDialog> {
           onPressed: () {
             final name = _name.text.trim();
             if (name.isEmpty) return;
-            final emoji = _emoji.text.trim();
+            final icon = _icon.text.trim();
             Navigator.pop(
               context,
-              CategoryDialogResult(name, _color, emoji.isEmpty ? null : emoji),
+              CategoryDialogResult(name, _color, icon.isEmpty ? null : icon),
             );
           },
           child: Text(isEdit ? l10n.save : l10n.add),
