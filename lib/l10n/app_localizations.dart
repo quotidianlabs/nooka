@@ -6,6 +6,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/intl.dart' as intl;
 
 import 'app_localizations_en.dart';
+import 'app_localizations_ru.dart';
 
 // ignore_for_file: type=lint
 
@@ -92,13 +93,274 @@ abstract class AppLocalizations {
       ];
 
   /// A list of this localizations delegate's supported locales.
-  static const List<Locale> supportedLocales = <Locale>[Locale('en')];
+  static const List<Locale> supportedLocales = <Locale>[
+    Locale('en'),
+    Locale('ru'),
+  ];
 
-  /// The title of the application
+  /// No description provided for @appTitle.
   ///
   /// In en, this message translates to:
   /// **'Nooka'**
   String get appTitle;
+
+  /// No description provided for @activeTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get activeTab;
+
+  /// No description provided for @archiveTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive'**
+  String get archiveTab;
+
+  /// No description provided for @addCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Add category'**
+  String get addCategory;
+
+  /// No description provided for @editCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit category'**
+  String get editCategory;
+
+  /// No description provided for @categoryNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Category name'**
+  String get categoryNameLabel;
+
+  /// No description provided for @colorLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Color'**
+  String get colorLabel;
+
+  /// No description provided for @emojiLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Emoji (optional)'**
+  String get emojiLabel;
+
+  /// No description provided for @addTask.
+  ///
+  /// In en, this message translates to:
+  /// **'New item'**
+  String get addTask;
+
+  /// No description provided for @editTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit item'**
+  String get editTask;
+
+  /// No description provided for @taskNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Item name'**
+  String get taskNameLabel;
+
+  /// No description provided for @categoryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get categoryLabel;
+
+  /// No description provided for @moveToCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to category'**
+  String get moveToCategory;
+
+  /// No description provided for @save.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get save;
+
+  /// No description provided for @add.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get add;
+
+  /// No description provided for @cancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancel;
+
+  /// No description provided for @delete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get delete;
+
+  /// No description provided for @edit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get edit;
+
+  /// No description provided for @rename.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename'**
+  String get rename;
+
+  /// No description provided for @restore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get restore;
+
+  /// No description provided for @done.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get done;
+
+  /// No description provided for @clearArchive.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear archive'**
+  String get clearArchive;
+
+  /// No description provided for @clearArchiveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear archive?'**
+  String get clearArchiveTitle;
+
+  /// No description provided for @clearArchiveBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Permanently delete {count, plural, =0{no archived items} one{{count} archived item} other{{count} archived items}}?'**
+  String clearArchiveBody(int count);
+
+  /// No description provided for @completedOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed {date}'**
+  String completedOn(String date);
+
+  /// No description provided for @deleteCategoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete category?'**
+  String get deleteCategoryTitle;
+
+  /// No description provided for @deleteCategoryBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Permanently delete \"{name}\" and {count, plural, =0{no items} one{{count} item} other{{count} items}}?'**
+  String deleteCategoryBody(String name, int count);
+
+  /// No description provided for @autoRemovesIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-removes in {count, plural, =0{under a day} one{{count} day} other{{count} days}}'**
+  String autoRemovesIn(int count);
+
+  /// No description provided for @openItemsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{no items} one{{count} item} other{{count} items}}'**
+  String openItemsCount(int count);
+
+  /// No description provided for @emptyNoCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'No categories yet — add one'**
+  String get emptyNoCategories;
+
+  /// No description provided for @emptyCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'No items'**
+  String get emptyCategory;
+
+  /// No description provided for @emptyArchive.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing archived'**
+  String get emptyArchive;
+
+  /// No description provided for @undoCompleteMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Item completed'**
+  String get undoCompleteMessage;
+
+  /// No description provided for @undoRestoreMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Item restored'**
+  String get undoRestoreMessage;
+
+  /// No description provided for @undoAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get undoAction;
+
+  /// No description provided for @settingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get settingsTitle;
+
+  /// No description provided for @themeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme'**
+  String get themeLabel;
+
+  /// No description provided for @languageLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get languageLabel;
+
+  /// No description provided for @themeSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get themeSystem;
+
+  /// No description provided for @themeLight.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get themeLight;
+
+  /// No description provided for @themeDark.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get themeDark;
+
+  /// No description provided for @langSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get langSystem;
+
+  /// No description provided for @langEnglish.
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get langEnglish;
+
+  /// No description provided for @langRussian.
+  ///
+  /// In en, this message translates to:
+  /// **'Russian'**
+  String get langRussian;
 }
 
 class _AppLocalizationsDelegate
@@ -112,7 +374,7 @@ class _AppLocalizationsDelegate
 
   @override
   bool isSupported(Locale locale) =>
-      <String>['en'].contains(locale.languageCode);
+      <String>['en', 'ru'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
@@ -123,6 +385,8 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
   switch (locale.languageCode) {
     case 'en':
       return AppLocalizationsEn();
+    case 'ru':
+      return AppLocalizationsRu();
   }
 
   throw FlutterError(
