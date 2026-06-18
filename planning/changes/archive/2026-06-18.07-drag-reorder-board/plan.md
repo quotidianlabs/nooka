@@ -1,9 +1,9 @@
 ---
-status: draft
+status: shipped
 date: 2026-06-18
 slug: drag-reorder-board
 spec: drag-reorder-board
-pr: null
+pr: "#9"
 ---
 
 # drag-reorder-board — implementation plan

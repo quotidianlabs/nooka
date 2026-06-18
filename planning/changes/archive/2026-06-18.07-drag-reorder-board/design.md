@@ -1,11 +1,11 @@
 ---
-status: draft
+status: shipped
 date: 2026-06-18
 slug: drag-reorder-board
 supersedes: null
 superseded_by: null
-pr: null
-outcome: null
+pr: "#9"
+outcome: "Active view is a drag board (drag_and_drop_lists): reorder categories, reorder tasks, and drag tasks across categories at a chosen position via moveTaskToCategoryAt; expanding a category now sets the add-task default."
 ---
 
 # Design: Drag-reorder board + expand-sets-default
