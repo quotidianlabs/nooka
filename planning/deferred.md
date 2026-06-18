@@ -6,9 +6,6 @@ change bundle when its trigger fires.
 - **Release docs + Android signing** — port habbits' `docs/release.md` runbook
   and upload-key signing (gitignored keystore + `key.properties`). *Revisit
   when* a Play Store release is actually cut.
-- **Bundle-id consistency** — nooka uses `com.nooka.nooka` while habbits uses
-  `io.github.quotidianlabs.habbits`. *Revisit when* app-icon/branding work is
-  scheduled, or before the first store upload.
 - **Due dates + reminders** — per-task due dates and on-device local
   notifications (habbits ships per-habit reminders). *Revisit when* nooka
   moves from a list to a planner.
