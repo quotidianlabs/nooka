@@ -42,6 +42,28 @@ void main() {
     expect(find.text('No categories yet — add one'), findsOneWidget);
   });
 
+  testWidgets('active view renders categories and tasks as a board', (
+    tester,
+  ) async {
+    final home = await db.todoDao.createCategory(
+      name: 'Home',
+      color: 0xFF009688,
+    );
+    final work = await db.todoDao.createCategory(
+      name: 'Work',
+      color: 0xFF3F51B5,
+    );
+    await db.todoDao.createTask(categoryId: home, name: 'Sweep');
+    await db.todoDao.createTask(categoryId: work, name: 'Email');
+    await tester.pumpWidget(_app(db, prefs));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(Key('category-header-$home')), findsOneWidget);
+    expect(find.byKey(Key('category-header-$work')), findsOneWidget);
+    expect(find.text('Sweep'), findsOneWidget);
+    expect(find.text('Email'), findsOneWidget);
+  });
+
   testWidgets('completing a task moves it from Active to Archive', (
     tester,
   ) async {

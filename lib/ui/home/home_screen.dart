@@ -1,18 +1,23 @@
 import 'dart:async';
 
+import 'package:drag_and_drop_lists/drag_and_drop_lists.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/repositories/settings_repository.dart';
 import '../../data/services/database/database.dart';
 import '../../domain/models/category_with_tasks.dart';
+import '../../domain/reorder.dart';
 import '../../l10n/app_localizations.dart';
 import '../settings/settings_screen.dart';
 import '../widgets/category_dialog.dart';
 import '../widgets/confirm_delete_dialog.dart';
 import '../widgets/task_dialog.dart';
 import 'home_view_model.dart';
+import 'widgets/category_header_content.dart';
 import 'widgets/category_section.dart';
+import 'widgets/task_row_content.dart';
 
 enum _View { active, archive }
 
@@ -127,23 +132,133 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     if (archived && visible.isEmpty) {
       return Center(child: Text(l10n.emptyArchive));
     }
-    return ListView(
-      children: [
-        for (final cwt in visible)
-          CategorySection(
-            category: cwt.category,
-            tasks: archived ? cwt.archivedTasks : cwt.activeTasks,
-            archived: archived,
-            now: now,
-            onToggleCollapsed: () =>
-                _vm.toggleCollapsed(cwt.category.id, !cwt.category.collapsed),
-            onHeaderMenu: () => _categoryMenu(cwt),
-            onTaskTap: (t) => archived ? _restore(t) : _complete(t),
-            onTaskMenu: archived ? null : (t) => _taskMenu(cats, t),
-          ),
-        const SizedBox(height: 80),
-      ],
+    if (archived) {
+      return ListView(
+        children: [
+          for (final cwt in visible)
+            CategorySection(
+              category: cwt.category,
+              tasks: cwt.archivedTasks,
+              archived: true,
+              now: now,
+              onToggleCollapsed: () =>
+                  _vm.toggleCollapsed(cwt.category.id, !cwt.category.collapsed),
+              onHeaderMenu: () => _categoryMenu(cwt),
+              onTaskTap: _restore,
+              onTaskMenu: null,
+            ),
+          const SizedBox(height: 80),
+        ],
+      );
+    }
+    return _board(visible, now);
+  }
+
+  Widget _board(List<CategoryWithTasks> cats, DateTime now) {
+    return DragAndDropLists(
+      listPadding: EdgeInsets.zero,
+      itemDragOnLongPress: true,
+      listDragOnLongPress: true,
+      onListReorder: (oldIndex, newIndex) {
+        final ids = [for (final c in cats) c.category.id];
+        _vm.reorderCategories(reorderedIds(ids, oldIndex, newIndex));
+      },
+      onItemReorder: (oldItemIndex, oldListIndex, newItemIndex, newListIndex) {
+        _onItemReorder(
+          cats,
+          oldItemIndex,
+          oldListIndex,
+          newItemIndex,
+          newListIndex,
+        );
+      },
+      children: [for (final cwt in cats) _dragList(cwt, cats, now)],
     );
+  }
+
+  DragAndDropList _dragList(
+    CategoryWithTasks cwt,
+    List<CategoryWithTasks> cats,
+    DateTime now,
+  ) {
+    final color = Color(cwt.category.color);
+    return DragAndDropList(
+      canDrag: true,
+      header: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          CategoryHeaderContent(
+            category: cwt.category,
+            taskCount: cwt.activeTasks.length,
+            onToggleCollapsed: () => _onExpandToggle(cwt.category),
+            onHeaderMenu: () => _categoryMenu(cwt),
+          ),
+          Container(
+            margin: const EdgeInsets.only(left: 16, right: 16, bottom: 2),
+            height: 2,
+            color: color.withValues(alpha: 0.25),
+          ),
+        ],
+      ),
+      contentsWhenEmpty: const SizedBox(height: 12),
+      children: cwt.category.collapsed
+          ? const []
+          : [
+              for (final task in cwt.activeTasks)
+                DragAndDropItem(
+                  child: Dismissible(
+                    key: ValueKey('dismiss-${task.id}'),
+                    direction: DismissDirection.startToEnd,
+                    background: Container(
+                      color: color,
+                      alignment: Alignment.centerLeft,
+                      padding: const EdgeInsets.only(left: 24),
+                      child: const Icon(Icons.check, color: Colors.white),
+                    ),
+                    confirmDismiss: (_) async {
+                      HapticFeedback.mediumImpact();
+                      _complete(task);
+                      return false;
+                    },
+                    child: TaskRowContent(
+                      task: task,
+                      color: color,
+                      archived: false,
+                      now: now,
+                      onTaskTap: (_) => _complete(task),
+                      onTaskMenu: (_) => _taskMenu(cats, task),
+                    ),
+                  ),
+                ),
+            ],
+    );
+  }
+
+  void _onItemReorder(
+    List<CategoryWithTasks> cats,
+    int oldItemIndex,
+    int oldListIndex,
+    int newItemIndex,
+    int newListIndex,
+  ) {
+    final from = cats[oldListIndex];
+    final to = cats[newListIndex];
+    final movedId = from.activeTasks[oldItemIndex].id;
+    if (oldListIndex == newListIndex) {
+      final ids = [for (final t in from.activeTasks) t.id];
+      _vm.reorderTasks(reorderedIds(ids, oldItemIndex, newItemIndex));
+    } else {
+      final targetIds = [for (final t in to.activeTasks) t.id];
+      _vm.moveTaskToCategoryAt(
+        movedId,
+        to.category.id,
+        insertedAt(targetIds, movedId, newItemIndex),
+      );
+    }
+  }
+
+  void _onExpandToggle(Category category) {
+    _vm.toggleCollapsed(category.id, !category.collapsed);
   }
 
   // ---- commands + toasts ----
