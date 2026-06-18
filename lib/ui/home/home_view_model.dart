@@ -42,6 +42,11 @@ class HomeViewModel extends _$HomeViewModel {
   Future<void> restoreTask(int id) => _repo.restoreTask(id);
   Future<void> reorderTasks(List<int> orderedIds) =>
       _repo.reorderTasks(orderedIds);
+  Future<void> moveTaskToCategoryAt(
+    int taskId,
+    int newCategoryId,
+    List<int> orderedTargetIds,
+  ) => _repo.moveTaskToCategoryAt(taskId, newCategoryId, orderedTargetIds);
   Future<void> purgeExpired() => _repo.purgeExpired();
   Future<void> clearArchive() => _repo.clearArchive();
 }
