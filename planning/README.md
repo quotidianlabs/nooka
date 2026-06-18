@@ -61,7 +61,9 @@ Templates live in [`_templates/`](_templates/).
 
 ### Active
 
-_None._
+- **[ci](changes/active/2026-06-18.03-ci/design.md)**
+  (2026-06-18) — GitHub Actions running `just lint-ci` + `just test` on push
+  and PRs, plus the README CI badge.
 
 ### Archived (shipped)
 
