@@ -28,6 +28,7 @@ dependencies:
     sdk: flutter
   intl: any
   cupertino_icons: ^1.0.8
+  drag_and_drop_lists: ^0.4.2
   shared_preferences: ^2.3.0
   drift: ^2.34.0
   drift_flutter: ^0.3.0

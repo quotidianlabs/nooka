@@ -13,4 +13,27 @@ void main() {
     reorderedIds(input, 0, 2);
     expect(input, [1, 2, 3]);
   });
+
+  group('insertedAt', () {
+    test('inserts at the head', () {
+      expect(insertedAt([2, 3], 1, 0), [1, 2, 3]);
+    });
+    test('inserts in the middle', () {
+      expect(insertedAt([1, 3], 2, 1), [1, 2, 3]);
+    });
+    test('inserts at the tail', () {
+      expect(insertedAt([1, 2], 3, 2), [1, 2, 3]);
+    });
+    test('clamps an out-of-range index to the tail', () {
+      expect(insertedAt([1, 2], 3, 99), [1, 2, 3]);
+    });
+    test('clamps a negative index to the head', () {
+      expect(insertedAt([2, 3], 1, -5), [1, 2, 3]);
+    });
+    test('does not mutate the input', () {
+      final input = [1, 2];
+      insertedAt(input, 3, 1);
+      expect(input, [1, 2]);
+    });
+  });
 }

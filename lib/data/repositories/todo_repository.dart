@@ -42,6 +42,11 @@ class TodoRepository {
   Future<void> restoreTask(int id) => _dao.restoreTask(id);
   Future<void> reorderTasks(List<int> orderedIds) =>
       _dao.reorderTasks(orderedIds);
+  Future<void> moveTaskToCategoryAt(
+    int taskId,
+    int newCategoryId,
+    List<int> orderedTargetIds,
+  ) => _dao.moveTaskToCategoryAt(taskId, newCategoryId, orderedTargetIds);
   Future<int> purgeExpired() => _dao.purgeExpired(DateTime.now());
   Future<int> clearArchive() => _dao.clearArchive();
 }

@@ -65,6 +65,11 @@ _None._
 
 ### Archived (shipped)
 
+- **[drag-reorder-board](changes/archive/2026-06-18.07-drag-reorder-board/design.md)**
+  (#9, 2026-06-18) — Expose drag-and-drop on the Active view (reorder
+  categories, reorder tasks, drag tasks across categories) via
+  `drag_and_drop_lists`, plus: expanding a category sets it as the add-task
+  default.
 - **[remember-last-category](changes/archive/2026-06-18.06-remember-last-category/change.md)**
   (#7, 2026-06-18) — Persist the last-used category through `SettingsRepository`
   so the add-task FAB defaults to it across app restarts.
