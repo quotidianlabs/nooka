@@ -2,6 +2,7 @@
 
 A **local-first to-do list. Your data, on your device.**
 
+[![CI](https://github.com/quotidianlabs/nooka/actions/workflows/ci.yml/badge.svg)](https://github.com/quotidianlabs/nooka/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 ![Flutter](https://img.shields.io/badge/Flutter-3.44.2-02569B?logo=flutter)
 
