@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
 
 import '../../../data/services/database/database.dart';
-import '../../../domain/archive.dart';
 import '../../../l10n/app_localizations.dart';
-import '../../core/color_contrast.dart';
+import 'category_header_content.dart';
+import 'task_row_content.dart';
 
 /// A collapsible category section: a flat section-label header plus its rows.
 /// Used in both Active and Archive views; [archived] selects which rows + row
@@ -37,10 +36,7 @@ class CategorySection extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
     final color = Color(category.color);
-    final nameColor = readableOn(color, scheme.surface);
-    final localeName = Localizations.localeOf(context).toString();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -48,44 +44,11 @@ class CategorySection extends StatelessWidget {
         // menu align with the item rows' columns. The bold category-color name
         // + count and the colored underline below keep it reading as a flat
         // section label rather than a task row. Tapping toggles collapse.
-        ListTile(
-          key: Key('category-header-${category.id}'),
-          onTap: onToggleCollapsed,
-          leading: Icon(
-            category.collapsed ? Icons.expand_more : Icons.expand_less,
-            color: scheme.onSurfaceVariant,
-          ),
-          title: Text.rich(
-            TextSpan(
-              children: [
-                if (category.emoji != null)
-                  TextSpan(
-                    text: '${category.emoji!} ',
-                    style: TextStyle(color: color),
-                  ),
-                TextSpan(
-                  text: category.name,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: nameColor,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                TextSpan(
-                  text: '  ·  ${l10n.openItemsCount(tasks.length)}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          trailing: IconButton(
-            key: Key('category-menu-${category.id}'),
-            icon: const Icon(Icons.more_vert),
-            onPressed: onHeaderMenu,
-          ),
+        CategoryHeaderContent(
+          category: category,
+          taskCount: tasks.length,
+          onToggleCollapsed: onToggleCollapsed,
+          onHeaderMenu: onHeaderMenu,
         ),
         // Thin colored underline binding the items to their category.
         Container(
@@ -106,30 +69,13 @@ class CategorySection extends StatelessWidget {
             for (final task in tasks)
               Builder(
                 builder: (context) {
-                  final tile = ListTile(
-                    key: Key('task-${task.id}'),
-                    leading: archived
-                        ? Icon(Icons.check_circle, color: color)
-                        : Semantics(
-                            button: true,
-                            label: l10n.markDoneLabel,
-                            child: const Icon(Icons.radio_button_unchecked),
-                          ),
-                    title: Text(task.name),
-                    subtitle: archived
-                        ? Text(
-                            '${l10n.completedOn(DateFormat.yMMMd(localeName).format(task.archivedAt!))}'
-                            ' · ${l10n.autoRemovesIn(daysRemaining(task.archivedAt!, now))}',
-                          )
-                        : null,
-                    trailing: onTaskMenu == null
-                        ? null
-                        : IconButton(
-                            key: Key('task-menu-${task.id}'),
-                            icon: const Icon(Icons.more_vert),
-                            onPressed: () => onTaskMenu!(task),
-                          ),
-                    onTap: () => onTaskTap(task),
+                  final tile = TaskRowContent(
+                    task: task,
+                    color: color,
+                    archived: archived,
+                    now: now,
+                    onTaskTap: onTaskTap,
+                    onTaskMenu: onTaskMenu,
                   );
                   if (archived) return tile;
                   // Active rows: swipe right to complete (tap still works too).
