@@ -61,12 +61,13 @@ Templates live in [`_templates/`](_templates/).
 
 ### Active
 
-- **[adopt-planning-convention](changes/active/2026-06-18.01-adopt-planning-convention/design.md)**
-  (2026-06-18) — Stand up `planning/` mirroring habbits, add `CLAUDE.md`, and
-  migrate the two superpowers specs into archive bundles.
+_None._
 
 ### Archived (shipped)
 
+- **[adopt-planning-convention](changes/archive/2026-06-18.01-adopt-planning-convention/design.md)**
+  (775dcef, 2026-06-18) — Stand up `planning/` mirroring habbits, add
+  `CLAUDE.md`, and migrate the two superpowers specs into archive bundles.
 - **[ui-refinements](changes/archive/2026-06-17.02-ui-refinements/design.md)**
   (6d11b30, 2026-06-17) — Distinct category section-label headers, a
   single-grapheme relabeled icon field, and a reliably auto-dismissing undo
