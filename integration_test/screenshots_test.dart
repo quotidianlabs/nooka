@@ -35,20 +35,27 @@ Future<AppDatabase> seededDb() async {
   }
 
   // Colors are drawn from kCategoryPalette so the shots match the picker.
-  await category('Home', 0xFF009688, '🏠', [
-    'Water the plants',
-    'Take out recycling',
-    'Vacuum living room',
-  ], ['Replace air filter']);
-  await category('Work', 0xFF1E88E5, '💼', [
-    'Email Priya',
-    'Draft Q3 deck',
-  ], ['Book travel']);
-  await category('Groceries', 0xFF43A047, '🛒', [
-    'Oat milk',
-    'Spinach',
-    'Coffee beans',
-  ], ['Bananas']);
+  await category(
+    'Home',
+    0xFF009688,
+    '🏠',
+    ['Water the plants', 'Take out recycling', 'Vacuum living room'],
+    ['Replace air filter'],
+  );
+  await category(
+    'Work',
+    0xFF1E88E5,
+    '💼',
+    ['Email Priya', 'Draft Q3 deck'],
+    ['Book travel'],
+  );
+  await category(
+    'Groceries',
+    0xFF43A047,
+    '🛒',
+    ['Oat milk', 'Spinach', 'Coffee beans'],
+    ['Bananas'],
+  );
   return db;
 }
 
