@@ -61,12 +61,13 @@ Templates live in [`_templates/`](_templates/).
 
 ### Active
 
-- **[ci](changes/active/2026-06-18.03-ci/design.md)**
-  (2026-06-18) — GitHub Actions running `just lint-ci` + `just test` on push
-  and PRs, plus the README CI badge.
+_None._
 
 ### Archived (shipped)
 
+- **[ci](changes/archive/2026-06-18.03-ci/design.md)**
+  (#3, 2026-06-18) — GitHub Actions running `just lint-ci` + `just test` on
+  push and PRs, plus the README CI badge.
 - **[readme-license-pubspec](changes/archive/2026-06-18.02-readme-license-pubspec/design.md)**
   (#1, 2026-06-18) — Real README (tagline, screenshot gallery, features,
   architecture), MIT `LICENSE`, fixed `pubspec` description, and a ported

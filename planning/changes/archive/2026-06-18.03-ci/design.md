@@ -1,11 +1,11 @@
 ---
-status: approved
+status: shipped
 date: 2026-06-18
 slug: ci
 supersedes: null
 superseded_by: null
-pr: null
-outcome: null
+pr: 3
+outcome: PR #3 — GitHub Actions lint + test workflow on push/PR, plus the README CI badge.
 ---
 
 # Design: GitHub Actions CI
