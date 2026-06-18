@@ -61,7 +61,9 @@ Templates live in [`_templates/`](_templates/).
 
 ### Active
 
-_None._
+- **[menu-alignment](changes/active/2026-06-18.04-menu-alignment/change.md)**
+  (2026-06-18) — Rebuild the category header as a `ListTile` so its chevron,
+  title, and ⋮ menu align with the item rows' columns.
 
 ### Archived (shipped)
 
