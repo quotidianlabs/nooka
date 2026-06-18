@@ -1,11 +1,11 @@
 ---
-status: approved
+status: shipped
 date: 2026-06-18
 slug: menu-alignment
 supersedes: null
 superseded_by: null
-pr: null
-outcome: null
+pr: 4
+outcome: PR #4 — category header rebuilt as a ListTile; leading chevron, title, and ⋮ menu now align with the item rows' columns.
 ---
 
 # Change: Align category-header and item ⋮ menus on one vertical line

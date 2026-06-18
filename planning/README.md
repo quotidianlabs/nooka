@@ -61,12 +61,13 @@ Templates live in [`_templates/`](_templates/).
 
 ### Active
 
-- **[menu-alignment](changes/active/2026-06-18.04-menu-alignment/change.md)**
-  (2026-06-18) — Rebuild the category header as a `ListTile` so its chevron,
-  title, and ⋮ menu align with the item rows' columns.
+_None._
 
 ### Archived (shipped)
 
+- **[menu-alignment](changes/archive/2026-06-18.04-menu-alignment/change.md)**
+  (#4, 2026-06-18) — Rebuild the category header as a `ListTile` so its
+  chevron, title, and ⋮ menu align with the item rows' columns.
 - **[ci](changes/archive/2026-06-18.03-ci/design.md)**
   (#3, 2026-06-18) — GitHub Actions running `just lint-ci` + `just test` on
   push and PRs, plus the README CI badge.
