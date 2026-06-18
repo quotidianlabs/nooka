@@ -1,9 +1,9 @@
 ---
-status: draft
+status: shipped
 date: 2026-06-18
 slug: app-icon
 spec: app-icon
-pr: null
+pr: "#6 (f786490)"
 ---
 
 # app-icon — implementation plan
