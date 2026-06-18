@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../data/repositories/settings_repository.dart';
 import '../../data/services/database/database.dart';
 import '../../domain/models/category_with_tasks.dart';
 import '../../l10n/app_localizations.dart';
@@ -28,6 +29,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Timer? _toastTimer;
 
   static const _toastDuration = Duration(seconds: 4);
+
+  @override
+  void initState() {
+    super.initState();
+    // Seed the quick-add default from the persisted last-used category so it
+    // survives app restarts.
+    _lastCategoryId = ref.read(settingsRepositoryProvider).readLastCategoryId();
+  }
 
   @override
   void dispose() {
@@ -189,6 +198,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       initialCategoryId: initial,
       onAdd: (name, categoryId) async {
         _lastCategoryId = categoryId;
+        await ref
+            .read(settingsRepositoryProvider)
+            .writeLastCategoryId(categoryId);
         await _vm.addTask(categoryId, name);
       },
     );

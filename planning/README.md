@@ -64,6 +64,9 @@ Templates live in [`_templates/`](_templates/).
 - **[app-icon](changes/active/2026-06-18.01-app-icon/design.md)**
   (2026-06-18) — Custom launcher icon: a white ticked checkbox on brand teal,
   generated for iOS + Android via `flutter_launcher_icons`.
+- **[remember-last-category](changes/active/2026-06-18.02-remember-last-category/change.md)**
+  (2026-06-18) — Persist the last-used category through `SettingsRepository` so
+  the add-task FAB defaults to it across app restarts.
 
 ### Archived (shipped)
 

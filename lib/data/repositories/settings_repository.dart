@@ -16,6 +16,7 @@ class SettingsRepository {
 
   static const _localeKey = 'locale';
   static const _themeKey = 'theme';
+  static const _lastCategoryKey = 'last_category';
 
   String? readLocaleToken() => _prefs.getString(_localeKey);
   Future<void> writeLocaleToken(String token) =>
@@ -24,6 +25,11 @@ class SettingsRepository {
   String? readThemeToken() => _prefs.getString(_themeKey);
   Future<void> writeThemeToken(String token) =>
       _prefs.setString(_themeKey, token);
+
+  /// The category id last used when adding a to-do, or null if none stored.
+  int? readLastCategoryId() => _prefs.getInt(_lastCategoryKey);
+  Future<void> writeLastCategoryId(int id) =>
+      _prefs.setInt(_lastCategoryKey, id);
 }
 
 @Riverpod(keepAlive: true)

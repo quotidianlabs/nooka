@@ -2,29 +2,42 @@ import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:nooka/data/repositories/settings_repository.dart';
 import 'package:nooka/data/services/database/database.dart';
 import 'package:nooka/data/services/database/database_providers.dart';
 import 'package:nooka/l10n/app_localizations.dart';
 import 'package:nooka/ui/home/home_screen.dart';
 
-Widget _app(AppDatabase db, {Locale locale = const Locale('en')}) =>
-    ProviderScope(
-      overrides: [appDatabaseProvider.overrideWithValue(db)],
-      child: MaterialApp(
-        locale: locale,
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        home: const HomeScreen(),
-      ),
-    );
+Widget _app(
+  AppDatabase db,
+  SharedPreferences prefs, {
+  Locale locale = const Locale('en'),
+}) => ProviderScope(
+  overrides: [
+    appDatabaseProvider.overrideWithValue(db),
+    sharedPreferencesProvider.overrideWithValue(prefs),
+  ],
+  child: MaterialApp(
+    locale: locale,
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    home: const HomeScreen(),
+  ),
+);
 
 void main() {
   late AppDatabase db;
-  setUp(() => db = AppDatabase(NativeDatabase.memory()));
+  late SharedPreferences prefs;
+  setUp(() async {
+    db = AppDatabase(NativeDatabase.memory());
+    SharedPreferences.setMockInitialValues({});
+    prefs = await SharedPreferences.getInstance();
+  });
   tearDown(() => db.close());
 
   testWidgets('empty state shown with no categories', (tester) async {
-    await tester.pumpWidget(_app(db));
+    await tester.pumpWidget(_app(db, prefs));
     await tester.pumpAndSettle();
     expect(find.text('No categories yet — add one'), findsOneWidget);
   });
@@ -37,7 +50,7 @@ void main() {
       color: 0xFF009688,
     );
     await db.todoDao.createTask(categoryId: cat, name: 'Sweep');
-    await tester.pumpWidget(_app(db));
+    await tester.pumpWidget(_app(db, prefs));
     await tester.pumpAndSettle();
 
     expect(find.text('Sweep'), findsOneWidget);
@@ -60,7 +73,7 @@ void main() {
     );
     final id = await db.todoDao.createTask(categoryId: cat, name: 'Sweep');
     await db.todoDao.completeTask(id, DateTime.now());
-    await tester.pumpWidget(_app(db));
+    await tester.pumpWidget(_app(db, prefs));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Archive'));
@@ -78,7 +91,7 @@ void main() {
     tester,
   ) async {
     await db.todoDao.createCategory(name: 'Home', color: 0xFF009688);
-    await tester.pumpWidget(_app(db));
+    await tester.pumpWidget(_app(db, prefs));
     await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(const Key('add-task-fab')));
@@ -106,7 +119,7 @@ void main() {
       color: 0xFF009688,
     );
     await db.todoDao.createTask(categoryId: cat, name: 'Sweep');
-    await tester.pumpWidget(_app(db));
+    await tester.pumpWidget(_app(db, prefs));
     await tester.pumpAndSettle();
 
     // Task id is 1 (first row in a fresh in-memory DB).
@@ -126,7 +139,7 @@ void main() {
     );
     final id = await db.todoDao.createTask(categoryId: cat, name: 'Sweep');
     await db.todoDao.completeTask(id, DateTime.now());
-    await tester.pumpWidget(_app(db));
+    await tester.pumpWidget(_app(db, prefs));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Archive'));
@@ -147,7 +160,7 @@ void main() {
     for (var i = 0; i < 5; i++) {
       await db.todoDao.createTask(categoryId: cat, name: 'Дело $i');
     }
-    await tester.pumpWidget(_app(db, locale: const Locale('ru')));
+    await tester.pumpWidget(_app(db, prefs, locale: const Locale('ru')));
     await tester.pumpAndSettle();
 
     // 5 active items -> Russian "many" form: "5 дел".
@@ -178,7 +191,7 @@ void main() {
       color: 0xFF009688,
     );
     await db.todoDao.createTask(categoryId: cat, name: 'Sweep');
-    await tester.pumpWidget(_app(db));
+    await tester.pumpWidget(_app(db, prefs));
     await tester.pumpAndSettle();
 
     expect(find.text('Sweep'), findsOneWidget);
@@ -196,7 +209,7 @@ void main() {
     tester,
   ) async {
     await db.todoDao.createCategory(name: 'Home', color: 0xFF009688);
-    await tester.pumpWidget(_app(db));
+    await tester.pumpWidget(_app(db, prefs));
     await tester.pumpAndSettle();
 
     // The old header used a CircleAvatar swatch; the flat label has none, and
@@ -215,7 +228,7 @@ void main() {
       color: 0xFF1E88E5,
       emoji: '🛒',
     );
-    await tester.pumpWidget(_app(db));
+    await tester.pumpWidget(_app(db, prefs));
     await tester.pumpAndSettle();
     expect(find.textContaining('🛒 Shopping'), findsOneWidget);
   });
@@ -228,7 +241,7 @@ void main() {
       color: 0xFF009688,
     );
     final task = await db.todoDao.createTask(categoryId: cat, name: 'Sweep');
-    await tester.pumpWidget(_app(db));
+    await tester.pumpWidget(_app(db, prefs));
     await tester.pumpAndSettle();
 
     final headerMenu = tester.getCenter(find.byKey(Key('category-menu-$cat')));
@@ -246,7 +259,7 @@ void main() {
       color: 0xFF009688,
     );
     await db.todoDao.createTask(categoryId: cat, name: 'Sweep');
-    await tester.pumpWidget(_app(db));
+    await tester.pumpWidget(_app(db, prefs));
     await tester.pumpAndSettle();
 
     await tester.tap(find.byIcon(Icons.radio_button_unchecked));
