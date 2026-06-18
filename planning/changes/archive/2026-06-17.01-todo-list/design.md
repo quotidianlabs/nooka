@@ -1,3 +1,13 @@
+---
+status: shipped
+date: 2026-06-17
+slug: todo-list
+supersedes: null
+superseded_by: null
+pr: null
+outcome: 38ee702 — initial local-first to-do list; colored categories holding tasks, complete→archive with 30-day retention, drag-reorder, undo toasts, light/dark, en/ru.
+---
+
 # Nooka — To-Do List Design Spec
 
 **Date:** 2026-06-17
