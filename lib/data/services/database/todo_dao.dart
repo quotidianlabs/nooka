@@ -145,6 +145,26 @@ class TodoDao extends DatabaseAccessor<AppDatabase> with _$TodoDaoMixin {
     });
   }
 
+  /// Moves [taskId] into [newCategoryId] and renumbers that category's active
+  /// tasks from [orderedTargetIds] (which MUST include [taskId] at its drop
+  /// position), in one transaction. The source category is not renumbered:
+  /// removing a task leaves a sortOrder gap but preserves relative order.
+  Future<void> moveTaskToCategoryAt(
+    int taskId,
+    int newCategoryId,
+    List<int> orderedTargetIds,
+  ) async {
+    await transaction(() async {
+      await (update(tasks)..where((t) => t.id.equals(taskId))).write(
+        TasksCompanion(categoryId: Value(newCategoryId)),
+      );
+      for (var i = 0; i < orderedTargetIds.length; i++) {
+        await (update(tasks)..where((t) => t.id.equals(orderedTargetIds[i])))
+            .write(TasksCompanion(sortOrder: Value(i)));
+      }
+    });
+  }
+
   /// Deletes every archived task whose retention window has elapsed as of [now].
   Future<int> purgeExpired(DateTime now) =>
       (delete(tasks)..where(

@@ -65,6 +65,32 @@ void main() {
       expect(rows.map((t) => t.name), ['t3', 't1', 't2']);
       expect(rows.map((t) => t.sortOrder), [0, 1, 2]);
     });
+
+    test(
+      'moveTaskToCategoryAt reassigns category and positions the task',
+      () async {
+        final src = await db.todoDao.createCategory(name: 'Src', color: 1);
+        final dst = await db.todoDao.createCategory(name: 'Dst', color: 2);
+        final s1 = await db.todoDao.createTask(categoryId: src, name: 's1');
+        final s2 = await db.todoDao.createTask(categoryId: src, name: 's2');
+        final d1 = await db.todoDao.createTask(categoryId: dst, name: 'd1');
+        final d2 = await db.todoDao.createTask(categoryId: dst, name: 'd2');
+
+        // Move s1 into dst between d1 and d2.
+        await db.todoDao.moveTaskToCategoryAt(s1, dst, [d1, s1, d2]);
+
+        final snapshot = await db.todoDao.watchCategoriesWithTasks().first;
+        final byName = {for (final c in snapshot) c.category.name: c};
+        expect(byName['Dst']!.activeTasks.map((t) => t.name), [
+          'd1',
+          's1',
+          'd2',
+        ]);
+        // Source keeps its remaining task in order; s1 is gone from it.
+        expect(byName['Src']!.activeTasks.map((t) => t.name), ['s2']);
+        expect(s2, isNotNull);
+      },
+    );
   });
 
   group('task lifecycle', () {
