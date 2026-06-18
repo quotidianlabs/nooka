@@ -9,3 +9,11 @@ List<int> reorderedIds(List<int> ids, int oldIndex, int newIndex) {
   list.insert(newIndex, item);
   return list;
 }
+
+/// Returns [ids] with [item] inserted at [index], clamped to `0..ids.length`.
+/// Does not mutate [ids].
+List<int> insertedAt(List<int> ids, int item, int index) {
+  final list = [...ids];
+  list.insert(index.clamp(0, list.length), item);
+  return list;
+}
