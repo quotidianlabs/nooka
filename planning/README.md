@@ -61,7 +61,11 @@ Templates live in [`_templates/`](_templates/).
 
 ### Active
 
-_None._
+- **[drag-reorder-board](changes/active/2026-06-18.07-drag-reorder-board/design.md)**
+  (draft, 2026-06-18) — Expose drag-and-drop on the Active view (reorder
+  categories, reorder tasks, drag tasks across categories) via
+  `drag_and_drop_lists`, plus: expanding a category sets it as the add-task
+  default.
 
 ### Archived (shipped)
 
