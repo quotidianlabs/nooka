@@ -61,10 +61,16 @@ lists, and expandable lists (`DragAndDropListExpansion`).
 
 The Active branch of `HomeScreen._body` is replaced by a `DragAndDropLists`:
 
-- One `DragAndDropListExpansion` per category (replaces the manual
-  collapse/expand from `CategorySection`). Its `title`/`trailing` render the
-  current colored header (emoji + bold category-color name + open-items count)
-  and the `⋮` menu; the colored underline is kept.
+- One `DragAndDropList` per category. Its `header` renders the current colored
+  header (chevron + emoji + bold category-color name + open-items count + `⋮`
+  menu) plus the colored underline. We keep our **existing** collapse mechanism
+  rather than the package's `DragAndDropListExpansion`: tapping the header calls
+  `toggleCollapsed` as today, and the list's `children` are the task items only
+  when `!category.collapsed`. This preserves the current collapse/expand
+  behavior and its widget test verbatim.
+- A collapsed or empty category still needs to be a valid drop target, so each
+  `DragAndDropList` sets `contentsWhenEmpty` to a small drop zone (so you can
+  drag a task onto a collapsed/empty category).
 - One `DragAndDropItem` per active task, rendering the current row (radio
   leading icon, name, `⋮` menu) wrapped in the existing swipe-right-to-complete
   `Dismissible`.
@@ -185,3 +191,9 @@ List<int> insertedAt(List<int> ids, int item, int index);
 - **Widget-test key drift** (low × medium). The board must keep the existing
   keys; the shared-builder refactor is the place that could drop them — the
   existing `home_screen_test.dart` suite guards against this.
+- **Menu-alignment test under the board** (medium × low). `DragAndDropLists`
+  can indent items relative to list headers, which would break the 0.5px
+  `category-menu`/`task-menu` and chevron/radio alignment assertions. Mitigation:
+  set the package's list/item padding to zero so header and item share the same
+  horizontal structure; if the package forces a fixed indent, update that test's
+  expectation to the new (still-consistent) offset.
