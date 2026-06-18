@@ -61,13 +61,14 @@ Templates live in [`_templates/`](_templates/).
 
 ### Active
 
-- **[readme-license-pubspec](changes/active/2026-06-18.02-readme-license-pubspec/design.md)**
-  (2026-06-18) — Real README (tagline, screenshot gallery, features,
-  architecture), MIT `LICENSE`, fixed `pubspec` description, and a ported
-  deterministic screenshot generator.
+_None._
 
 ### Archived (shipped)
 
+- **[readme-license-pubspec](changes/archive/2026-06-18.02-readme-license-pubspec/design.md)**
+  (#1, 2026-06-18) — Real README (tagline, screenshot gallery, features,
+  architecture), MIT `LICENSE`, fixed `pubspec` description, and a ported
+  deterministic screenshot generator.
 - **[adopt-planning-convention](changes/archive/2026-06-18.01-adopt-planning-convention/design.md)**
   (775dcef, 2026-06-18) — Stand up `planning/` mirroring habbits, add
   `CLAUDE.md`, and migrate the two superpowers specs into archive bundles.
