@@ -275,6 +275,35 @@ void main() {
     expect(chevron.dx, moreOrLessEquals(radio.dx, epsilon: 0.5));
   });
 
+  testWidgets('expanding a category makes it the quick-add default', (
+    tester,
+  ) async {
+    final home = await db.todoDao.createCategory(
+      name: 'Home',
+      color: 0xFF009688,
+    );
+    final work = await db.todoDao.createCategory(
+      name: 'Work',
+      color: 0xFF3F51B5,
+    );
+    // Start both collapsed so expanding is a real collapse->expand transition.
+    await db.todoDao.setCollapsed(home, true);
+    await db.todoDao.setCollapsed(work, true);
+    await tester.pumpWidget(_app(db, prefs));
+    await tester.pumpAndSettle();
+
+    // Expand Work (the non-first category).
+    await tester.tap(find.byKey(Key('category-header-$work')));
+    await tester.pumpAndSettle();
+
+    expect(SettingsRepository(prefs).readLastCategoryId(), work);
+
+    // The quick-add dialog should preselect Work.
+    await tester.tap(find.byKey(const Key('add-task-fab')));
+    await tester.pumpAndSettle();
+    expect(find.text('Work'), findsWidgets);
+  });
+
   testWidgets('undo toast is floating and auto-dismisses', (tester) async {
     final cat = await db.todoDao.createCategory(
       name: 'Home',

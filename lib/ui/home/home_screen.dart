@@ -258,7 +258,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   void _onExpandToggle(Category category) {
+    final expanding = category.collapsed; // currently collapsed -> expanding
     _vm.toggleCollapsed(category.id, !category.collapsed);
+    if (expanding) {
+      _lastCategoryId = category.id;
+      ref.read(settingsRepositoryProvider).writeLastCategoryId(category.id);
+    }
   }
 
   // ---- commands + toasts ----
