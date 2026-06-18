@@ -1,11 +1,11 @@
 ---
-status: approved
+status: shipped
 date: 2026-06-18
 slug: readme-license-pubspec
 supersedes: null
 superseded_by: null
-pr: null
-outcome: null
+pr: 1
+outcome: 3bf42c0 — real README with a six-shot screenshot gallery, MIT LICENSE, fixed pubspec description, and a ported deterministic screenshot generator.
 ---
 
 # Design: README, LICENSE, pubspec, and screenshot infrastructure
