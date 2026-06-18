@@ -1,11 +1,11 @@
 ---
-status: draft
+status: shipped
 date: 2026-06-18
 slug: remember-last-category
 supersedes: null
 superseded_by: null
-pr: null
-outcome: null
+pr: "#7 (206b457)"
+outcome: "Last-used category persisted via SettingsRepository; the add-task FAB now defaults to it across restarts."
 ---
 
 # Change: Persist the last-used category for quick add

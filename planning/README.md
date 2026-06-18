@@ -61,15 +61,16 @@ Templates live in [`_templates/`](_templates/).
 
 ### Active
 
-- **[app-icon](changes/active/2026-06-18.01-app-icon/design.md)**
-  (2026-06-18) — Custom launcher icon: a white ticked checkbox on brand teal,
-  generated for iOS + Android via `flutter_launcher_icons`.
-- **[remember-last-category](changes/active/2026-06-18.02-remember-last-category/change.md)**
-  (2026-06-18) — Persist the last-used category through `SettingsRepository` so
-  the add-task FAB defaults to it across app restarts.
+_None._
 
 ### Archived (shipped)
 
+- **[remember-last-category](changes/archive/2026-06-18.06-remember-last-category/change.md)**
+  (#7, 2026-06-18) — Persist the last-used category through `SettingsRepository`
+  so the add-task FAB defaults to it across app restarts.
+- **[app-icon](changes/archive/2026-06-18.05-app-icon/design.md)**
+  (#6, 2026-06-18) — Custom launcher icon: a white ticked checkbox on brand
+  teal, generated for iOS + Android via `flutter_launcher_icons`.
 - **[menu-alignment](changes/archive/2026-06-18.04-menu-alignment/change.md)**
   (#4, 2026-06-18) — Rebuild the category header as a `ListTile` so its
   chevron, title, and ⋮ menu align with the item rows' columns.
