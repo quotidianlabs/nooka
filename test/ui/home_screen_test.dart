@@ -220,6 +220,26 @@ void main() {
     expect(find.textContaining('🛒 Shopping'), findsOneWidget);
   });
 
+  testWidgets('header and row ⋮ menus align on one vertical line', (
+    tester,
+  ) async {
+    final cat = await db.todoDao.createCategory(
+      name: 'Home',
+      color: 0xFF009688,
+    );
+    final task = await db.todoDao.createTask(categoryId: cat, name: 'Sweep');
+    await tester.pumpWidget(_app(db));
+    await tester.pumpAndSettle();
+
+    final headerMenu = tester.getCenter(find.byKey(Key('category-menu-$cat')));
+    final rowMenu = tester.getCenter(find.byKey(Key('task-menu-$task')));
+    expect(headerMenu.dx, moreOrLessEquals(rowMenu.dx, epsilon: 0.5));
+
+    final chevron = tester.getCenter(find.byIcon(Icons.expand_less));
+    final radio = tester.getCenter(find.byIcon(Icons.radio_button_unchecked));
+    expect(chevron.dx, moreOrLessEquals(radio.dx, epsilon: 0.5));
+  });
+
   testWidgets('undo toast is floating and auto-dismisses', (tester) async {
     final cat = await db.todoDao.createCategory(
       name: 'Home',

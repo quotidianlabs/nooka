@@ -44,55 +44,47 @@ class CategorySection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Flat section-label header (intentionally NOT a ListTile row): the
-        // category name in its color (bold), optional icon before it, a muted
-        // count, then the collapse chevron + menu. Tapping toggles collapse.
-        InkWell(
+        // Section header as a ListTile so its leading chevron, title, and ⋮
+        // menu align with the item rows' columns. The bold category-color name
+        // + count and the colored underline below keep it reading as a flat
+        // section label rather than a task row. Tapping toggles collapse.
+        ListTile(
           key: Key('category-header-${category.id}'),
           onTap: onToggleCollapsed,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 4, 6),
-            child: Row(
+          leading: Icon(
+            category.collapsed ? Icons.expand_more : Icons.expand_less,
+            color: scheme.onSurfaceVariant,
+          ),
+          title: Text.rich(
+            TextSpan(
               children: [
-                Expanded(
-                  child: Text.rich(
-                    TextSpan(
-                      children: [
-                        if (category.emoji != null)
-                          TextSpan(
-                            text: '${category.emoji!} ',
-                            style: TextStyle(color: color),
-                          ),
-                        TextSpan(
-                          text: category.name,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            color: nameColor,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        TextSpan(
-                          text: '  ·  ${l10n.openItemsCount(tasks.length)}',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: scheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                if (category.emoji != null)
+                  TextSpan(
+                    text: '${category.emoji!} ',
+                    style: TextStyle(color: color),
+                  ),
+                TextSpan(
+                  text: category.name,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: nameColor,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                Icon(
-                  category.collapsed ? Icons.expand_more : Icons.expand_less,
-                  color: scheme.onSurfaceVariant,
-                ),
-                IconButton(
-                  key: Key('category-menu-${category.id}'),
-                  icon: const Icon(Icons.more_vert),
-                  onPressed: onHeaderMenu,
+                TextSpan(
+                  text: '  ·  ${l10n.openItemsCount(tasks.length)}',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
                 ),
               ],
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          trailing: IconButton(
+            key: Key('category-menu-${category.id}'),
+            icon: const Icon(Icons.more_vert),
+            onPressed: onHeaderMenu,
           ),
         ),
         // Thin colored underline binding the items to their category.
