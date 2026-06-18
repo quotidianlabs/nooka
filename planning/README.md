@@ -61,7 +61,10 @@ Templates live in [`_templates/`](_templates/).
 
 ### Active
 
-_None._
+- **[readme-license-pubspec](changes/active/2026-06-18.02-readme-license-pubspec/design.md)**
+  (2026-06-18) — Real README (tagline, screenshot gallery, features,
+  architecture), MIT `LICENSE`, fixed `pubspec` description, and a ported
+  deterministic screenshot generator.
 
 ### Archived (shipped)
 
