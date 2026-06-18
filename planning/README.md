@@ -61,7 +61,9 @@ Templates live in [`_templates/`](_templates/).
 
 ### Active
 
-_None._
+- **[app-icon](changes/active/2026-06-18.01-app-icon/design.md)**
+  (2026-06-18) — Custom launcher icon: a white ticked checkbox on brand teal,
+  generated for iOS + Android via `flutter_launcher_icons`.
 
 ### Archived (shipped)
 
