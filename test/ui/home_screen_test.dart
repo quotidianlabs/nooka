@@ -18,6 +18,12 @@ class _ErrorStreamRepo extends TodoRepository {
       Stream.error(Exception('boom'));
 }
 
+class _ThrowingMutationRepo extends TodoRepository {
+  _ThrowingMutationRepo(super.dao);
+  @override
+  Future<int> purgeExpired() => Future.error(Exception('locked'));
+}
+
 Widget _app(
   AppDatabase db,
   SharedPreferences prefs, {
@@ -362,5 +368,27 @@ void main() {
     await tester.pump(const Duration(seconds: 5));
     await tester.pumpAndSettle();
     expect(find.text('Item completed'), findsNothing);
+  });
+
+  testWidgets('a throwing mutation surfaces the actionFailed SnackBar', (
+    tester,
+  ) async {
+    // Seed a category so the board renders and the Archive tab is reachable.
+    final cat = await db.todoDao.createCategory(
+      name: 'Home',
+      color: 0xFF009688,
+    );
+    await db.todoDao.createTask(categoryId: cat, name: 'Sweep');
+    await tester.pumpWidget(
+      _appWithRepo(_ThrowingMutationRepo(db.todoDao), prefs),
+    );
+    await tester.pumpAndSettle();
+
+    // Switching to Archive triggers the guarded purgeExpired, which throws.
+    await tester.tap(find.text('Archive'));
+    await tester.pump(); // let the guard catch + show the SnackBar
+    await tester.pump();
+
+    expect(find.text("Couldn't complete that. Try again."), findsOneWidget);
   });
 }

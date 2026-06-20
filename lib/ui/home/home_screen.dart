@@ -96,7 +96,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               selected: {_view},
               onSelectionChanged: (s) {
                 setState(() => _view = s.first);
-                if (s.first == _View.archive) _vm.purgeExpired();
+                if (s.first == _View.archive) _guard(() => _vm.purgeExpired());
               },
             ),
           ),
@@ -142,8 +142,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               tasks: cwt.archivedTasks,
               archived: true,
               now: now,
-              onToggleCollapsed: () =>
-                  _vm.toggleCollapsed(cwt.category.id, !cwt.category.collapsed),
+              onToggleCollapsed: () => _guard(
+                () => _vm.toggleCollapsed(
+                  cwt.category.id,
+                  !cwt.category.collapsed,
+                ),
+              ),
               onHeaderMenu: () => _categoryMenu(cwt),
               onTaskTap: _restore,
               onTaskMenu: null,
@@ -162,7 +166,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       listDragOnLongPress: true,
       onListReorder: (oldIndex, newIndex) {
         final ids = [for (final c in cats) c.category.id];
-        _vm.reorderCategories(reorderedIds(ids, oldIndex, newIndex));
+        _guard(
+          () => _vm.reorderCategories(reorderedIds(ids, oldIndex, newIndex)),
+        );
       },
       onItemReorder: (oldItemIndex, oldListIndex, newItemIndex, newListIndex) {
         _onItemReorder(
@@ -260,10 +266,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   void _onExpandToggle(Category category) {
     final expanding = category.collapsed; // currently collapsed -> expanding
-    _vm.toggleCollapsed(category.id, !category.collapsed);
+    _guard(() => _vm.toggleCollapsed(category.id, !category.collapsed));
     if (expanding) {
       _lastCategoryId = category.id;
       ref.read(settingsRepositoryProvider).writeLastCategoryId(category.id);
+    }
+  }
+
+  /// Runs an imperative mutation, surfacing any failure as a localized
+  /// SnackBar instead of an unhandled async error. Bundles B and C route their
+  /// edited/new mutations through this same guard.
+  Future<void> _guard(Future<void> Function() action) async {
+    try {
+      await action();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context).actionFailed)),
+      );
     }
   }
 
@@ -297,14 +317,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final message = AppLocalizations.of(context).undoCompleteMessage;
     await _vm.completeTask(task.id);
     if (!mounted) return;
-    _showUndoToast(message, () => _vm.restoreTask(task.id));
+    _showUndoToast(message, () => _guard(() => _vm.restoreTask(task.id)));
   }
 
   Future<void> _restore(Task task) async {
     final message = AppLocalizations.of(context).undoRestoreMessage;
     await _vm.restoreTask(task.id);
     if (!mounted) return;
-    _showUndoToast(message, () => _vm.completeTask(task.id));
+    _showUndoToast(message, () => _guard(() => _vm.completeTask(task.id)));
   }
 
   Future<void> _addTask(List<CategoryWithTasks> cats) async {
