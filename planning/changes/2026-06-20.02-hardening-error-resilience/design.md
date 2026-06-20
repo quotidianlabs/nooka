@@ -1,5 +1,5 @@
 ---
-status: draft
+status: shipped
 date: 2026-06-20
 slug: hardening-error-resilience
 spec: hardening-error-resilience
@@ -7,7 +7,7 @@ summary: Bundle A of the hardening sweep — stop swallowing DB-write failures, 
 supersedes: null
 superseded_by: null
 pr: null
-outcome: null
+outcome: "Added `_HomeScreenState._guard` surfacing failed mutations as a localized actionFailed SnackBar (6 fire-and-forget call sites converted; _onItemReorder left for Bundle B); wrapped the startup purge in try/catch with a logged count; installed FlutterError.onError + runZonedGuarded; localized the stream-error screen via errorLoading. 48/48 tests green."
 ---
 
 # Design: Error resilience — guarded mutations + survivable startup
