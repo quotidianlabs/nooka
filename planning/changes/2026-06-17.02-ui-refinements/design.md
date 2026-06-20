@@ -2,6 +2,7 @@
 status: shipped
 date: 2026-06-17
 slug: ui-refinements
+summary: Distinct category section-label headers, a single-grapheme relabeled icon field, and a reliably auto-dismissing undo toast.
 supersedes: null
 superseded_by: null
 pr: null

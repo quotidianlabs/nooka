@@ -2,6 +2,7 @@
 status: shipped
 date: 2026-06-18
 slug: readme-license-pubspec
+summary: Real README (tagline, screenshot gallery, features, architecture), MIT LICENSE, fixed pubspec description, and a ported deterministic screenshot generator.
 supersedes: null
 superseded_by: null
 pr: 1
@@ -140,8 +141,8 @@ content:
   (habbits style), drawn from nooka's actual capabilities.
 - **Architecture:** the layered MVVM / Riverpod summary from
   `architecture/README.md`, with links into `planning/` (e.g. the archived
-  [`todo-list`](planning/changes/archive/2026-06-17.01-todo-list/design.md)
-  bundle and the [`adopt-planning-convention`](planning/changes/archive/2026-06-18.01-adopt-planning-convention/design.md)
+  [`todo-list`](planning/changes/2026-06-17.01-todo-list/design.md)
+  bundle and the [`adopt-planning-convention`](planning/changes/2026-06-18.01-adopt-planning-convention/design.md)
   bundle).
 - **Getting started / Development:** `flutter pub get` / `flutter run`; the
   build_runner note; `just lint` / `just test` (with the current test count);

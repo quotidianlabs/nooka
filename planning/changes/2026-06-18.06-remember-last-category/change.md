@@ -2,6 +2,7 @@
 status: shipped
 date: 2026-06-18
 slug: remember-last-category
+summary: Persist the last-used category through SettingsRepository so the add-task FAB defaults to it across app restarts.
 supersedes: null
 superseded_by: null
 pr: "#7 (206b457)"

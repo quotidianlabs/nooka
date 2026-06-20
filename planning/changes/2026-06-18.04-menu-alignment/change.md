@@ -2,6 +2,7 @@
 status: shipped
 date: 2026-06-18
 slug: menu-alignment
+summary: Rebuild the category header as a ListTile so its chevron, title, and ⋮ menu align with the item rows' columns.
 supersedes: null
 superseded_by: null
 pr: 4

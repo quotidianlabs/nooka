@@ -21,7 +21,7 @@ single home.
 **Architecture:** Pure docs/scaffolding change. Copy the portable convention
 (README Conventions section + `_templates/`) verbatim from
 `../habbits/planning/`, write a nooka-specific intro + Index, and `git mv` the
-existing specs into `changes/archive/` with YAML frontmatter prepended. No Dart
+existing specs into `changes/` with YAML frontmatter prepended. No Dart
 is touched.
 
 **Tech Stack:** Markdown, git, `just` (existing `Justfile`). The sibling repo
@@ -55,8 +55,8 @@ parts.
 ### Task 1: Migrate the two superpowers spec+plan pairs into archive bundles
 
 **Files:**
-- Create dir: `planning/changes/archive/2026-06-17.01-todo-list/`
-- Create dir: `planning/changes/archive/2026-06-17.02-ui-refinements/`
+- Create dir: `planning/changes/2026-06-17.01-todo-list/`
+- Create dir: `planning/changes/2026-06-17.02-ui-refinements/`
 - Move: `docs/superpowers/specs/2026-06-17-todo-list-design.md` → `…/2026-06-17.01-todo-list/design.md`
 - Move: `docs/superpowers/plans/2026-06-17-todo-list.md` → `…/2026-06-17.01-todo-list/plan.md`
 - Move: `docs/superpowers/specs/2026-06-17-ui-refinements-design.md` → `…/2026-06-17.02-ui-refinements/design.md`
@@ -69,21 +69,21 @@ history, and stamps each file with habbits-style YAML frontmatter.
 - [ ] **Step 1: Create the archive bundle directories**
 
   ```bash
-  mkdir -p planning/changes/archive/2026-06-17.01-todo-list \
-           planning/changes/archive/2026-06-17.02-ui-refinements
+  mkdir -p planning/changes/2026-06-17.01-todo-list \
+           planning/changes/2026-06-17.02-ui-refinements
   ```
 
 - [ ] **Step 2: Move the four files with `git mv`**
 
   ```bash
   git mv docs/superpowers/specs/2026-06-17-todo-list-design.md \
-         planning/changes/archive/2026-06-17.01-todo-list/design.md
+         planning/changes/2026-06-17.01-todo-list/design.md
   git mv docs/superpowers/plans/2026-06-17-todo-list.md \
-         planning/changes/archive/2026-06-17.01-todo-list/plan.md
+         planning/changes/2026-06-17.01-todo-list/plan.md
   git mv docs/superpowers/specs/2026-06-17-ui-refinements-design.md \
-         planning/changes/archive/2026-06-17.02-ui-refinements/design.md
+         planning/changes/2026-06-17.02-ui-refinements/design.md
   git mv docs/superpowers/plans/2026-06-17-ui-refinements.md \
-         planning/changes/archive/2026-06-17.02-ui-refinements/plan.md
+         planning/changes/2026-06-17.02-ui-refinements/plan.md
   ```
 
 - [ ] **Step 3: Prepend YAML frontmatter to `2026-06-17.01-todo-list/design.md`**
@@ -164,7 +164,7 @@ history, and stamps each file with habbits-style YAML frontmatter.
 
 - [ ] **Step 8: Verify history is preserved**
 
-  Run: `git log --follow --oneline planning/changes/archive/2026-06-17.01-todo-list/design.md | head -3`
+  Run: `git log --follow --oneline planning/changes/2026-06-17.01-todo-list/design.md | head -3`
   Expected: shows commits predating this branch (e.g. the original spec commit),
   not just the move — proving `--follow` traced through the rename.
 
@@ -183,7 +183,7 @@ history, and stamps each file with habbits-style YAML frontmatter.
 
 **Files:**
 - Create: `planning/_templates/design.md`, `plan.md`, `change.md` (copied verbatim)
-- Create: `planning/changes/active/.gitkeep`, `planning/changes/archive/.gitkeep`
+- Create: `planning/changes/active/.gitkeep`, `planning/changes/.gitkeep`
 - Create: `planning/deferred.md`
 - Create: `planning/README.md`
 
@@ -200,7 +200,7 @@ Stands up the convention container around the already-committed
 - [ ] **Step 2: Add `.gitkeep` placeholders (mirrors habbits)**
 
   ```bash
-  touch planning/changes/active/.gitkeep planning/changes/archive/.gitkeep
+  touch planning/changes/active/.gitkeep planning/changes/.gitkeep
   ```
 
 - [ ] **Step 3: Create `planning/deferred.md`**
@@ -271,11 +271,11 @@ Stands up the convention container around the already-committed
 
   ### Archived (shipped)
 
-  - **[ui-refinements](changes/archive/2026-06-17.02-ui-refinements/design.md)**
+  - **[ui-refinements](changes/2026-06-17.02-ui-refinements/design.md)**
     (6d11b30, 2026-06-17) — Distinct category section-label headers, a
     single-grapheme relabeled icon field, and a reliably auto-dismissing undo
     toast.
-  - **[todo-list](changes/archive/2026-06-17.01-todo-list/design.md)**
+  - **[todo-list](changes/2026-06-17.01-todo-list/design.md)**
     (38ee702, 2026-06-17) — Initial local-first to-do list: colored categories
     holding tasks, complete→archive with 30-day retention, drag-reorder, undo
     toasts, light/dark themes, en/ru.
@@ -286,8 +286,8 @@ Stands up the convention container around the already-committed
   ```bash
   for p in architecture/README.md \
            planning/changes/active/2026-06-18.01-adopt-planning-convention/design.md \
-           planning/changes/archive/2026-06-17.01-todo-list/design.md \
-           planning/changes/archive/2026-06-17.02-ui-refinements/design.md; do
+           planning/changes/2026-06-17.01-todo-list/design.md \
+           planning/changes/2026-06-17.02-ui-refinements/design.md; do
     [ -e "$p" ] && echo "OK  $p" || echo "MISSING  $p"; done
   ```
   Expected: four `OK` lines, no `MISSING`.
@@ -329,7 +329,7 @@ a clean lint + link + no-stray-reference check.
 
   - A change is a bundle `planning/changes/active/YYYY-MM-DD.NN-<slug>/` with
     `design.md` + `plan.md` (Full lane) or `change.md` (Lightweight); on merge it
-    moves to `planning/changes/archive/`.
+    moves to `planning/changes/`.
   - Real-but-unscheduled items live in `planning/deferred.md`.
   - The `architecture/` capability docs live at the repo root (one file per
     capability) and are the living truth-home for what the system does now.
@@ -379,7 +379,7 @@ a clean lint + link + no-stray-reference check.
 
 When this bundle merges, **promote** it: move
 `planning/changes/active/2026-06-18.01-adopt-planning-convention/` to
-`planning/changes/archive/`, set its `design.md` frontmatter to
+`planning/changes/`, set its `design.md` frontmatter to
 `status: shipped` with the merge `pr`/`outcome`, and move its README Index line
 from **Active** to **Archived**. This is the convention's own merge ritual — do
 it as part of merging, per `planning/README.md`.

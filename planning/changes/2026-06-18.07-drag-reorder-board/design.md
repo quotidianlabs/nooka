@@ -2,6 +2,7 @@
 status: shipped
 date: 2026-06-18
 slug: drag-reorder-board
+summary: Expose drag-and-drop on the Active view (reorder categories, reorder tasks, drag tasks across categories) via drag_and_drop_lists, plus: expanding a category sets it as the add-task default.
 supersedes: null
 superseded_by: null
 pr: "#9"
