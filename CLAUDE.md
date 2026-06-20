@@ -25,3 +25,9 @@ Design + plan for every non-trivial change live in `planning/`. Read
 variant for CI. Generated `*.g.dart` is committed; run
 `dart run build_runner build --delete-conflicting-outputs` after touching
 `@riverpod`/Drift code.
+
+An implementer's final pre-commit gate is `just lint-ci`, not `just lint`:
+`lint` runs `dart format` which rewrites files in place, so it can pass while
+leaving the reformat uncommitted (a dirty tree that then fails CI). Format with
+`just lint` while iterating, but verify a clean, already-committed tree with
+`just lint-ci` last.
