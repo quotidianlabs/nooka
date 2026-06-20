@@ -279,29 +279,42 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
   }
 
-  void _onExpandToggle(Category category) {
+  Future<void> _onExpandToggle(Category category) async {
     final expanding = category.collapsed; // currently collapsed -> expanding
-    _guard(() => _vm.toggleCollapsed(category.id, !category.collapsed));
-    if (expanding) {
+    final ok = await _guard(
+      () => _vm.toggleCollapsed(category.id, !category.collapsed),
+    );
+    // Persist the remembered default only when the toggle actually succeeded.
+    if (ok && expanding) {
       _lastCategoryId = category.id;
-      ref.read(settingsRepositoryProvider).writeLastCategoryId(category.id);
+      await ref
+          .read(settingsRepositoryProvider)
+          .writeLastCategoryId(category.id);
     }
   }
 
   /// Runs an imperative mutation, surfacing any failure as a localized
   /// SnackBar instead of an unhandled async error. Bundles B and C route their
   /// edited/new mutations through this same guard.
-  Future<void> _guard(Future<void> Function() action) async {
+  ///
+  /// Returns `true` when the action completed successfully, `false` when it
+  /// threw (or when the widget was unmounted before the SnackBar could show).
+  /// Callers that need to gate follow-up work (e.g. persisting a default) on
+  /// success should check the return value; pure fire-and-forget callers may
+  /// discard it.
+  Future<bool> _guard(Future<void> Function() action) async {
     try {
       await action();
+      return true;
     } catch (e, st) {
       // Log so a swallowed failure (incl. a programmer error) is never
       // invisible; the SnackBar is the user-facing half.
       debugPrint('Guarded mutation failed: $e\n$st');
-      if (!mounted) return;
+      if (!mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(AppLocalizations.of(context).actionFailed)),
       );
+      return false;
     }
   }
 
@@ -356,11 +369,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       categories: [for (final c in cats) c.category],
       initialCategoryId: initial,
       onAdd: (name, categoryId) async {
-        _lastCategoryId = categoryId;
-        await ref
-            .read(settingsRepositoryProvider)
-            .writeLastCategoryId(categoryId);
-        await _vm.addTask(categoryId, name);
+        if (await _guard(() => _vm.addTask(categoryId, name))) {
+          _lastCategoryId = categoryId;
+          await ref
+              .read(settingsRepositoryProvider)
+              .writeLastCategoryId(categoryId);
+        }
       },
     );
   }
@@ -420,16 +434,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           initialEmoji: cwt.category.emoji,
         );
         if (r != null) {
-          await _vm.renameCategory(cwt.category.id, r.name);
-          await _vm.setCategoryColor(cwt.category.id, r.color);
-          await _vm.setCategoryEmoji(cwt.category.id, r.emoji);
+          await _guard(
+            () => _vm.updateCategory(
+              id: cwt.category.id,
+              name: r.name,
+              color: r.color,
+              emoji: r.emoji,
+            ),
+          );
         }
       case 'add':
         await showQuickAddDialog(
           context,
           categories: [cwt.category],
           initialCategoryId: cwt.category.id,
-          onAdd: (name, categoryId) => _vm.addTask(categoryId, name),
+          onAdd: (name, categoryId) =>
+              _guard(() => _vm.addTask(categoryId, name)),
         );
       case 'delete':
         final ok = await confirmDeleteCategory(
@@ -437,7 +457,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           name: cwt.category.name,
           itemCount: cwt.tasks.length,
         );
-        if (ok) await _vm.deleteCategory(cwt.category.id);
+        if (ok) {
+          await _vm.deleteCategory(cwt.category.id);
+          if (cwt.category.id == _lastCategoryId) {
+            _lastCategoryId = null;
+            await ref.read(settingsRepositoryProvider).clearLastCategoryId();
+          }
+        }
     }
   }
 

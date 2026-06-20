@@ -14,4 +14,16 @@ void main() {
 
     expect(repo.readLastCategoryId(), 42);
   });
+
+  test('clearLastCategoryId removes a stored id', () async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final repo = SettingsRepository(prefs);
+
+    await repo.writeLastCategoryId(7);
+    expect(repo.readLastCategoryId(), 7);
+
+    await repo.clearLastCategoryId();
+    expect(repo.readLastCategoryId(), isNull);
+  });
 }

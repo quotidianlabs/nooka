@@ -1,13 +1,13 @@
 ---
-status: draft
+status: shipped
 date: 2026-06-20
 slug: hardening-archive-and-coverage
 spec: hardening-archive-and-coverage
 summary: Fix the archive-countdown truncation, stale last-category pref, premature add-default persistence, nondeterministic ordering, and un-batched category edits, then close the remaining DAO/controller/flow coverage gaps.
 supersedes: null
 superseded_by: null
-pr: null
-outcome: null
+pr: "#12"
+outcome: "Ceiled daysRemaining so surviving items never show 0 (M1); added category/task id ordering tiebreakers (L1); batched category edits into one updateCategory DAO/repo/VM write wired through _guard (L4); clear last_category when its category is deleted (M2); persist last_category only after addTask succeeds (M4). Closed coverage gaps: DAO purge-boundary/restore-reappend/move-sortOrder, locale/theme controller round-trips, and a full add→complete→purge-boundary→restore flow test. The final whole-branch review caught that M4's persistence still ran when the guarded add failed (_guard swallowed the error); fixed by having _guard report success and gating persistence on it, with a regression test. 89/89 tests green."
 ---
 
 # Design: Archive countdown, ordering & remaining coverage

@@ -26,5 +26,14 @@ void main() {
     test('never returns negative', () {
       expect(daysRemaining(now.subtract(const Duration(days: 99)), now), 0);
     });
+    test('a sliver of life left rounds up to 1, not down to 0', () {
+      expect(
+        daysRemaining(now.subtract(const Duration(days: 29, hours: 23)), now),
+        1,
+      );
+    });
+    test('exactly at expiry reports 0', () {
+      expect(daysRemaining(now.subtract(const Duration(days: 30)), now), 0);
+    });
   });
 }
