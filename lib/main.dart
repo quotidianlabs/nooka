@@ -16,8 +16,14 @@ Future<void> main() async {
   final container = ProviderContainer(
     overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
   );
-  // Startup cleanup: purge archived items past their 30-day retention.
-  await container.read(todoRepositoryProvider).purgeExpired();
+  // Startup cleanup: purge archived items past their 30-day retention. Must
+  // never block boot — log failures and continue.
+  try {
+    final purged = await container.read(todoRepositoryProvider).purgeExpired();
+    debugPrint('Startup purge removed $purged expired item(s).');
+  } catch (e, st) {
+    debugPrint('Startup purge failed (continuing): $e\n$st');
+  }
 
   runApp(
     UncontrolledProviderScope(container: container, child: const NookaApp()),
