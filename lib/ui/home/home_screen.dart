@@ -29,7 +29,8 @@ class HomeScreen extends ConsumerStatefulWidget {
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends ConsumerState<HomeScreen> {
+class _HomeScreenState extends ConsumerState<HomeScreen>
+    with WidgetsBindingObserver {
   _View _view = _View.active;
   int? _lastCategoryId; // remembered default for quick add
   Timer? _toastTimer;
@@ -39,6 +40,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     // Seed the quick-add default from the persisted last-used category so it
     // survives app restarts.
     _lastCategoryId = ref.read(settingsRepositoryProvider).readLastCategoryId();
@@ -46,8 +48,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _toastTimer?.cancel();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Rebuild on resume so the archive "auto-removes in N days" countdown
+    // recomputes `now` instead of showing a value stale across midnight.
+    if (state == AppLifecycleState.resumed) setState(() {});
   }
 
   HomeViewModel get _vm => ref.read(homeViewModelProvider.notifier);

@@ -83,6 +83,38 @@ void main() {
     expect(find.text('No categories yet — add one'), findsOneWidget);
   });
 
+  testWidgets('resuming the app rebuilds the archive view without error', (
+    tester,
+  ) async {
+    final cat = await db.todoDao.createCategory(
+      name: 'Home',
+      color: 0xFF009688,
+    );
+    final t = await db.todoDao.createTask(categoryId: cat, name: 'Sweep');
+    // Archive recently so it stays within retention regardless of the real
+    // clock (and survives the purge that runs on opening the Archive view).
+    await db.todoDao.completeTask(
+      t,
+      DateTime.now().subtract(const Duration(days: 1)),
+    );
+    await tester.pumpWidget(_app(db, prefs));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Archive'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Auto-removes in'), findsOneWidget);
+
+    // A resume lifecycle transition rebuilds the screen (recomputing `now`)
+    // without throwing.
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.textContaining('Auto-removes in'), findsOneWidget);
+  });
+
   testWidgets('active view renders categories and tasks as a board', (
     tester,
   ) async {

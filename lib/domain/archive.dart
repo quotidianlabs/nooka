@@ -1,3 +1,10 @@
+// Retention is measured in elapsed 24-hour periods, not local calendar days:
+// [archiveCutoff] subtracts a fixed `Duration(days: archiveRetentionDays)`.
+// Across a DST transition the boundary can therefore shift by ~1 hour relative
+// to the wall clock — acceptable at a 30-day window. If exact calendar-day
+// retention is ever required, switch this math to floor `archivedAt` and `now`
+// to local midnight before differencing.
+
 /// Days an archived item is retained before automatic deletion.
 const int archiveRetentionDays = 30;
 
