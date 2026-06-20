@@ -215,8 +215,14 @@ void main() {
       final at30 = await db.todoDao.createTask(categoryId: cat, name: 'at30');
       final at29 = await db.todoDao.createTask(categoryId: cat, name: 'at29');
       final now = DateTime(2026, 6, 17);
-      await db.todoDao.completeTask(at30, now.subtract(const Duration(days: 30)));
-      await db.todoDao.completeTask(at29, now.subtract(const Duration(days: 29)));
+      await db.todoDao.completeTask(
+        at30,
+        now.subtract(const Duration(days: 30)),
+      );
+      await db.todoDao.completeTask(
+        at29,
+        now.subtract(const Duration(days: 29)),
+      );
 
       final deleted = await db.todoDao.purgeExpired(now);
 
