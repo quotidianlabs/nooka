@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/repositories/settings_repository.dart';
 import '../../data/services/database/database.dart';
+import '../../domain/board_reorder.dart';
 import '../../domain/models/category_with_tasks.dart';
 import '../../domain/reorder.dart';
 import '../../l10n/app_localizations.dart';
@@ -171,13 +172,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         );
       },
       onItemReorder: (oldItemIndex, oldListIndex, newItemIndex, newListIndex) {
-        _onItemReorder(
-          cats,
-          oldItemIndex,
-          oldListIndex,
-          newItemIndex,
-          newListIndex,
-        );
+        _onItemReorder(oldItemIndex, oldListIndex, newItemIndex, newListIndex);
       },
       children: [for (final cwt in cats) _dragList(cwt, cats, now)],
     );
@@ -242,25 +237,42 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   void _onItemReorder(
-    List<CategoryWithTasks> cats,
     int oldItemIndex,
     int oldListIndex,
     int newItemIndex,
     int newListIndex,
   ) {
-    final from = cats[oldListIndex];
-    final to = cats[newListIndex];
-    final movedId = from.activeTasks[oldItemIndex].id;
-    if (oldListIndex == newListIndex) {
-      final ids = [for (final t in from.activeTasks) t.id];
-      _vm.reorderTasks(reorderedIds(ids, oldItemIndex, newItemIndex));
-    } else {
-      final targetIds = [for (final t in to.activeTasks) t.id];
-      _vm.moveTaskToCategoryAt(
-        movedId,
-        to.category.id,
-        insertedAt(targetIds, movedId, newItemIndex),
-      );
+    // H4: never trust the build-time snapshot — the watch stream may have
+    // emitted mid-drag. Re-read live state and let planReorder validate it.
+    final cats = ref.read(homeViewModelProvider).value;
+    if (cats == null) return;
+    final plan = planReorder(
+      cats,
+      oldItemIndex,
+      oldListIndex,
+      newItemIndex,
+      newListIndex,
+    );
+    switch (plan) {
+      case ReorderNoop():
+        return;
+      case ReorderWithin(:final orderedIds):
+        _guard(() => _vm.reorderTasks(orderedIds));
+      case ReorderAcross(
+        :final movedId,
+        :final toCategoryId,
+        :final orderedTargetIds,
+        :final expandCategoryId,
+      ):
+        _guard(
+          () =>
+              _vm.moveTaskToCategoryAt(movedId, toCategoryId, orderedTargetIds),
+        );
+        // H3: a collapsed destination renders no items, so the dropped task
+        // would be hidden. Auto-expand it.
+        if (expandCategoryId != null) {
+          _guard(() => _vm.toggleCollapsed(expandCategoryId, false));
+        }
     }
   }
 
