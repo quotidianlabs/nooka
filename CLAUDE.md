@@ -16,7 +16,11 @@ Design + plan for every non-trivial change live in `planning/`. Read
   `just index`.
 - Real-but-unscheduled items live in `planning/deferred.md`.
 - The `architecture/` capability docs live at the repo root (one file per
-  capability) and are the living truth-home for what the system does now.
+  capability) and are the living truth-home for what the system does now. A
+  change that alters behavior a capability doc describes updates that
+  `architecture/*.md` in the same change/PR — the promotion rides with the
+  code, not as a follow-up. This applies to subagent-implemented tasks too, so
+  name the affected doc in the task.
 
 ## Commands
 
