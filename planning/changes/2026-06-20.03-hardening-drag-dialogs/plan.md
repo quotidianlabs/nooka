@@ -53,69 +53,214 @@ type — and fill the drag-board + dialog widget-test coverage gaps.
 
 ---
 
-### Task 1: H4 then H3 — robust `_onItemReorder` (fresh snapshot, bounds-check, auto-expand collapsed destination)
+### Task 1: H4 + H3 — extract a pure `planReorder` decision and make `_onItemReorder` interpret it
 
 **Files:**
+- Create: `lib/domain/board_reorder.dart`
 - Modify: `lib/ui/home/home_screen.dart`
-- Test: `test/ui/home_screen_test.dart`
+- Test: `test/domain/board_reorder_test.dart`
 
-Re-read the current view-model value inside `_onItemReorder`, bounds-check all
-four indices, no-op when stale/out-of-range, and auto-expand the destination
-category after a cross-category move so the task is never hidden. Route all
-mutations through Bundle A's `_guard`.
+The H3/H4 logic lives in the private `_onItemReorder`, reacting to a brittle
+drag gesture — untestable in place. Extract the *decision* (no-op when the
+snapshot is stale/out-of-range; reorder-within; move-across with optional
+auto-expand of a collapsed destination) into a pure function `planReorder` that
+takes the current snapshot + the four drag indices and returns a `ReorderPlan`.
+`_onItemReorder` then re-reads live state, calls `planReorder`, and interprets
+the plan through Bundle A's `_guard`. The pure function is unit-tested directly;
+no widget/gesture simulation needed.
 
-- [ ] **Step 1: Write the failing test — collapsed destination auto-expands and keeps the task**
+- [ ] **Step 1: Write the failing unit tests for `planReorder`**
 
-  Add to `test/ui/home_screen_test.dart` inside `main()`. The test sets up a
-  source task and a **collapsed** destination, invokes the move via the view
-  model (the reorder logic's effect — not a simulated drag), and asserts the
-  destination ends expanded with the task present. Because the production
-  `_onItemReorder` is the unit under test, drive it through the same calls it
-  makes and assert resulting state:
+  Create `test/domain/board_reorder_test.dart`. Build `CategoryWithTasks`
+  fixtures from the generated `Category`/`Task` data classes (pure rows, no DB).
+  Verify: out-of-range list/item indices → `ReorderNoop` (H4); a within-category
+  drop → `ReorderWithin` with the reordered ids; a cross-category drop into an
+  **expanded** destination → `ReorderAcross` with `expandCategoryId == null`; a
+  cross-category drop into a **collapsed** destination → `ReorderAcross` with
+  `expandCategoryId == <destination id>` (H3); an append (`newItemIndex ==
+  length`) is allowed (not a no-op).
 
   ```dart
-  testWidgets('cross-category move into a collapsed category expands it', (
-    tester,
-  ) async {
-    final src = await db.todoDao.createCategory(name: 'Src', color: 0xFF009688);
-    final dst = await db.todoDao.createCategory(name: 'Dst', color: 0xFF3F51B5);
-    final t = await db.todoDao.createTask(categoryId: src, name: 'Move me');
-    await db.todoDao.setCollapsed(dst, true);
-    await tester.pumpWidget(_app(db, prefs));
-    await tester.pumpAndSettle();
+  import 'package:flutter_test/flutter_test.dart';
+  import 'package:nooka/data/services/database/database.dart';
+  import 'package:nooka/domain/board_reorder.dart';
+  import 'package:nooka/domain/models/category_with_tasks.dart';
 
-    // Drive the move the way _onItemReorder does for a cross-list drop, then
-    // mirror the auto-expand the fix adds.
-    await db.todoDao.moveTaskToCategoryAt(t, dst, [t]);
-    await db.todoDao.setCollapsed(dst, false);
-    await tester.pumpAndSettle();
+  Category _cat(int id, {bool collapsed = false}) => Category(
+    id: id,
+    name: 'C$id',
+    color: 0xFF009688,
+    emoji: null,
+    collapsed: collapsed,
+    sortOrder: id,
+    createdAt: DateTime(2026, 1, 1),
+  );
 
-    // The task is now visible under the (expanded) destination.
-    final snapshot = await db.todoDao.watchCategoriesWithTasks().first;
-    final dstCwt = snapshot.firstWhere((c) => c.category.id == dst);
-    expect(dstCwt.category.collapsed, isFalse);
-    expect(dstCwt.activeTasks.map((t) => t.name), ['Move me']);
-    expect(find.text('Move me'), findsOneWidget);
-  });
+  Task _task(int id, int categoryId) => Task(
+    id: id,
+    categoryId: categoryId,
+    name: 'T$id',
+    sortOrder: id,
+    createdAt: DateTime(2026, 1, 1),
+    archivedAt: null,
+  );
+
+  CategoryWithTasks _cwt(Category c, List<Task> tasks) =>
+      CategoryWithTasks(category: c, tasks: tasks);
+
+  void main() {
+    // Two categories: list 0 = {t1,t2}, list 1 = {t3}.
+    List<CategoryWithTasks> snapshot({bool dstCollapsed = false}) => [
+      _cwt(_cat(1), [_task(1, 1), _task(2, 1)]),
+      _cwt(_cat(2, collapsed: dstCollapsed), [_task(3, 2)]),
+    ];
+
+    test('out-of-range list index returns ReorderNoop', () {
+      expect(planReorder(snapshot(), 0, 0, 0, 5), isA<ReorderNoop>());
+      expect(planReorder(snapshot(), 0, 9, 0, 0), isA<ReorderNoop>());
+    });
+
+    test('out-of-range item index returns ReorderNoop', () {
+      // list 0 has 2 items; item index 2 is out of range for a same-list move.
+      expect(planReorder(snapshot(), 2, 0, 0, 0), isA<ReorderNoop>());
+    });
+
+    test('within-category drop returns ReorderWithin with reordered ids', () {
+      final plan = planReorder(snapshot(), 0, 0, 1, 0);
+      expect(plan, isA<ReorderWithin>());
+      expect((plan as ReorderWithin).orderedIds, [2, 1]);
+    });
+
+    test('cross-category drop into an expanded destination does not expand', () {
+      final plan = planReorder(snapshot(), 0, 0, 0, 1);
+      expect(plan, isA<ReorderAcross>());
+      final across = plan as ReorderAcross;
+      expect(across.movedId, 1);
+      expect(across.toCategoryId, 2);
+      expect(across.orderedTargetIds, [1, 3]);
+      expect(across.expandCategoryId, isNull);
+    });
+
+    test('cross-category drop into a collapsed destination expands it (H3)', () {
+      final plan =
+          planReorder(snapshot(dstCollapsed: true), 0, 0, 1, 1) as ReorderAcross;
+      expect(plan.expandCategoryId, 2);
+      expect(plan.orderedTargetIds, [3, 1]); // appended at index 1
+    });
+
+    test('append index (== length) is allowed, not a no-op', () {
+      // destination list 1 has length 1; newItemIndex 1 appends.
+      expect(planReorder(snapshot(), 0, 0, 1, 1), isA<ReorderAcross>());
+    });
+  }
   ```
 
-  This test encodes the *intended* end state (expanded + visible). It passes
-  once Step 3 makes `_onItemReorder` auto-expand; before the fix the production
-  drop path would leave `dst` collapsed and the task hidden. (We keep the test
-  driving the DAO directly because raw `drag_and_drop_lists` gestures are
-  brittle — see the spec's Risk note.)
+  (Confirm the `Category`/`Task` constructor field names + the
+  `CategoryWithTasks` constructor against `database.g.dart` /
+  `category_with_tasks.dart`; adjust if the generated signatures differ.)
 
-- [ ] **Step 2: Run it to confirm the suite is green before the refactor**
+- [ ] **Step 2: Run it to verify it fails**
 
-  Run: `flutter test test/ui/home_screen_test.dart`
-  Expected: PASS (the DAO ops already exist). This is the guardrail; it and the
-  full suite must stay green after Step 3.
+  Run: `flutter test test/domain/board_reorder_test.dart`
+  Expected: FAIL to compile — `board_reorder.dart` / `planReorder` /
+  `ReorderPlan` do not exist yet.
 
-- [ ] **Step 3: Rewrite `_onItemReorder` to re-read state, bounds-check, and auto-expand**
+- [ ] **Step 3: Create the pure `planReorder` helper**
 
-  In `lib/ui/home/home_screen.dart`, replace the current method
-  (lines 237-258) with the snapshot-fresh, bounds-checked, guarded version.
-  Drop the `cats` parameter (re-read it instead):
+  Create `lib/domain/board_reorder.dart`. It depends only on the domain model
+  and the existing `reorder.dart` primitives (`reorderedIds`, `insertedAt`) —
+  no Flutter, no Drift, no Riverpod:
+
+  ```dart
+  import 'models/category_with_tasks.dart';
+  import 'reorder.dart';
+
+  /// The decision a drag-board drop resolves to. Pure data; the UI layer
+  /// interprets it (issuing the guarded mutations).
+  sealed class ReorderPlan {
+    const ReorderPlan();
+  }
+
+  /// Stale/out-of-range drop — the snapshot no longer matches; do nothing.
+  class ReorderNoop extends ReorderPlan {
+    const ReorderNoop();
+  }
+
+  /// Reorder tasks within a single category.
+  class ReorderWithin extends ReorderPlan {
+    const ReorderWithin(this.orderedIds);
+    final List<int> orderedIds;
+  }
+
+  /// Move [movedId] into [toCategoryId] at the resolved position.
+  /// [expandCategoryId] is set when the destination was collapsed and must be
+  /// auto-expanded so the moved task is not hidden (H3); null otherwise.
+  class ReorderAcross extends ReorderPlan {
+    const ReorderAcross({
+      required this.movedId,
+      required this.toCategoryId,
+      required this.orderedTargetIds,
+      required this.expandCategoryId,
+    });
+    final int movedId;
+    final int toCategoryId;
+    final List<int> orderedTargetIds;
+    final int? expandCategoryId;
+  }
+
+  /// Resolve a `drag_and_drop_lists` drop against the CURRENT [cats] snapshot.
+  /// All four indices are validated against the live snapshot so a drop that
+  /// raced a stream emission becomes a [ReorderNoop] instead of a RangeError
+  /// or a wrong-task move (H4).
+  ReorderPlan planReorder(
+    List<CategoryWithTasks> cats,
+    int oldItemIndex,
+    int oldListIndex,
+    int newItemIndex,
+    int newListIndex,
+  ) {
+    if (oldListIndex < 0 ||
+        oldListIndex >= cats.length ||
+        newListIndex < 0 ||
+        newListIndex >= cats.length) {
+      return const ReorderNoop();
+    }
+    final from = cats[oldListIndex];
+    final to = cats[newListIndex];
+    if (oldItemIndex < 0 || oldItemIndex >= from.activeTasks.length) {
+      return const ReorderNoop();
+    }
+    // An insert index may equal the list length (append); reject only beyond.
+    if (newItemIndex < 0 || newItemIndex > to.activeTasks.length) {
+      return const ReorderNoop();
+    }
+
+    final movedId = from.activeTasks[oldItemIndex].id;
+    if (oldListIndex == newListIndex) {
+      final ids = [for (final t in from.activeTasks) t.id];
+      return ReorderWithin(reorderedIds(ids, oldItemIndex, newItemIndex));
+    }
+    final targetIds = [for (final t in to.activeTasks) t.id];
+    return ReorderAcross(
+      movedId: movedId,
+      toCategoryId: to.category.id,
+      orderedTargetIds: insertedAt(targetIds, movedId, newItemIndex),
+      expandCategoryId: to.category.collapsed ? to.category.id : null,
+    );
+  }
+  ```
+
+- [ ] **Step 4: Run the unit tests to verify they pass**
+
+  Run: `flutter test test/domain/board_reorder_test.dart`
+  Expected: PASS — all six cases green.
+
+- [ ] **Step 5: Rewrite `_onItemReorder` to re-read state and interpret the plan**
+
+  In `lib/ui/home/home_screen.dart`, add the import for `board_reorder.dart`,
+  then replace the current method (lines 237-258) so it re-reads live state and
+  switches on the plan, routing each mutation through `_guard`. Drop the `cats`
+  parameter:
 
   ```dart
   void _onItemReorder(
@@ -124,40 +269,36 @@ mutations through Bundle A's `_guard`.
     int newItemIndex,
     int newListIndex,
   ) {
-    // H4: never trust the build-time snapshot — re-read current state. The
-    // watch stream may have emitted mid-drag.
+    // H4: never trust the build-time snapshot — the watch stream may have
+    // emitted mid-drag. Re-read live state and let planReorder validate it.
     final cats = ref.read(homeViewModelProvider).value;
-    if (cats == null) return; // loading/error -> stale drag, no-op
-    if (oldListIndex < 0 ||
-        oldListIndex >= cats.length ||
-        newListIndex < 0 ||
-        newListIndex >= cats.length) {
-      return;
-    }
-    final from = cats[oldListIndex];
-    final to = cats[newListIndex];
-    if (oldItemIndex < 0 || oldItemIndex >= from.activeTasks.length) return;
-    // An insert index may equal length (append); only reject beyond that.
-    if (newItemIndex < 0 || newItemIndex > to.activeTasks.length) return;
-
-    final movedId = from.activeTasks[oldItemIndex].id;
-    if (oldListIndex == newListIndex) {
-      final ids = [for (final t in from.activeTasks) t.id];
-      _guard(() => _vm.reorderTasks(reorderedIds(ids, oldItemIndex, newItemIndex)));
-    } else {
-      final targetIds = [for (final t in to.activeTasks) t.id];
-      _guard(
-        () => _vm.moveTaskToCategoryAt(
-          movedId,
-          to.category.id,
-          insertedAt(targetIds, movedId, newItemIndex),
-        ),
-      );
-      // H3: a collapsed destination renders no items, so the dropped task would
-      // be hidden. Auto-expand it so the move is visible.
-      if (to.category.collapsed) {
-        _guard(() => _vm.toggleCollapsed(to.category.id, false));
-      }
+    if (cats == null) return;
+    final plan = planReorder(
+      cats,
+      oldItemIndex,
+      oldListIndex,
+      newItemIndex,
+      newListIndex,
+    );
+    switch (plan) {
+      case ReorderNoop():
+        return;
+      case ReorderWithin(:final orderedIds):
+        _guard(() => _vm.reorderTasks(orderedIds));
+      case ReorderAcross(
+        :final movedId,
+        :final toCategoryId,
+        :final orderedTargetIds,
+        :final expandCategoryId,
+      ):
+        _guard(
+          () => _vm.moveTaskToCategoryAt(movedId, toCategoryId, orderedTargetIds),
+        );
+        // H3: a collapsed destination renders no items, so the dropped task
+        // would be hidden. Auto-expand it.
+        if (expandCategoryId != null) {
+          _guard(() => _vm.toggleCollapsed(expandCategoryId, false));
+        }
     }
   }
   ```
@@ -174,24 +315,19 @@ mutations through Bundle A's `_guard`.
   (`_board` and `_dragList` still take `cats` for building the lists; only the
   reorder closure stops forwarding it.)
 
-- [ ] **Step 4: Run the new test + full UI suite**
+- [ ] **Step 6: Run the full UI suite + lint**
 
-  Run: `flutter test test/ui/home_screen_test.dart`
-  Expected: PASS, including the new auto-expand test and all existing
-  collapse/menu/swipe/locale tests.
+  Run: `flutter test test/ui/home_screen_test.dart` then `just lint`
+  Expected: PASS — all existing collapse/menu/swipe/locale tests still green;
+  lint clean. Confirm `_guard` resolves (Bundle A); if `flutter analyze` reports
+  `_guard` undefined, Bundle A has not landed — rebase before continuing.
 
-- [ ] **Step 5: Lint**
-
-  Run: `just lint`
-  Expected: clean. Confirm `_guard` resolves (Bundle A); if `flutter analyze`
-  reports `_guard` undefined, Bundle A has not landed — rebase before
-  continuing.
-
-- [ ] **Step 6: Commit**
+- [ ] **Step 7: Commit**
 
   ```bash
-  git add lib/ui/home/home_screen.dart test/ui/home_screen_test.dart
-  git commit -m "fix: bounds-check reorder snapshot and auto-expand collapsed drop target
+  git add lib/domain/board_reorder.dart lib/ui/home/home_screen.dart \
+    test/domain/board_reorder_test.dart
+  git commit -m "fix: bounds-check reorder via pure planReorder and auto-expand collapsed drop target
 
   Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
   ```
@@ -1171,7 +1307,9 @@ cancel; the two confirm-delete dialogs return true/false.
 
 ## Self-review
 
-- **Finding coverage:** H4+H3 (T1), H5+L5 (T2), M3 button-enable + length-cap
+- **Finding coverage:** H4+H3 via a pure `planReorder` in
+  `lib/domain/board_reorder.dart`, unit-tested in `test/domain/board_reorder_test.dart`
+  (T1), H5+L5 (T2), M3 button-enable + length-cap
   (T3), M3 title overflow (T4), L3 param removal (T5); coverage gaps —
   category_header_content (T6), category_section (T7), task_dialog confirm/cancel
   + confirm_delete_dialog (T8); task_row_content coverage folded into T4/T5.
