@@ -27,6 +27,12 @@ class TodoRepository {
       _dao.setCategoryColor(id, color);
   Future<void> setCategoryEmoji(int id, String? emoji) =>
       _dao.setCategoryEmoji(id, emoji);
+  Future<void> updateCategory({
+    required int id,
+    required String name,
+    required int color,
+    required String? emoji,
+  }) => _dao.updateCategory(id: id, name: name, color: color, emoji: emoji);
   Future<void> setCollapsed(int id, bool collapsed) =>
       _dao.setCollapsed(id, collapsed);
   Future<void> reorderCategories(List<int> orderedIds) =>

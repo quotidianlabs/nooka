@@ -47,6 +47,22 @@ class TodoDao extends DatabaseAccessor<AppDatabase> with _$TodoDaoMixin {
         CategoriesCompanion(emoji: Value(emoji)),
       );
 
+  /// Writes a category's name, color and emoji in a single update — the edit
+  /// dialog's three fields, batched so the stream rebuilds once.
+  Future<void> updateCategory({
+    required int id,
+    required String name,
+    required int color,
+    required String? emoji,
+  }) =>
+      (update(categories)..where((c) => c.id.equals(id))).write(
+        CategoriesCompanion(
+          name: Value(name),
+          color: Value(color),
+          emoji: Value(emoji),
+        ),
+      );
+
   Future<void> setCollapsed(int id, bool collapsed) =>
       (update(categories)..where((c) => c.id.equals(id))).write(
         CategoriesCompanion(collapsed: Value(collapsed)),

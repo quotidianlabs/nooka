@@ -34,6 +34,39 @@ void main() {
       )..where((c) => c.id.equals(cat))).getSingle();
       expect(row.collapsed, isTrue);
     });
+
+    test('updateCategory writes name, color and emoji in one call', () async {
+      final id = await db.todoDao.createCategory(
+        name: 'Home',
+        color: 1,
+        emoji: '🏠',
+      );
+
+      await db.todoDao.updateCategory(
+        id: id,
+        name: 'House',
+        color: 2,
+        emoji: '🏡',
+      );
+      var row = await (db.select(
+        db.categories,
+      )..where((c) => c.id.equals(id))).getSingle();
+      expect(row.name, 'House');
+      expect(row.color, 2);
+      expect(row.emoji, '🏡');
+
+      // Clearing the emoji to null is a real write, not "unchanged".
+      await db.todoDao.updateCategory(
+        id: id,
+        name: 'House',
+        color: 2,
+        emoji: null,
+      );
+      row = await (db.select(
+        db.categories,
+      )..where((c) => c.id.equals(id))).getSingle();
+      expect(row.emoji, isNull);
+    });
   });
 
   group('reordering', () {

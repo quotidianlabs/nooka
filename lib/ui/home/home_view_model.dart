@@ -27,6 +27,12 @@ class HomeViewModel extends _$HomeViewModel {
       _repo.setCategoryColor(id, color);
   Future<void> setCategoryEmoji(int id, String? emoji) =>
       _repo.setCategoryEmoji(id, emoji);
+  Future<void> updateCategory({
+    required int id,
+    required String name,
+    required int color,
+    required String? emoji,
+  }) => _repo.updateCategory(id: id, name: name, color: color, emoji: emoji);
   Future<void> toggleCollapsed(int id, bool collapsed) =>
       _repo.setCollapsed(id, collapsed);
   Future<void> reorderCategories(List<int> orderedIds) =>
