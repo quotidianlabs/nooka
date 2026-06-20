@@ -291,17 +291,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   /// Runs an imperative mutation, surfacing any failure as a localized
   /// SnackBar instead of an unhandled async error. Bundles B and C route their
   /// edited/new mutations through this same guard.
-  Future<void> _guard(Future<void> Function() action) async {
+  ///
+  /// Returns `true` when the action completed successfully, `false` when it
+  /// threw (or when the widget was unmounted before the SnackBar could show).
+  /// Callers that need to gate follow-up work (e.g. persisting a default) on
+  /// success should check the return value; pure fire-and-forget callers may
+  /// discard it.
+  Future<bool> _guard(Future<void> Function() action) async {
     try {
       await action();
+      return true;
     } catch (e, st) {
       // Log so a swallowed failure (incl. a programmer error) is never
       // invisible; the SnackBar is the user-facing half.
       debugPrint('Guarded mutation failed: $e\n$st');
-      if (!mounted) return;
+      if (!mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(AppLocalizations.of(context).actionFailed)),
       );
+      return false;
     }
   }
 
@@ -356,11 +364,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       categories: [for (final c in cats) c.category],
       initialCategoryId: initial,
       onAdd: (name, categoryId) async {
-        await _guard(() => _vm.addTask(categoryId, name));
-        _lastCategoryId = categoryId;
-        await ref
-            .read(settingsRepositoryProvider)
-            .writeLastCategoryId(categoryId);
+        if (await _guard(() => _vm.addTask(categoryId, name))) {
+          _lastCategoryId = categoryId;
+          await ref
+              .read(settingsRepositoryProvider)
+              .writeLastCategoryId(categoryId);
+        }
       },
     );
   }

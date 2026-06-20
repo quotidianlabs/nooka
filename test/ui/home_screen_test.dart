@@ -24,6 +24,15 @@ class _ThrowingMutationRepo extends TodoRepository {
   Future<int> purgeExpired() => Future.error(Exception('locked'));
 }
 
+/// A repo whose [createTask] always throws; [watchCategoriesWithTasks] is
+/// delegated to the real DAO so the board renders normally.
+class _ThrowingCreateTaskRepo extends TodoRepository {
+  _ThrowingCreateTaskRepo(super.dao);
+  @override
+  Future<int> createTask({required int categoryId, required String name}) =>
+      Future.error(Exception('db locked'));
+}
+
 Widget _app(
   AppDatabase db,
   SharedPreferences prefs, {
@@ -414,5 +423,42 @@ void main() {
     await tester.pump();
 
     expect(find.text("Couldn't complete that. Try again."), findsOneWidget);
+  });
+
+  testWidgets('failed addTask does NOT persist last_category (M4 regression)', (
+    tester,
+  ) async {
+    // Seed a category so the board and FAB render.
+    final cat = await db.todoDao.createCategory(
+      name: 'Home',
+      color: 0xFF009688,
+    );
+    // Use the real DAO for the watch stream; only createTask throws.
+    final throwingRepo = _ThrowingCreateTaskRepo(db.todoDao);
+    await tester.pumpWidget(_appWithRepo(throwingRepo, prefs));
+    await tester.pumpAndSettle();
+
+    // Open the quick-add dialog via the FAB.
+    await tester.tap(find.byKey(const Key('add-task-fab')));
+    await tester.pumpAndSettle();
+
+    // Type a name and confirm — this will call createTask, which throws.
+    await tester.enterText(
+      find.byKey(const Key('quick-add-field')),
+      'Should not be saved',
+    );
+    await tester.pump(); // flush listener setState
+    await tester.tap(find.byKey(const Key('quick-add-confirm')));
+    await tester.pumpAndSettle();
+
+    // The actionFailed SnackBar must appear.
+    expect(find.text("Couldn't complete that. Try again."), findsOneWidget);
+
+    // last_category must NOT have been written (stays null).
+    expect(SettingsRepository(prefs).readLastCategoryId(), isNull);
+
+    // Suppress unused variable warning — cat is used to ensure a category
+    // exists so the board renders and FAB is visible.
+    expect(cat, isA<int>());
   });
 }

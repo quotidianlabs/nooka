@@ -41,7 +41,7 @@ void main() {
     );
     expect(await db.todoDao.purgeExpired(now), 0);
 
-    // At exactly 30 days it IS eligible — but we restore instead of purging.
+    // Restore it (still within retention) → back to active.
     await vm.restoreTask(task.id);
     snapshot = await db.todoDao.watchCategoriesWithTasks().first;
     expect(snapshot.first.activeTasks.single.id, task.id);
