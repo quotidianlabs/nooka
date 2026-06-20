@@ -111,7 +111,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           : null,
       body: state.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('$e')),
+        error: (e, _) =>
+            Center(child: Text(AppLocalizations.of(context).errorLoading)),
         data: (cats) => _body(cats, now),
       ),
     );

@@ -4,10 +4,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:nooka/data/repositories/settings_repository.dart';
+import 'package:nooka/data/repositories/todo_repository.dart';
 import 'package:nooka/data/services/database/database.dart';
 import 'package:nooka/data/services/database/database_providers.dart';
+import 'package:nooka/domain/models/category_with_tasks.dart';
 import 'package:nooka/l10n/app_localizations.dart';
 import 'package:nooka/ui/home/home_screen.dart';
+
+class _ErrorStreamRepo extends TodoRepository {
+  _ErrorStreamRepo(super.dao);
+  @override
+  Stream<List<CategoryWithTasks>> watchCategoriesWithTasks() =>
+      Stream.error(Exception('boom'));
+}
 
 Widget _app(
   AppDatabase db,
@@ -17,6 +26,23 @@ Widget _app(
   overrides: [
     appDatabaseProvider.overrideWithValue(db),
     sharedPreferencesProvider.overrideWithValue(prefs),
+  ],
+  child: MaterialApp(
+    locale: locale,
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    home: const HomeScreen(),
+  ),
+);
+
+Widget _appWithRepo(
+  TodoRepository repo,
+  SharedPreferences prefs, {
+  Locale locale = const Locale('en'),
+}) => ProviderScope(
+  overrides: [
+    sharedPreferencesProvider.overrideWithValue(prefs),
+    todoRepositoryProvider.overrideWithValue(repo),
   ],
   child: MaterialApp(
     locale: locale,
@@ -253,6 +279,16 @@ void main() {
     await tester.pumpWidget(_app(db, prefs));
     await tester.pumpAndSettle();
     expect(find.textContaining('🛒 Shopping'), findsOneWidget);
+  });
+
+  testWidgets('stream error shows a localized message, not the raw exception', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_appWithRepo(_ErrorStreamRepo(db.todoDao), prefs));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Something went wrong'), findsOneWidget);
+    expect(find.textContaining('Exception'), findsNothing);
   });
 
   testWidgets('header and row ⋮ menus align on one vertical line', (
