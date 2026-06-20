@@ -1,5 +1,5 @@
 ---
-status: draft
+status: shipped
 date: 2026-06-20
 slug: hardening-drag-dialogs
 spec: hardening-drag-dialogs

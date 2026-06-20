@@ -1,5 +1,5 @@
 ---
-status: draft
+status: shipped
 date: 2026-06-20
 slug: hardening-drag-dialogs
 spec: hardening-drag-dialogs
@@ -7,7 +7,7 @@ summary: Bundle B of the whole-app hardening sweep — harden the drag board and
 supersedes: null
 superseded_by: null
 pr: null
-outcome: null
+outcome: "Extracted a pure planReorder() (lib/domain/board_reorder.dart) so _onItemReorder re-reads live state, bounds-checks (H4), and auto-expands a collapsed drop target (H3); guarded quick-add against double-tap + post-dispose focus (H5/L5); disabled confirm on empty name + capped length at 100 + clipped long titles (M3); derived archived from task.archivedAt and dropped the param (L3). Added widget coverage for the drag-board widgets and the task/confirm-delete dialogs. 70/70 tests green. Interactive flutter-run smoke (collapsed-drop, double-tap) left to the user."
 ---
 
 # Design: hardening — drag board & dialogs (Bundle B)
