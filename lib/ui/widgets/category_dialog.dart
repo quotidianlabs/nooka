@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../core/category_colors.dart';
-import 'task_dialog.dart' show kMaxNameLength;
+import 'dialog_constants.dart';
 
 /// Result of editing/creating a category.
 class CategoryDialogResult {

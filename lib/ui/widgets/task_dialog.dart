@@ -3,9 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../data/services/database/database.dart';
 import '../../l10n/app_localizations.dart';
-
-/// Max length for a task/category name. Caps storage and prevents row overflow.
-const int kMaxNameLength = 100;
+import 'dialog_constants.dart';
 
 /// Result of creating/editing a task: the name and the chosen category id.
 class TaskDialogResult {

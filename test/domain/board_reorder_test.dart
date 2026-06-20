@@ -70,4 +70,13 @@ void main() {
     // destination list 1 has length 1; newItemIndex 1 appends.
     expect(planReorder(snapshot(), 0, 0, 1, 1), isA<ReorderAcross>());
   });
+
+  test('within-category drop at index == length moves to end, never throws', () {
+    // list 0 has 2 items; same-list newItemIndex == 2 (== length). planReorder
+    // permits it and reorderedIds clamps, so this is a move-to-end, not a
+    // RangeError (closes the H4 within-append edge).
+    final plan = planReorder(snapshot(), 0, 0, 2, 0);
+    expect(plan, isA<ReorderWithin>());
+    expect((plan as ReorderWithin).orderedIds, [2, 1]);
+  });
 }

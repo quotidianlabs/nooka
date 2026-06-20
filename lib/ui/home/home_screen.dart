@@ -263,15 +263,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         :final orderedTargetIds,
         :final expandCategoryId,
       ):
-        _guard(
-          () =>
-              _vm.moveTaskToCategoryAt(movedId, toCategoryId, orderedTargetIds),
-        );
-        // H3: a collapsed destination renders no items, so the dropped task
-        // would be hidden. Auto-expand it.
-        if (expandCategoryId != null) {
-          _guard(() => _vm.toggleCollapsed(expandCategoryId, false));
-        }
+        _guard(() async {
+          await _vm.moveTaskToCategoryAt(
+            movedId,
+            toCategoryId,
+            orderedTargetIds,
+          );
+          // H3: a collapsed destination renders no items, so the dropped task
+          // would be hidden. Auto-expand it — but only after the move succeeds,
+          // so a failed move never leaves an expanded empty category.
+          if (expandCategoryId != null) {
+            await _vm.toggleCollapsed(expandCategoryId, false);
+          }
+        });
     }
   }
 
@@ -290,7 +294,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Future<void> _guard(Future<void> Function() action) async {
     try {
       await action();
-    } catch (_) {
+    } catch (e, st) {
+      // Log so a swallowed failure (incl. a programmer error) is never
+      // invisible; the SnackBar is the user-facing half.
+      debugPrint('Guarded mutation failed: $e\n$st');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(AppLocalizations.of(context).actionFailed)),
