@@ -356,11 +356,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       categories: [for (final c in cats) c.category],
       initialCategoryId: initial,
       onAdd: (name, categoryId) async {
+        await _guard(() => _vm.addTask(categoryId, name));
         _lastCategoryId = categoryId;
         await ref
             .read(settingsRepositoryProvider)
             .writeLastCategoryId(categoryId);
-        await _vm.addTask(categoryId, name);
       },
     );
   }
