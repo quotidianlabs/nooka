@@ -442,7 +442,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           name: cwt.category.name,
           itemCount: cwt.tasks.length,
         );
-        if (ok) await _vm.deleteCategory(cwt.category.id);
+        if (ok) {
+          await _vm.deleteCategory(cwt.category.id);
+          if (cwt.category.id == _lastCategoryId) {
+            _lastCategoryId = null;
+            await ref.read(settingsRepositoryProvider).clearLastCategoryId();
+          }
+        }
     }
   }
 

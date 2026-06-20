@@ -30,6 +30,9 @@ class SettingsRepository {
   int? readLastCategoryId() => _prefs.getInt(_lastCategoryKey);
   Future<void> writeLastCategoryId(int id) =>
       _prefs.setInt(_lastCategoryKey, id);
+
+  /// Forgets the last-used category (e.g. after it is deleted).
+  Future<void> clearLastCategoryId() => _prefs.remove(_lastCategoryKey);
 }
 
 @Riverpod(keepAlive: true)

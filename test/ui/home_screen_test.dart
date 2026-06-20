@@ -372,6 +372,28 @@ void main() {
     expect(find.text('Item completed'), findsNothing);
   });
 
+  testWidgets('deleting the remembered category clears last_category', (
+    tester,
+  ) async {
+    final home = await db.todoDao.createCategory(
+      name: 'Home',
+      color: 0xFF009688,
+    );
+    await prefs.setInt('last_category', home);
+    await tester.pumpWidget(_app(db, prefs));
+    await tester.pumpAndSettle();
+
+    // Open the category menu, choose Delete, confirm.
+    await tester.tap(find.byKey(Key('category-menu-$home')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('confirm-delete')));
+    await tester.pumpAndSettle();
+
+    expect(SettingsRepository(prefs).readLastCategoryId(), isNull);
+  });
+
   testWidgets('a throwing mutation surfaces the actionFailed SnackBar', (
     tester,
   ) async {
