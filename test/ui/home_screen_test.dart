@@ -152,12 +152,14 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.enterText(find.byKey(const Key('quick-add-field')), 'First');
+    await tester.pump(); // flush listener setState before tapping
     await tester.tap(find.byKey(const Key('quick-add-confirm')));
     await tester.pumpAndSettle();
     // Dialog is still open (field present) and cleared.
     expect(find.byKey(const Key('quick-add-field')), findsOneWidget);
 
     await tester.enterText(find.byKey(const Key('quick-add-field')), 'Second');
+    await tester.pump(); // flush listener setState before tapping
     await tester.tap(find.byKey(const Key('quick-add-confirm')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('quick-add-done')));

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../core/category_colors.dart';
+import 'task_dialog.dart' show kMaxNameLength;
 
 /// Result of editing/creating a category.
 class CategoryDialogResult {
@@ -53,6 +54,12 @@ class _CategoryDialogState extends State<_CategoryDialog> {
   late int _color = widget.initialColor;
 
   @override
+  void initState() {
+    super.initState();
+    _name.addListener(() => setState(() {}));
+  }
+
+  @override
   void dispose() {
     _name.dispose();
     _icon.dispose();
@@ -73,6 +80,7 @@ class _CategoryDialogState extends State<_CategoryDialog> {
             controller: _name,
             autofocus: true,
             decoration: InputDecoration(labelText: l10n.categoryNameLabel),
+            inputFormatters: [LengthLimitingTextInputFormatter(kMaxNameLength)],
           ),
           TextField(
             key: const Key('category-icon-field'),
@@ -120,15 +128,21 @@ class _CategoryDialogState extends State<_CategoryDialog> {
         ),
         TextButton(
           key: const Key('category-confirm'),
-          onPressed: () {
-            final name = _name.text.trim();
-            if (name.isEmpty) return;
-            final icon = _icon.text.trim();
-            Navigator.pop(
-              context,
-              CategoryDialogResult(name, _color, icon.isEmpty ? null : icon),
-            );
-          },
+          onPressed: _name.text.trim().isEmpty
+              ? null
+              : () {
+                  final name = _name.text.trim();
+                  if (name.isEmpty) return;
+                  final icon = _icon.text.trim();
+                  Navigator.pop(
+                    context,
+                    CategoryDialogResult(
+                      name,
+                      _color,
+                      icon.isEmpty ? null : icon,
+                    ),
+                  );
+                },
           child: Text(isEdit ? l10n.save : l10n.add),
         ),
       ],

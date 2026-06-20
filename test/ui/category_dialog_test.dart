@@ -45,10 +45,46 @@ void main() {
       find.byKey(const Key('category-name-field')),
       'Home',
     );
+    await tester.pump(); // flush the listener-driven setState before tapping
     await tester.tap(find.byKey(const Key('category-confirm')));
     await tester.pumpAndSettle();
 
     expect(result?.name, 'Home');
     expect(result?.emoji, 'a');
+  });
+
+  testWidgets('category confirm is disabled until the name is non-empty', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('en'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: Center(
+              child: ElevatedButton(
+                onPressed: () => showCategoryDialog(context),
+                child: const Text('open'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    TextButton confirm() =>
+        tester.widget<TextButton>(find.byKey(const Key('category-confirm')));
+    expect(confirm().onPressed, isNull);
+
+    await tester.enterText(
+      find.byKey(const Key('category-name-field')),
+      'Home',
+    );
+    await tester.pump();
+    expect(confirm().onPressed, isNotNull);
   });
 }

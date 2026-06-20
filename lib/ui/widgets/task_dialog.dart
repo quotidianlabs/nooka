@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../data/services/database/database.dart';
 import '../../l10n/app_localizations.dart';
+
+/// Max length for a task/category name. Caps storage and prevents row overflow.
+const int kMaxNameLength = 100;
 
 /// Result of creating/editing a task: the name and the chosen category id.
 class TaskDialogResult {
@@ -49,6 +53,12 @@ class _TaskDialogState extends State<_TaskDialog> {
   late int _categoryId = widget.initialCategoryId;
 
   @override
+  void initState() {
+    super.initState();
+    _name.addListener(() => setState(() {}));
+  }
+
+  @override
   void dispose() {
     _name.dispose();
     super.dispose();
@@ -68,6 +78,7 @@ class _TaskDialogState extends State<_TaskDialog> {
             controller: _name,
             autofocus: true,
             decoration: InputDecoration(labelText: l10n.taskNameLabel),
+            inputFormatters: [LengthLimitingTextInputFormatter(kMaxNameLength)],
           ),
           const SizedBox(height: 8),
           DropdownButtonFormField<int>(
@@ -89,11 +100,13 @@ class _TaskDialogState extends State<_TaskDialog> {
         ),
         TextButton(
           key: const Key('task-confirm'),
-          onPressed: () {
-            final name = _name.text.trim();
-            if (name.isEmpty) return;
-            Navigator.pop(context, TaskDialogResult(name, _categoryId));
-          },
+          onPressed: _name.text.trim().isEmpty
+              ? null
+              : () {
+                  final name = _name.text.trim();
+                  if (name.isEmpty) return;
+                  Navigator.pop(context, TaskDialogResult(name, _categoryId));
+                },
           child: Text(isEdit ? l10n.save : l10n.add),
         ),
       ],
@@ -142,6 +155,12 @@ class _QuickAddDialogState extends State<_QuickAddDialog> {
   bool _busy = false;
 
   @override
+  void initState() {
+    super.initState();
+    _name.addListener(() => setState(() {}));
+  }
+
+  @override
   void dispose() {
     _name.dispose();
     _focus.dispose();
@@ -179,6 +198,7 @@ class _QuickAddDialogState extends State<_QuickAddDialog> {
             textInputAction: TextInputAction.done,
             onSubmitted: (_) => _submit(),
             decoration: InputDecoration(labelText: l10n.taskNameLabel),
+            inputFormatters: [LengthLimitingTextInputFormatter(kMaxNameLength)],
           ),
           const SizedBox(height: 8),
           DropdownButtonFormField<int>(
@@ -201,7 +221,7 @@ class _QuickAddDialogState extends State<_QuickAddDialog> {
         ),
         TextButton(
           key: const Key('quick-add-confirm'),
-          onPressed: _submit,
+          onPressed: (_busy || _name.text.trim().isEmpty) ? null : _submit,
           child: Text(l10n.add),
         ),
       ],

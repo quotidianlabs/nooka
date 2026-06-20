@@ -55,6 +55,8 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.enterText(find.byKey(const Key('quick-add-field')), 'Milk');
+    await tester
+        .pump(); // flush the listener-driven setState so confirm is enabled
     await tester.tap(find.byKey(const Key('quick-add-confirm')));
     await tester.pump(); // start the first _submit; field clears synchronously
     // Field is already empty, so the second tap reads empty and no-ops; the
@@ -65,6 +67,42 @@ void main() {
     gate.complete();
     await tester.pumpAndSettle();
     expect(calls, 1);
+  });
+
+  testWidgets('quick-add confirm is disabled until the name is non-empty', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _host(
+        (context) => showQuickAddDialog(
+          context,
+          categories: [_cat(1, 'Home')],
+          initialCategoryId: 1,
+          onAdd: (name, categoryId) async {},
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    TextButton confirm() =>
+        tester.widget<TextButton>(find.byKey(const Key('quick-add-confirm')));
+    expect(confirm().onPressed, isNull); // empty -> disabled
+
+    await tester.enterText(find.byKey(const Key('quick-add-field')), '   ');
+    await tester.pump();
+    expect(confirm().onPressed, isNull); // whitespace-only -> still disabled
+
+    await tester.enterText(find.byKey(const Key('quick-add-field')), 'Milk');
+    await tester.pump();
+    expect(confirm().onPressed, isNotNull); // non-empty -> enabled
+
+    await tester.enterText(find.byKey(const Key('quick-add-field')), 'x' * 200);
+    await tester.pump();
+    final field = tester.widget<TextField>(
+      find.byKey(const Key('quick-add-field')),
+    );
+    expect(field.controller!.text.length, 100); // capped at kMaxNameLength
   });
 
   testWidgets(
@@ -84,6 +122,8 @@ void main() {
       await tester.tap(find.text('open'));
       await tester.pumpAndSettle();
       await tester.enterText(find.byKey(const Key('quick-add-field')), 'Milk');
+      await tester
+          .pump(); // flush the listener-driven setState so confirm is enabled
       await tester.tap(find.byKey(const Key('quick-add-confirm')));
       await tester.pump(); // _submit awaits onAdd
 
