@@ -137,4 +137,44 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  testWidgets('showTaskDialog returns the result on confirm', (tester) async {
+    TaskDialogResult? result;
+    await tester.pumpWidget(
+      _host((context) async {
+        result = await showTaskDialog(
+          context,
+          categories: [_cat(1, 'Home')],
+          initialCategoryId: 1,
+        );
+      }),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byKey(const Key('task-name-field')), 'Sweep');
+    await tester.pump(); // flush listener-driven setState so confirm is enabled
+    await tester.tap(find.byKey(const Key('task-confirm')));
+    await tester.pumpAndSettle();
+    expect(result?.name, 'Sweep');
+    expect(result?.categoryId, 1);
+  });
+
+  testWidgets('showTaskDialog returns null on cancel', (tester) async {
+    Object? sentinel = 'unset';
+    await tester.pumpWidget(
+      _host((context) async {
+        sentinel = await showTaskDialog(
+          context,
+          categories: [_cat(1, 'Home')],
+          initialCategoryId: 1,
+        );
+      }),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(sentinel, isNull);
+  });
 }
