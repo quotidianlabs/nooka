@@ -12,4 +12,5 @@ Reactive `watchCategoriesWithTasks()` propagates changes back to the UI.
 ## Capability index
 - [Data model](data-model.md)
 - [Archive & retention](archive.md)
+- [Error handling](error-handling.md)
 - [i18n & theming](i18n-theming.md)
