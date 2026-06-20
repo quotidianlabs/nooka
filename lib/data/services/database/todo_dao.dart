@@ -54,14 +54,13 @@ class TodoDao extends DatabaseAccessor<AppDatabase> with _$TodoDaoMixin {
     required String name,
     required int color,
     required String? emoji,
-  }) =>
-      (update(categories)..where((c) => c.id.equals(id))).write(
-        CategoriesCompanion(
-          name: Value(name),
-          color: Value(color),
-          emoji: Value(emoji),
-        ),
-      );
+  }) => (update(categories)..where((c) => c.id.equals(id))).write(
+    CategoriesCompanion(
+      name: Value(name),
+      color: Value(color),
+      emoji: Value(emoji),
+    ),
+  );
 
   Future<void> setCollapsed(int id, bool collapsed) =>
       (update(categories)..where((c) => c.id.equals(id))).write(

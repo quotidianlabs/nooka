@@ -420,9 +420,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           initialEmoji: cwt.category.emoji,
         );
         if (r != null) {
-          await _vm.renameCategory(cwt.category.id, r.name);
-          await _vm.setCategoryColor(cwt.category.id, r.color);
-          await _vm.setCategoryEmoji(cwt.category.id, r.emoji);
+          await _guard(
+            () => _vm.updateCategory(
+              id: cwt.category.id,
+              name: r.name,
+              color: r.color,
+              emoji: r.emoji,
+            ),
+          );
         }
       case 'add':
         await showQuickAddDialog(
