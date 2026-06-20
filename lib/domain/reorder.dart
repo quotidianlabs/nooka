@@ -2,10 +2,12 @@
 ///
 /// [newIndex] is the destination index *after* the dragged item is removed —
 /// the convention of `ReorderableListView`'s `onReorder` callback when the
-/// caller pre-adjusts for downward moves. The index is clamped to the
-/// post-removal range, so an over-the-end index (a drop past the last row)
-/// appends rather than throwing a `RangeError`. Does not mutate [ids].
+/// caller pre-adjusts for downward moves. Total and never throws: an
+/// out-of-range [oldIndex] (or an empty list) returns an unchanged copy — you
+/// cannot move an item that isn't there — and [newIndex] is clamped to the
+/// post-removal range so an over-the-end drop appends. Does not mutate [ids].
 List<int> reorderedIds(List<int> ids, int oldIndex, int newIndex) {
+  if (oldIndex < 0 || oldIndex >= ids.length) return [...ids];
   final list = [...ids];
   final item = list.removeAt(oldIndex);
   list.insert(newIndex.clamp(0, list.length), item);

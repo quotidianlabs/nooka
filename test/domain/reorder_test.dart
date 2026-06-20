@@ -18,6 +18,13 @@ void main() {
     // an unclamped insert would RangeError. Clamp makes it a move-to-end.
     expect(reorderedIds([1, 2, 3], 0, 3), [2, 3, 1]);
   });
+  test('returns an unchanged copy when oldIndex is out of range', () {
+    expect(reorderedIds([1, 2, 3], 5, 0), [1, 2, 3]);
+    expect(reorderedIds([1, 2, 3], -1, 0), [1, 2, 3]);
+  });
+  test('returns an empty list for empty input without throwing', () {
+    expect(reorderedIds(<int>[], 0, 0), isEmpty);
+  });
 
   group('insertedAt', () {
     test('inserts at the head', () {
