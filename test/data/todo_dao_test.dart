@@ -125,6 +125,29 @@ void main() {
       },
     );
 
+    test('moveTaskToCategoryAt renumbers dest, leaves source gap', () async {
+      final src = await db.todoDao.createCategory(name: 'Src', color: 1);
+      final dst = await db.todoDao.createCategory(name: 'Dst', color: 2);
+      final s1 = await db.todoDao.createTask(categoryId: src, name: 's1'); // 0
+      final s2 = await db.todoDao.createTask(categoryId: src, name: 's2'); // 1
+      final d1 = await db.todoDao.createTask(categoryId: dst, name: 'd1'); // 0
+      final d2 = await db.todoDao.createTask(categoryId: dst, name: 'd2'); // 1
+
+      // Move s1 into dst between d1 and d2.
+      await db.todoDao.moveTaskToCategoryAt(s1, dst, [d1, s1, d2]);
+
+      Future<int> orderOf(int id) async => (await (db.select(
+        db.tasks,
+      )..where((t) => t.id.equals(id))).getSingle()).sortOrder;
+
+      // Destination renumbered 0,1,2 in the new order.
+      expect(await orderOf(d1), 0);
+      expect(await orderOf(s1), 1);
+      expect(await orderOf(d2), 2);
+      // Source is NOT renumbered: s2 keeps its original sortOrder (1), gap left.
+      expect(await orderOf(s2), 1);
+    });
+
     test('duplicate sortOrder orders deterministically by id', () async {
       final cat = await db.todoDao.createCategory(name: 'Home', color: 1);
       final t1 = await db.todoDao.createTask(categoryId: cat, name: 't1');
@@ -185,6 +208,41 @@ void main() {
       expect(deleted, 1);
       final remaining = await db.select(db.tasks).get();
       expect(remaining.map((t) => t.name), ['fresh']);
+    });
+
+    test('purgeExpired boundary: exactly 30d purged, 29d kept', () async {
+      final cat = await db.todoDao.createCategory(name: 'Home', color: 1);
+      final at30 = await db.todoDao.createTask(categoryId: cat, name: 'at30');
+      final at29 = await db.todoDao.createTask(categoryId: cat, name: 'at29');
+      final now = DateTime(2026, 6, 17);
+      await db.todoDao.completeTask(at30, now.subtract(const Duration(days: 30)));
+      await db.todoDao.completeTask(at29, now.subtract(const Duration(days: 29)));
+
+      final deleted = await db.todoDao.purgeExpired(now);
+
+      expect(deleted, 1);
+      final remaining = await db.select(db.tasks).get();
+      expect(remaining.map((t) => t.name), ['at29']);
+      expect(at30, isNotNull);
+    });
+
+    test('restoreTask re-appends to the tail of active sortOrder', () async {
+      final cat = await db.todoDao.createCategory(name: 'Home', color: 1);
+      final a = await db.todoDao.createTask(categoryId: cat, name: 'a'); // 0
+      final b = await db.todoDao.createTask(categoryId: cat, name: 'b'); // 1
+      final c = await db.todoDao.createTask(categoryId: cat, name: 'c'); // 2
+      expect([a, b, c], isNotEmpty);
+
+      // Archive 'a', then restore it: it should re-append after b and c.
+      await db.todoDao.completeTask(a, DateTime(2026, 6, 1));
+      await db.todoDao.restoreTask(a);
+
+      final row = await (db.select(
+        db.tasks,
+      )..where((t) => t.id.equals(a))).getSingle();
+      expect(row.archivedAt, isNull);
+      // b=1, c=2 remained active while a was archived → a re-appends at 3.
+      expect(row.sortOrder, 3);
     });
 
     test('clearArchive deletes all archived but keeps active', () async {
