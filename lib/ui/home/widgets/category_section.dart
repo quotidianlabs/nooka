@@ -72,7 +72,6 @@ class CategorySection extends StatelessWidget {
                   final tile = TaskRowContent(
                     task: task,
                     color: color,
-                    archived: archived,
                     now: now,
                     onTaskTap: onTaskTap,
                     onTaskMenu: onTaskMenu,

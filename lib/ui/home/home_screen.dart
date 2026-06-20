@@ -225,7 +225,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     child: TaskRowContent(
                       task: task,
                       color: color,
-                      archived: false,
                       now: now,
                       onTaskTap: (_) => _complete(task),
                       onTaskMenu: (_) => _taskMenu(cats, task),
