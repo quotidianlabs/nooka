@@ -1,5 +1,5 @@
 ---
-status: draft
+status: shipped
 date: 2026-06-20
 slug: hardening-archive-and-coverage
 spec: hardening-archive-and-coverage
@@ -7,7 +7,7 @@ summary: Fix the archive-countdown truncation, stale last-category pref, prematu
 supersedes: null
 superseded_by: null
 pr: null
-outcome: null
+outcome: "Ceiled daysRemaining so surviving items never show 0 (M1); added category/task id ordering tiebreakers (L1); batched category edits into one updateCategory DAO/repo/VM write wired through _guard (L4); clear last_category when its category is deleted (M2); persist last_category only after addTask succeeds (M4). Closed coverage gaps: DAO purge-boundary/restore-reappend/move-sortOrder, locale/theme controller round-trips, and a full add→complete→purge-boundary→restore flow test. 88/88 tests green."
 ---
 
 # Design: Archive countdown, ordering & remaining coverage

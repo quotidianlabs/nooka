@@ -1,5 +1,5 @@
 ---
-status: draft
+status: shipped
 date: 2026-06-20
 slug: hardening-archive-and-coverage
 spec: hardening-archive-and-coverage
