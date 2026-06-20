@@ -996,3 +996,17 @@ Run the whole gate, regenerate the planning index, and open the PR.
 - **Integration-vs-widget decision:** stated in T9 and design §Testing — a
   host-VM widget/container test at `test/integration/archive_flow_test.dart`,
   not a new `integration_test/` harness.
+
+## Post-review fixes (PR #12)
+
+Two review rounds landed on the PR:
+
+- **Final whole-branch review** caught that M4's persistence still ran when the
+  guarded add failed (`_guard` swallowed the error) — fixed by having `_guard`
+  report success and gating persistence on it, with a regression test.
+- **External review** caught that L1's category `id` tiebreak was inert: placed
+  after `tasks.sortOrder`, a category sortOrder collision was resolved by task
+  contents, not by id. Fixed by grouping the order keys by table
+  (`catSortOrder, catId, taskSortOrder, taskId`) plus a category-collision test.
+  Same round removed the now-dead per-field category setters and tightened a
+  few test assertions.
