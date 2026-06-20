@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../data/services/database/database.dart';
 import '../../l10n/app_localizations.dart';
+import 'dialog_constants.dart';
 
 /// Result of creating/editing a task: the name and the chosen category id.
 class TaskDialogResult {
@@ -49,6 +51,12 @@ class _TaskDialogState extends State<_TaskDialog> {
   late int _categoryId = widget.initialCategoryId;
 
   @override
+  void initState() {
+    super.initState();
+    _name.addListener(() => setState(() {}));
+  }
+
+  @override
   void dispose() {
     _name.dispose();
     super.dispose();
@@ -68,6 +76,7 @@ class _TaskDialogState extends State<_TaskDialog> {
             controller: _name,
             autofocus: true,
             decoration: InputDecoration(labelText: l10n.taskNameLabel),
+            inputFormatters: [LengthLimitingTextInputFormatter(kMaxNameLength)],
           ),
           const SizedBox(height: 8),
           DropdownButtonFormField<int>(
@@ -89,11 +98,13 @@ class _TaskDialogState extends State<_TaskDialog> {
         ),
         TextButton(
           key: const Key('task-confirm'),
-          onPressed: () {
-            final name = _name.text.trim();
-            if (name.isEmpty) return;
-            Navigator.pop(context, TaskDialogResult(name, _categoryId));
-          },
+          onPressed: _name.text.trim().isEmpty
+              ? null
+              : () {
+                  final name = _name.text.trim();
+                  if (name.isEmpty) return;
+                  Navigator.pop(context, TaskDialogResult(name, _categoryId));
+                },
           child: Text(isEdit ? l10n.save : l10n.add),
         ),
       ],
@@ -139,6 +150,13 @@ class _QuickAddDialogState extends State<_QuickAddDialog> {
   final TextEditingController _name = TextEditingController();
   final FocusNode _focus = FocusNode();
   late int _categoryId = widget.initialCategoryId;
+  bool _busy = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _name.addListener(() => setState(() {}));
+  }
 
   @override
   void dispose() {
@@ -148,10 +166,17 @@ class _QuickAddDialogState extends State<_QuickAddDialog> {
   }
 
   Future<void> _submit() async {
+    if (_busy) return;
     final name = _name.text.trim();
     if (name.isEmpty) return;
-    await widget.onAdd(name, _categoryId);
-    _name.clear();
+    _busy = true;
+    _name.clear(); // clear synchronously, before the await
+    try {
+      await widget.onAdd(name, _categoryId);
+    } finally {
+      _busy = false;
+    }
+    if (!mounted) return; // L5: dialog may have been dismissed mid-await
     _focus.requestFocus(); // keep the keyboard up for the next item
   }
 
@@ -171,6 +196,7 @@ class _QuickAddDialogState extends State<_QuickAddDialog> {
             textInputAction: TextInputAction.done,
             onSubmitted: (_) => _submit(),
             decoration: InputDecoration(labelText: l10n.taskNameLabel),
+            inputFormatters: [LengthLimitingTextInputFormatter(kMaxNameLength)],
           ),
           const SizedBox(height: 8),
           DropdownButtonFormField<int>(
@@ -193,7 +219,7 @@ class _QuickAddDialogState extends State<_QuickAddDialog> {
         ),
         TextButton(
           key: const Key('quick-add-confirm'),
-          onPressed: _submit,
+          onPressed: (_busy || _name.text.trim().isEmpty) ? null : _submit,
           child: Text(l10n.add),
         ),
       ],

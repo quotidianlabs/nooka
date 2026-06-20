@@ -284,6 +284,18 @@ abstract class AppLocalizations {
   /// **'Undo'**
   String get undoAction;
 
+  /// No description provided for @errorLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong'**
+  String get errorLoading;
+
+  /// No description provided for @actionFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t complete that. Try again.'**
+  String get actionFailed;
+
   /// No description provided for @settingsTitle.
   ///
   /// In en, this message translates to:

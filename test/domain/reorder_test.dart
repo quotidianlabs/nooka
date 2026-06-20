@@ -13,6 +13,11 @@ void main() {
     reorderedIds(input, 0, 2);
     expect(input, [1, 2, 3]);
   });
+  test('clamps an over-the-end index to the tail instead of throwing', () {
+    // newIndex == original length: after removeAt the list is one shorter, so
+    // an unclamped insert would RangeError. Clamp makes it a move-to-end.
+    expect(reorderedIds([1, 2, 3], 0, 3), [2, 3, 1]);
+  });
 
   group('insertedAt', () {
     test('inserts at the head', () {

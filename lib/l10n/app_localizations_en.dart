@@ -141,6 +141,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get undoAction => 'Undo';
 
   @override
+  String get errorLoading => 'Something went wrong';
+
+  @override
+  String get actionFailed => 'Couldn\'t complete that. Try again.';
+
+  @override
   String get settingsTitle => 'Settings';
 
   @override

@@ -4,10 +4,25 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:nooka/data/repositories/settings_repository.dart';
+import 'package:nooka/data/repositories/todo_repository.dart';
 import 'package:nooka/data/services/database/database.dart';
 import 'package:nooka/data/services/database/database_providers.dart';
+import 'package:nooka/domain/models/category_with_tasks.dart';
 import 'package:nooka/l10n/app_localizations.dart';
 import 'package:nooka/ui/home/home_screen.dart';
+
+class _ErrorStreamRepo extends TodoRepository {
+  _ErrorStreamRepo(super.dao);
+  @override
+  Stream<List<CategoryWithTasks>> watchCategoriesWithTasks() =>
+      Stream.error(Exception('boom'));
+}
+
+class _ThrowingMutationRepo extends TodoRepository {
+  _ThrowingMutationRepo(super.dao);
+  @override
+  Future<int> purgeExpired() => Future.error(Exception('locked'));
+}
 
 Widget _app(
   AppDatabase db,
@@ -17,6 +32,23 @@ Widget _app(
   overrides: [
     appDatabaseProvider.overrideWithValue(db),
     sharedPreferencesProvider.overrideWithValue(prefs),
+  ],
+  child: MaterialApp(
+    locale: locale,
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    home: const HomeScreen(),
+  ),
+);
+
+Widget _appWithRepo(
+  TodoRepository repo,
+  SharedPreferences prefs, {
+  Locale locale = const Locale('en'),
+}) => ProviderScope(
+  overrides: [
+    sharedPreferencesProvider.overrideWithValue(prefs),
+    todoRepositoryProvider.overrideWithValue(repo),
   ],
   child: MaterialApp(
     locale: locale,
@@ -120,12 +152,14 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.enterText(find.byKey(const Key('quick-add-field')), 'First');
+    await tester.pump(); // flush listener setState before tapping
     await tester.tap(find.byKey(const Key('quick-add-confirm')));
     await tester.pumpAndSettle();
     // Dialog is still open (field present) and cleared.
     expect(find.byKey(const Key('quick-add-field')), findsOneWidget);
 
     await tester.enterText(find.byKey(const Key('quick-add-field')), 'Second');
+    await tester.pump(); // flush listener setState before tapping
     await tester.tap(find.byKey(const Key('quick-add-confirm')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('quick-add-done')));
@@ -255,6 +289,16 @@ void main() {
     expect(find.textContaining('🛒 Shopping'), findsOneWidget);
   });
 
+  testWidgets('stream error shows a localized message, not the raw exception', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_appWithRepo(_ErrorStreamRepo(db.todoDao), prefs));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Something went wrong'), findsOneWidget);
+    expect(find.textContaining('Exception'), findsNothing);
+  });
+
   testWidgets('header and row ⋮ menus align on one vertical line', (
     tester,
   ) async {
@@ -326,5 +370,27 @@ void main() {
     await tester.pump(const Duration(seconds: 5));
     await tester.pumpAndSettle();
     expect(find.text('Item completed'), findsNothing);
+  });
+
+  testWidgets('a throwing mutation surfaces the actionFailed SnackBar', (
+    tester,
+  ) async {
+    // Seed a category so the board renders and the Archive tab is reachable.
+    final cat = await db.todoDao.createCategory(
+      name: 'Home',
+      color: 0xFF009688,
+    );
+    await db.todoDao.createTask(categoryId: cat, name: 'Sweep');
+    await tester.pumpWidget(
+      _appWithRepo(_ThrowingMutationRepo(db.todoDao), prefs),
+    );
+    await tester.pumpAndSettle();
+
+    // Switching to Archive triggers the guarded purgeExpired, which throws.
+    await tester.tap(find.text('Archive'));
+    await tester.pump(); // let the guard catch + show the SnackBar
+    await tester.pump();
+
+    expect(find.text("Couldn't complete that. Try again."), findsOneWidget);
   });
 }

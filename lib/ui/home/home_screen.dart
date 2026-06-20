@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/repositories/settings_repository.dart';
 import '../../data/services/database/database.dart';
+import '../../domain/board_reorder.dart';
 import '../../domain/models/category_with_tasks.dart';
 import '../../domain/reorder.dart';
 import '../../l10n/app_localizations.dart';
@@ -96,7 +97,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               selected: {_view},
               onSelectionChanged: (s) {
                 setState(() => _view = s.first);
-                if (s.first == _View.archive) _vm.purgeExpired();
+                if (s.first == _View.archive) _guard(() => _vm.purgeExpired());
               },
             ),
           ),
@@ -111,7 +112,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           : null,
       body: state.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('$e')),
+        error: (e, _) =>
+            Center(child: Text(AppLocalizations.of(context).errorLoading)),
         data: (cats) => _body(cats, now),
       ),
     );
@@ -141,8 +143,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               tasks: cwt.archivedTasks,
               archived: true,
               now: now,
-              onToggleCollapsed: () =>
-                  _vm.toggleCollapsed(cwt.category.id, !cwt.category.collapsed),
+              onToggleCollapsed: () => _guard(
+                () => _vm.toggleCollapsed(
+                  cwt.category.id,
+                  !cwt.category.collapsed,
+                ),
+              ),
               onHeaderMenu: () => _categoryMenu(cwt),
               onTaskTap: _restore,
               onTaskMenu: null,
@@ -161,16 +167,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       listDragOnLongPress: true,
       onListReorder: (oldIndex, newIndex) {
         final ids = [for (final c in cats) c.category.id];
-        _vm.reorderCategories(reorderedIds(ids, oldIndex, newIndex));
+        _guard(
+          () => _vm.reorderCategories(reorderedIds(ids, oldIndex, newIndex)),
+        );
       },
       onItemReorder: (oldItemIndex, oldListIndex, newItemIndex, newListIndex) {
-        _onItemReorder(
-          cats,
-          oldItemIndex,
-          oldListIndex,
-          newItemIndex,
-          newListIndex,
-        );
+        _onItemReorder(oldItemIndex, oldListIndex, newItemIndex, newListIndex);
       },
       children: [for (final cwt in cats) _dragList(cwt, cats, now)],
     );
@@ -223,7 +225,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     child: TaskRowContent(
                       task: task,
                       color: color,
-                      archived: false,
                       now: now,
                       onTaskTap: (_) => _complete(task),
                       onTaskMenu: (_) => _taskMenu(cats, task),
@@ -235,34 +236,72 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   void _onItemReorder(
-    List<CategoryWithTasks> cats,
     int oldItemIndex,
     int oldListIndex,
     int newItemIndex,
     int newListIndex,
   ) {
-    final from = cats[oldListIndex];
-    final to = cats[newListIndex];
-    final movedId = from.activeTasks[oldItemIndex].id;
-    if (oldListIndex == newListIndex) {
-      final ids = [for (final t in from.activeTasks) t.id];
-      _vm.reorderTasks(reorderedIds(ids, oldItemIndex, newItemIndex));
-    } else {
-      final targetIds = [for (final t in to.activeTasks) t.id];
-      _vm.moveTaskToCategoryAt(
-        movedId,
-        to.category.id,
-        insertedAt(targetIds, movedId, newItemIndex),
-      );
+    // H4: never trust the build-time snapshot — the watch stream may have
+    // emitted mid-drag. Re-read live state and let planReorder validate it.
+    final cats = ref.read(homeViewModelProvider).value;
+    if (cats == null) return;
+    final plan = planReorder(
+      cats,
+      oldItemIndex,
+      oldListIndex,
+      newItemIndex,
+      newListIndex,
+    );
+    switch (plan) {
+      case ReorderNoop():
+        return;
+      case ReorderWithin(:final orderedIds):
+        _guard(() => _vm.reorderTasks(orderedIds));
+      case ReorderAcross(
+        :final movedId,
+        :final toCategoryId,
+        :final orderedTargetIds,
+        :final expandCategoryId,
+      ):
+        _guard(() async {
+          await _vm.moveTaskToCategoryAt(
+            movedId,
+            toCategoryId,
+            orderedTargetIds,
+          );
+          // H3: a collapsed destination renders no items, so the dropped task
+          // would be hidden. Auto-expand it — but only after the move succeeds,
+          // so a failed move never leaves an expanded empty category.
+          if (expandCategoryId != null) {
+            await _vm.toggleCollapsed(expandCategoryId, false);
+          }
+        });
     }
   }
 
   void _onExpandToggle(Category category) {
     final expanding = category.collapsed; // currently collapsed -> expanding
-    _vm.toggleCollapsed(category.id, !category.collapsed);
+    _guard(() => _vm.toggleCollapsed(category.id, !category.collapsed));
     if (expanding) {
       _lastCategoryId = category.id;
       ref.read(settingsRepositoryProvider).writeLastCategoryId(category.id);
+    }
+  }
+
+  /// Runs an imperative mutation, surfacing any failure as a localized
+  /// SnackBar instead of an unhandled async error. Bundles B and C route their
+  /// edited/new mutations through this same guard.
+  Future<void> _guard(Future<void> Function() action) async {
+    try {
+      await action();
+    } catch (e, st) {
+      // Log so a swallowed failure (incl. a programmer error) is never
+      // invisible; the SnackBar is the user-facing half.
+      debugPrint('Guarded mutation failed: $e\n$st');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context).actionFailed)),
+      );
     }
   }
 
@@ -296,14 +335,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final message = AppLocalizations.of(context).undoCompleteMessage;
     await _vm.completeTask(task.id);
     if (!mounted) return;
-    _showUndoToast(message, () => _vm.restoreTask(task.id));
+    _showUndoToast(message, () => _guard(() => _vm.restoreTask(task.id)));
   }
 
   Future<void> _restore(Task task) async {
     final message = AppLocalizations.of(context).undoRestoreMessage;
     await _vm.restoreTask(task.id);
     if (!mounted) return;
-    _showUndoToast(message, () => _vm.completeTask(task.id));
+    _showUndoToast(message, () => _guard(() => _vm.completeTask(task.id)));
   }
 
   Future<void> _addTask(List<CategoryWithTasks> cats) async {

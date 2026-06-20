@@ -148,6 +148,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String get undoAction => 'Отменить';
 
   @override
+  String get errorLoading => 'Что-то пошло не так';
+
+  @override
+  String get actionFailed =>
+      'Не удалось выполнить действие. Попробуйте ещё раз.';
+
+  @override
   String get settingsTitle => 'Настройки';
 
   @override

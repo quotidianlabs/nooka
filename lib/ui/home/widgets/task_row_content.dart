@@ -18,7 +18,6 @@ class TaskRowContent extends StatelessWidget {
     super.key,
     required this.task,
     required this.color,
-    required this.archived,
     required this.now,
     required this.onTaskTap,
     required this.onTaskMenu,
@@ -26,7 +25,6 @@ class TaskRowContent extends StatelessWidget {
 
   final Task task;
   final Color color;
-  final bool archived;
   final DateTime now;
   final void Function(Task) onTaskTap;
   final void Function(Task)? onTaskMenu;
@@ -35,6 +33,7 @@ class TaskRowContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final localeName = Localizations.localeOf(context).toString();
+    final archived = task.archivedAt != null;
     return ListTile(
       key: Key('task-${task.id}'),
       leading: archived
@@ -44,7 +43,7 @@ class TaskRowContent extends StatelessWidget {
               label: l10n.markDoneLabel,
               child: const Icon(Icons.radio_button_unchecked),
             ),
-      title: Text(task.name),
+      title: Text(task.name, maxLines: 2, overflow: TextOverflow.ellipsis),
       subtitle: archived
           ? Text(
               '${l10n.completedOn(DateFormat.yMMMd(localeName).format(task.archivedAt!))}'
