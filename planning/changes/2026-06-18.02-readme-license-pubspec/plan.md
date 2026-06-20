@@ -400,9 +400,9 @@ simulator (or Android emulator).
 
   The design and implementation history for every change lives in
   [`planning/`](planning/) — see, e.g., the
-  [to-do list foundation](planning/changes/archive/2026-06-17.01-todo-list/design.md)
+  [to-do list foundation](planning/changes/2026-06-17.01-todo-list/design.md)
   and the
-  [planning-convention adoption](planning/changes/archive/2026-06-18.01-adopt-planning-convention/design.md).
+  [planning-convention adoption](planning/changes/2026-06-18.01-adopt-planning-convention/design.md).
   The living capability docs are in [`architecture/`](architecture/README.md).
 
   ## Getting started
@@ -490,8 +490,8 @@ simulator (or Android emulator).
            assets/screenshots/home-en.png assets/screenshots/archive-en.png \
            assets/screenshots/settings-en.png assets/screenshots/create-en.png \
            assets/screenshots/home-dark.png assets/screenshots/home-ru.png \
-           planning/changes/archive/2026-06-17.01-todo-list/design.md \
-           planning/changes/archive/2026-06-18.01-adopt-planning-convention/design.md \
+           planning/changes/2026-06-17.01-todo-list/design.md \
+           planning/changes/2026-06-18.01-adopt-planning-convention/design.md \
            architecture/README.md docs/screenshots.md; do
     [ -e "$p" ] && echo "OK  $p" || echo "MISSING  $p"; done
   ```
@@ -517,6 +517,6 @@ simulator (or Android emulator).
 
 On merge, **promote** this bundle per `planning/README.md`: move
 `planning/changes/active/2026-06-18.02-readme-license-pubspec/` to
-`planning/changes/archive/`, set its `design.md` frontmatter to
+`planning/changes/`, set its `design.md` frontmatter to
 `status: shipped` with the merge `pr`/`outcome`, and move its README Index line
 from **Active** to **Archived**.

@@ -2,6 +2,7 @@
 status: shipped
 date: 2026-06-18
 slug: adopt-planning-convention
+summary: Stand up planning/ mirroring habbits, add CLAUDE.md, and migrate the two superpowers specs into archive bundles.
 supersedes: null
 superseded_by: null
 pr: 775dcef
@@ -78,7 +79,7 @@ Create a project guide mirroring habbits' in shape:
   Android, English + Russian), layered MVVM with Riverpod.
 - **Workflow** section: design + plan for every non-trivial change live in
   `planning/`; read `planning/README.md` for the convention; bundles in
-  `changes/active/` → `changes/archive/` on merge; unscheduled items in
+  `changes/active/` → `changes/` on merge; unscheduled items in
   `planning/deferred.md`; `architecture/` capability docs are the truth-home.
 - **Commands** section: `just lint` (`dart format` + `flutter analyze`) and
   `just test` (`flutter test`); CI uses `just lint-ci`; regenerate generated
@@ -98,10 +99,10 @@ list foundation and the UI-refinements pass — both merged). Move them with
 
 | From | To |
 |------|----|
-| `docs/superpowers/specs/2026-06-17-todo-list-design.md` | `planning/changes/archive/2026-06-17.01-todo-list/design.md` |
-| `docs/superpowers/plans/2026-06-17-todo-list.md` | `planning/changes/archive/2026-06-17.01-todo-list/plan.md` |
-| `docs/superpowers/specs/2026-06-17-ui-refinements-design.md` | `planning/changes/archive/2026-06-17.02-ui-refinements/design.md` |
-| `docs/superpowers/plans/2026-06-17-ui-refinements.md` | `planning/changes/archive/2026-06-17.02-ui-refinements/plan.md` |
+| `docs/superpowers/specs/2026-06-17-todo-list-design.md` | `planning/changes/2026-06-17.01-todo-list/design.md` |
+| `docs/superpowers/plans/2026-06-17-todo-list.md` | `planning/changes/2026-06-17.01-todo-list/plan.md` |
+| `docs/superpowers/specs/2026-06-17-ui-refinements-design.md` | `planning/changes/2026-06-17.02-ui-refinements/design.md` |
+| `docs/superpowers/plans/2026-06-17-ui-refinements.md` | `planning/changes/2026-06-17.02-ui-refinements/plan.md` |
 
 Frontmatter added on migration: `status: shipped`, `date` (proposal date),
 `slug`, and `pr`/`outcome` (the merge commit short-SHA where no PR number
@@ -145,7 +146,7 @@ This is a docs/scaffold change touching no Dart, so verification is:
   confirms no source was disturbed.
 - Every relative link in `planning/README.md` and `CLAUDE.md` resolves to an
   existing path.
-- `git log --follow planning/changes/archive/2026-06-17.01-todo-list/design.md`
+- `git log --follow planning/changes/2026-06-17.01-todo-list/design.md`
   shows the pre-move history — confirms the migration preserved provenance.
 - `docs/superpowers/` no longer exists; no stray references to it remain
   (`grep -r superpowers . --include=*.md` finds only `.superpowers/` tooling,

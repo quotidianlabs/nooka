@@ -2,6 +2,7 @@
 status: shipped
 date: 2026-06-17
 slug: todo-list
+summary: Initial local-first to-do list: colored categories holding tasks, complete→archive with 30-day retention, drag-reorder, undo toasts, light/dark themes, en/ru.
 supersedes: null
 superseded_by: null
 pr: null

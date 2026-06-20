@@ -6,30 +6,36 @@ system got to where it is*. The living truth about *what it does now* lives in
 
 ## Conventions
 
-> This section is the portable convention — identical across the sibling repos.
-> The Index below is repo-specific. To adopt elsewhere, copy this section plus
-> [`_templates/`](_templates/) and point that repo's `CLAUDE.md` workflow at it.
+> This section is the portable convention — identical across the
+> modern-python repos. The generated change listing (`just index`) and the `## Other` pointers below are repo-local. To adopt elsewhere,
+> copy this section plus [`_templates/`](_templates/) and point that repo's
+> `CLAUDE.md` Workflow + truth home at it.
 
 ### Two axes, never mixed
 
 - **`architecture/` (repo root) — the present.** One file per capability,
-  living prose, updated whenever a change ships. The truth home.
-- **`planning/changes/` — the past-and-pending.** One folder per change, frozen
-  once shipped.
+  living prose, updated in the same PR that ships the change. The truth home.
+- **`planning/changes/` — the past-and-pending.** One folder per change,
+  kept in place after ship.
 
-Shipping a change **promotes** its conclusions into the affected
-`architecture/<capability>.md` by hand, then archives the bundle.
+A change **promotes** its conclusions into the affected
+`architecture/<capability>.md` by hand **in the implementing PR, alongside the
+code** — the edit rides in the same diff and is reviewed with it, never applied
+as a separate post-merge step. That hand-edit is what keeps `architecture/`
+true; the bundle stays in `changes/` as the *why*.
 
 ### Change bundles
 
-A change is a folder `changes/active/YYYY-MM-DD.NN-<slug>/`:
+A change is a folder `changes/YYYY-MM-DD.NN-<slug>/`:
 
-- `YYYY-MM-DD` — proposal date; `.NN` — zero-padded intra-day counter that
-  breaks same-date ties so the timeline sorts stably.
+- `YYYY-MM-DD` — proposal date; `.NN` — zero-padded intra-day counter
+  (`.01`, `.02`, …) that breaks same-date ties so the timeline sorts stably.
 - `<slug>` — kebab-case description, not a story ID.
 
-On merge the folder moves to `changes/archive/` with `status: shipped`, `pr:`,
-and `outcome:` filled, and its line moves from **Active** to **Archived** below.
+`summary` is written when the change is created (it is the change's
+one-liner). The implementing PR then sets `status: shipped` and fills `pr`
+and `outcome` **in the branch**, alongside the code and the `architecture/`
+promotion — no post-merge bookkeeping, no folder move.
 
 ### Three lanes
 
@@ -39,61 +45,32 @@ and `outcome:` filled, and its line moves from **Active** to **Archived** below.
 | **Lightweight** | `change.md` | small-but-real: ≲30 LOC net, ≤2 files, no new file, no public-API change, single straightforward test |
 | **Tiny** | none — conventional commit | typo, dep bump, linter/formatter/CI tweak, mechanical rename, single-line config |
 
-Heavier lane wins on ambiguity. A `change.md` that outgrows its lane splits into
-`design.md` + `plan.md`.
+Heavier lane wins on ambiguity. A `change.md` that outgrows its lane splits
+into `design.md` + `plan.md`.
 
 ### Artifacts at a glance
 
 - **`design.md`** — the spec: the *thinking* (why, design, trade-offs, scope).
 - **`plan.md`** — the plan: the *sequencing* (the executor's task checklist).
 - **`change.md`** — both, condensed, for the lightweight lane.
+- **`releases/<semver>.md`** — per-release user-facing notes.
+- **`audits/<date>-<slug>.md`** — findings from a code/docs/bug-hunt sweep;
+  spawns fix changes.
+- **`retros/<date>-<slug>.md`** — what we learned after a body of work.
 - **`deferred.md`** — real-but-unscheduled items, each with a revisit trigger.
 
 Templates live in [`_templates/`](_templates/).
 
 ### Frontmatter
 
-`design.md` / `change.md`: `status` (draft|approved|shipped|superseded), `date`,
-`slug`, `supersedes`, `superseded_by`, `pr`, `outcome`. `plan.md`: `status`,
-`date`, `slug`, `spec`, `pr`. Files in `architecture/` carry **no** frontmatter.
+`design.md` / `change.md`: `status` (draft|approved|shipped|superseded),
+`date`, `slug`, `summary` (single line), `supersedes`, `superseded_by`, `pr`,
+`outcome`. `plan.md`: `status`, `date`, `slug`, `spec`, `pr`. Files in
+`architecture/` carry **no** frontmatter — living prose, dated by git.
 
 ## Index
 
-### Active
-
-_None._
-
-### Archived (shipped)
-
-- **[drag-reorder-board](changes/archive/2026-06-18.07-drag-reorder-board/design.md)**
-  (#9, 2026-06-18) — Expose drag-and-drop on the Active view (reorder
-  categories, reorder tasks, drag tasks across categories) via
-  `drag_and_drop_lists`, plus: expanding a category sets it as the add-task
-  default.
-- **[remember-last-category](changes/archive/2026-06-18.06-remember-last-category/change.md)**
-  (#7, 2026-06-18) — Persist the last-used category through `SettingsRepository`
-  so the add-task FAB defaults to it across app restarts.
-- **[app-icon](changes/archive/2026-06-18.05-app-icon/design.md)**
-  (#6, 2026-06-18) — Custom launcher icon: a white ticked checkbox on brand
-  teal, generated for iOS + Android via `flutter_launcher_icons`.
-- **[menu-alignment](changes/archive/2026-06-18.04-menu-alignment/change.md)**
-  (#4, 2026-06-18) — Rebuild the category header as a `ListTile` so its
-  chevron, title, and ⋮ menu align with the item rows' columns.
-- **[ci](changes/archive/2026-06-18.03-ci/design.md)**
-  (#3, 2026-06-18) — GitHub Actions running `just lint-ci` + `just test` on
-  push and PRs, plus the README CI badge.
-- **[readme-license-pubspec](changes/archive/2026-06-18.02-readme-license-pubspec/design.md)**
-  (#1, 2026-06-18) — Real README (tagline, screenshot gallery, features,
-  architecture), MIT `LICENSE`, fixed `pubspec` description, and a ported
-  deterministic screenshot generator.
-- **[adopt-planning-convention](changes/archive/2026-06-18.01-adopt-planning-convention/design.md)**
-  (775dcef, 2026-06-18) — Stand up `planning/` mirroring habbits, add
-  `CLAUDE.md`, and migrate the two superpowers specs into archive bundles.
-- **[ui-refinements](changes/archive/2026-06-17.02-ui-refinements/design.md)**
-  (6d11b30, 2026-06-17) — Distinct category section-label headers, a
-  single-grapheme relabeled icon field, and a reliably auto-dismissing undo
-  toast.
-- **[todo-list](changes/archive/2026-06-17.01-todo-list/design.md)**
-  (38ee702, 2026-06-17) — Initial local-first to-do list: colored categories
-  holding tasks, complete→archive with 30-day retention, drag-reorder, undo
-  toasts, light/dark themes, en/ru.
+The change listing is **generated**, not maintained — run `just index` to
+print it (grouped by `status`: In progress / Shipped / Superseded). The
+frontmatter in each bundle is the single source of truth; there is no
+committed copy to drift.

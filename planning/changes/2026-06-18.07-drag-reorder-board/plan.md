@@ -763,7 +763,7 @@ then promote the data-model note.
   Push the branch and open a PR titled `feat: drag-reorder board +
   expand-sets-default`. On merge, set this bundle's `design.md`/`plan.md`
   frontmatter to `status: shipped` with the `pr:`/`outcome:`, move the folder
-  to `planning/changes/archive/`, and move its `planning/README.md` line from
+  to `planning/changes/`, and move its `planning/README.md` line from
   **Active** to **Archived**.
 
 ---

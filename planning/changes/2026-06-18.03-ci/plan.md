@@ -173,7 +173,7 @@ committed on it).
 This bundle ships via PR (the repo squash-merges PRs). After opening the PR,
 confirm both CI jobs run and go green on the PR and that the README badge
 resolves. On merge, **promote** per `planning/README.md`: move
-`planning/changes/active/2026-06-18.03-ci/` to `planning/changes/archive/`,
+`planning/changes/active/2026-06-18.03-ci/` to `planning/changes/`,
 set its `design.md` frontmatter to `status: shipped` with the merge `pr`/
 `outcome`, and move its README Index line from **Active** to **Archived** — in
 a follow-up promotion PR, as with bundles 1–2.
