@@ -49,6 +49,8 @@
   "undoCompleteMessage": "Item completed",
   "undoRestoreMessage": "Item restored",
   "undoAction": "Undo",
+  "errorLoading": "Something went wrong",
+  "actionFailed": "Couldn't complete that. Try again.",
   "settingsTitle": "Settings",
   "themeLabel": "Theme",
   "languageLabel": "Language",
