@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -12,6 +14,10 @@ import 'ui/home/home_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  FlutterError.onError = (details) {
+    FlutterError.presentError(details);
+    debugPrint('FlutterError: ${details.exceptionAsString()}');
+  };
   final prefs = await SharedPreferences.getInstance();
   final container = ProviderContainer(
     overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
@@ -25,8 +31,11 @@ Future<void> main() async {
     debugPrint('Startup purge failed (continuing): $e\n$st');
   }
 
-  runApp(
-    UncontrolledProviderScope(container: container, child: const NookaApp()),
+  runZonedGuarded(
+    () => runApp(
+      UncontrolledProviderScope(container: container, child: const NookaApp()),
+    ),
+    (error, stack) => debugPrint('Uncaught zone error: $error\n$stack'),
   );
 }
 
