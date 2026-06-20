@@ -5,7 +5,7 @@ slug: finish-deferred-lows
 summary: Close out the three deferred audit lows — make reorderedIds total (L2), document the elapsed-24h retention semantics (L7), and refresh the archive countdown on app resume (L8).
 supersedes: null
 superseded_by: null
-pr: null
+pr: "#13"
 outcome: "reorderedIds now returns an unchanged copy for an out-of-range oldIndex / empty list (total, never throws) — L2; documented that retention is elapsed-24h not calendar-day (DST may shift the boundary ~1h, acceptable) — L7; HomeScreen observes lifecycle and rebuilds on resume so the archive countdown recomputes now — L8. 93/93 tests green."
 ---
 
