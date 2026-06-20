@@ -139,6 +139,7 @@ class _QuickAddDialogState extends State<_QuickAddDialog> {
   final TextEditingController _name = TextEditingController();
   final FocusNode _focus = FocusNode();
   late int _categoryId = widget.initialCategoryId;
+  bool _busy = false;
 
   @override
   void dispose() {
@@ -148,10 +149,17 @@ class _QuickAddDialogState extends State<_QuickAddDialog> {
   }
 
   Future<void> _submit() async {
+    if (_busy) return;
     final name = _name.text.trim();
     if (name.isEmpty) return;
-    await widget.onAdd(name, _categoryId);
-    _name.clear();
+    _busy = true;
+    _name.clear(); // clear synchronously, before the await
+    try {
+      await widget.onAdd(name, _categoryId);
+    } finally {
+      _busy = false;
+    }
+    if (!mounted) return; // L5: dialog may have been dismissed mid-await
     _focus.requestFocus(); // keep the keyboard up for the next item
   }
 
