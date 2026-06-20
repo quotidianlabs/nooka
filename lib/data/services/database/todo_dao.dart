@@ -202,6 +202,8 @@ class TodoDao extends DatabaseAccessor<AppDatabase> with _$TodoDaoMixin {
         ])..orderBy([
           OrderingTerm(expression: categories.sortOrder),
           OrderingTerm(expression: tasks.sortOrder),
+          OrderingTerm(expression: categories.id),
+          OrderingTerm(expression: tasks.id),
         ]);
     return q.watch().map(_group);
   }

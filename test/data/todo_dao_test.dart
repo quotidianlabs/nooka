@@ -1,4 +1,4 @@
-import 'package:drift/drift.dart' show OrderingTerm;
+import 'package:drift/drift.dart' show OrderingTerm, Value;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nooka/data/services/database/database.dart';
@@ -91,6 +91,27 @@ void main() {
         expect(s2, isNotNull);
       },
     );
+
+    test('duplicate sortOrder orders deterministically by id', () async {
+      final cat = await db.todoDao.createCategory(name: 'Home', color: 1);
+      final t1 = await db.todoDao.createTask(categoryId: cat, name: 't1');
+      final t2 = await db.todoDao.createTask(categoryId: cat, name: 't2');
+      final t3 = await db.todoDao.createTask(categoryId: cat, name: 't3');
+
+      // Force a sortOrder collision (reachable via the stale-set reorder hazard).
+      for (final id in [t1, t2, t3]) {
+        await (db.update(db.tasks)..where((t) => t.id.equals(id))).write(
+          const TasksCompanion(sortOrder: Value(0)),
+        );
+      }
+
+      final a = await db.todoDao.watchCategoriesWithTasks().first;
+      final b = await db.todoDao.watchCategoriesWithTasks().first;
+      final orderA = a.first.activeTasks.map((t) => t.id).toList();
+      final orderB = b.first.activeTasks.map((t) => t.id).toList();
+      expect(orderA, [t1, t2, t3]); // id-ascending tiebreak
+      expect(orderA, orderB); // stable across reads
+    });
   });
 
   group('task lifecycle', () {
