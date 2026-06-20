@@ -32,21 +32,6 @@ class TodoDao extends DatabaseAccessor<AppDatabase> with _$TodoDaoMixin {
     );
   }
 
-  Future<void> renameCategory(int id, String name) =>
-      (update(categories)..where((c) => c.id.equals(id))).write(
-        CategoriesCompanion(name: Value(name)),
-      );
-
-  Future<void> setCategoryColor(int id, int color) =>
-      (update(categories)..where((c) => c.id.equals(id))).write(
-        CategoriesCompanion(color: Value(color)),
-      );
-
-  Future<void> setCategoryEmoji(int id, String? emoji) =>
-      (update(categories)..where((c) => c.id.equals(id))).write(
-        CategoriesCompanion(emoji: Value(emoji)),
-      );
-
   /// Writes a category's name, color and emoji in a single update — the edit
   /// dialog's three fields, batched so the stream rebuilds once.
   Future<void> updateCategory({
@@ -215,9 +200,12 @@ class TodoDao extends DatabaseAccessor<AppDatabase> with _$TodoDaoMixin {
         select(categories).join([
           leftOuterJoin(tasks, tasks.categoryId.equalsExp(categories.id)),
         ])..orderBy([
+          // Group keys by table: the category-level tiebreak (id) must come
+          // before any task key. Otherwise a category sortOrder collision is
+          // resolved by task contents (rows interleave) instead of by id.
           OrderingTerm(expression: categories.sortOrder),
-          OrderingTerm(expression: tasks.sortOrder),
           OrderingTerm(expression: categories.id),
+          OrderingTerm(expression: tasks.sortOrder),
           OrderingTerm(expression: tasks.id),
         ]);
     return q.watch().map(_group);

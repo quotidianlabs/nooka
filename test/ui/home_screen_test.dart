@@ -429,10 +429,8 @@ void main() {
     tester,
   ) async {
     // Seed a category so the board and FAB render.
-    final cat = await db.todoDao.createCategory(
-      name: 'Home',
-      color: 0xFF009688,
-    );
+    // Seed a category so the board renders and the FAB is visible.
+    await db.todoDao.createCategory(name: 'Home', color: 0xFF009688);
     // Use the real DAO for the watch stream; only createTask throws.
     final throwingRepo = _ThrowingCreateTaskRepo(db.todoDao);
     await tester.pumpWidget(_appWithRepo(throwingRepo, prefs));
@@ -456,9 +454,5 @@ void main() {
 
     // last_category must NOT have been written (stays null).
     expect(SettingsRepository(prefs).readLastCategoryId(), isNull);
-
-    // Suppress unused variable warning — cat is used to ensure a category
-    // exists so the board renders and FAB is visible.
-    expect(cat, isA<int>());
   });
 }

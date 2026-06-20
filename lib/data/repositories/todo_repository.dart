@@ -21,12 +21,6 @@ class TodoRepository {
     required int color,
     String? emoji,
   }) => _dao.createCategory(name: name, color: color, emoji: emoji);
-  Future<void> renameCategory(int id, String name) =>
-      _dao.renameCategory(id, name);
-  Future<void> setCategoryColor(int id, int color) =>
-      _dao.setCategoryColor(id, color);
-  Future<void> setCategoryEmoji(int id, String? emoji) =>
-      _dao.setCategoryEmoji(id, emoji);
   Future<void> updateCategory({
     required int id,
     required String name,

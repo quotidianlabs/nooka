@@ -39,7 +39,7 @@ final class HomeViewModelProvider
   HomeViewModel create() => HomeViewModel();
 }
 
-String _$homeViewModelHash() => r'88a7b459a6a19ee7ecae92789a5d59a4290054ea';
+String _$homeViewModelHash() => r'0857c736395d9f2841abefff2bcb3f52ac8926cf';
 
 /// Streams every category with its tasks and exposes mutation commands.
 /// Depends only on [TodoRepository].

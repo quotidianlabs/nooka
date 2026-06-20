@@ -279,12 +279,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
   }
 
-  void _onExpandToggle(Category category) {
+  Future<void> _onExpandToggle(Category category) async {
     final expanding = category.collapsed; // currently collapsed -> expanding
-    _guard(() => _vm.toggleCollapsed(category.id, !category.collapsed));
-    if (expanding) {
+    final ok = await _guard(
+      () => _vm.toggleCollapsed(category.id, !category.collapsed),
+    );
+    // Persist the remembered default only when the toggle actually succeeded.
+    if (ok && expanding) {
       _lastCategoryId = category.id;
-      ref.read(settingsRepositoryProvider).writeLastCategoryId(category.id);
+      await ref
+          .read(settingsRepositoryProvider)
+          .writeLastCategoryId(category.id);
     }
   }
 
@@ -443,7 +448,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           context,
           categories: [cwt.category],
           initialCategoryId: cwt.category.id,
-          onAdd: (name, categoryId) => _vm.addTask(categoryId, name),
+          onAdd: (name, categoryId) =>
+              _guard(() => _vm.addTask(categoryId, name)),
         );
       case 'delete':
         final ok = await confirmDeleteCategory(

@@ -168,6 +168,34 @@ void main() {
       expect(orderA, [t1, t2, t3]); // id-ascending tiebreak
       expect(orderA, orderB); // stable across reads
     });
+
+    test(
+      'duplicate category sortOrder orders categories by id, not tasks',
+      () async {
+        final catA = await db.todoDao.createCategory(name: 'A', color: 1);
+        final catB = await db.todoDao.createCategory(name: 'B', color: 2);
+        // Force a category sortOrder collision.
+        for (final id in [catA, catB]) {
+          await (db.update(db.categories)..where((c) => c.id.equals(id))).write(
+            const CategoriesCompanion(sortOrder: Value(0)),
+          );
+        }
+        // Give A a high task sortOrder and B a low one: with the category id
+        // tiebreak placed after tasks.sortOrder, the rows interleave and B sorts
+        // first. Grouping the order keys by table keeps category order by id.
+        final ta = await db.todoDao.createTask(categoryId: catA, name: 'ta');
+        final tb = await db.todoDao.createTask(categoryId: catB, name: 'tb');
+        await (db.update(db.tasks)..where((t) => t.id.equals(ta))).write(
+          const TasksCompanion(sortOrder: Value(5)),
+        );
+        await (db.update(db.tasks)..where((t) => t.id.equals(tb))).write(
+          const TasksCompanion(sortOrder: Value(1)),
+        );
+
+        final snap = await db.todoDao.watchCategoriesWithTasks().first;
+        expect(snap.map((c) => c.category.id), [catA, catB]); // id-ascending
+      },
+    );
   });
 
   group('task lifecycle', () {
@@ -229,7 +257,6 @@ void main() {
       expect(deleted, 1);
       final remaining = await db.select(db.tasks).get();
       expect(remaining.map((t) => t.name), ['at29']);
-      expect(at30, isNotNull);
     });
 
     test('restoreTask re-appends to the tail of active sortOrder', () async {
@@ -237,7 +264,6 @@ void main() {
       final a = await db.todoDao.createTask(categoryId: cat, name: 'a'); // 0
       final b = await db.todoDao.createTask(categoryId: cat, name: 'b'); // 1
       final c = await db.todoDao.createTask(categoryId: cat, name: 'c'); // 2
-      expect([a, b, c], isNotEmpty);
 
       // Archive 'a', then restore it: it should re-append after b and c.
       await db.todoDao.completeTask(a, DateTime(2026, 6, 1));
@@ -249,6 +275,13 @@ void main() {
       expect(row.archivedAt, isNull);
       // b=1, c=2 remained active while a was archived → a re-appends at 3.
       expect(row.sortOrder, 3);
+      // The active order reflects the re-append: b, c, then a.
+      final active = (await db.todoDao.watchCategoriesWithTasks().first)
+          .first
+          .activeTasks
+          .map((t) => t.id)
+          .toList();
+      expect(active, [b, c, a]);
     });
 
     test('clearArchive deletes all archived but keeps active', () async {
