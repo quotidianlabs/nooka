@@ -72,6 +72,17 @@ class HomeViewModel extends _$HomeViewModel {
   Future<CommandOutcome> toggleCollapsed(int id, bool collapsed) =>
       _run(() => _repo.setCollapsed(id, collapsed));
 
+  /// Toggles category [id], which is currently [collapsed]. Expanding it
+  /// (collapsed → expanded) also remembers it as the quick-add default — the
+  /// "expanding a category sets the add-task default" rule. Collapsing does not.
+  Future<CommandOutcome> toggleActiveCategory(int id, bool collapsed) async {
+    final outcome = await _run(() => _repo.setCollapsed(id, !collapsed));
+    if (outcome == CommandOutcome.success && collapsed) {
+      await _remembered.write(id); // was collapsed → now expanding
+    }
+    return outcome;
+  }
+
   /// Reorders the category at [oldIndex] to [newIndex] against live state.
   Future<CommandOutcome> reorderCategories(int oldIndex, int newIndex) {
     final cats = state.value;

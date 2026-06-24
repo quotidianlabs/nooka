@@ -182,6 +182,30 @@ void main() {
     });
   });
 
+  group('toggleActiveCategory remembers on expand', () {
+    test('expanding a collapsed category remembers it', () async {
+      final cat = await db.todoDao.createCategory(name: 'Home', color: 1);
+      await db.todoDao.setCollapsed(cat, true);
+      final (container, vm) = await build();
+
+      final outcome = await vm.toggleActiveCategory(cat, true); // -> expand
+
+      expect(outcome, CommandOutcome.success);
+      expect(container.read(rememberedCategoryProvider).read(), cat);
+      expect((await snapshot()).first.category.collapsed, isFalse);
+    });
+
+    test('collapsing an expanded category does NOT remember it', () async {
+      final cat = await db.todoDao.createCategory(name: 'Home', color: 1);
+      final (container, vm) = await build();
+
+      await vm.toggleActiveCategory(cat, false); // -> collapse
+
+      expect(container.read(rememberedCategoryProvider).read(), isNull);
+      expect((await snapshot()).first.category.collapsed, isTrue);
+    });
+  });
+
   group('reorderCategories', () {
     test('reorders categories by index', () async {
       final a = await db.todoDao.createCategory(name: 'A', color: 1);
