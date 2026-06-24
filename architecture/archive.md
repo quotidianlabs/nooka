@@ -1,7 +1,12 @@
 # Archive & retention
 
 Completing a task sets `archivedAt = now`; restoring clears it and re-appends the
-task to its category's active order. Archived tasks are retained
+task to its category's active order. The `now` for `archivedAt` and for the purge
+cutoff is sourced from the injectable **Clock seam** (`domain/clock.dart`):
+`TodoRepository` holds a `Clock` (production `SystemClock`, overridable with a
+`FixedClock` in tests), so archive-lifecycle time is deterministic through the
+repository's interface. (A task's `createdAt` is non-injected write-only metadata
+the DAO stamps directly — see the decision record.) Archived tasks are retained
 `archiveRetentionDays` (30) days from `archivedAt`, then purged. Retention is
 measured in elapsed 24-hour periods, not local calendar days, so a DST
 transition can shift the boundary by ~an hour (acceptable at a 30-day window).
