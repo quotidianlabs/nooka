@@ -5,11 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../data/repositories/settings_repository.dart';
 import '../../data/services/database/database.dart';
-import '../../domain/board_reorder.dart';
 import '../../domain/models/category_with_tasks.dart';
-import '../../domain/reorder.dart';
 import '../../l10n/app_localizations.dart';
 import '../settings/settings_screen.dart';
 import '../widgets/category_dialog.dart';
@@ -32,7 +29,6 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen>
     with WidgetsBindingObserver {
   _View _view = _View.active;
-  int? _lastCategoryId; // remembered default for quick add
   Timer? _toastTimer;
 
   static const _toastDuration = Duration(seconds: 4);
@@ -41,9 +37,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    // Seed the quick-add default from the persisted last-used category so it
-    // survives app restarts.
-    _lastCategoryId = ref.read(settingsRepositoryProvider).readLastCategoryId();
   }
 
   @override
@@ -107,7 +100,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               selected: {_view},
               onSelectionChanged: (s) {
                 setState(() => _view = s.first);
-                if (s.first == _View.archive) _guard(() => _vm.purgeExpired());
+                if (s.first == _View.archive) _dispatch(_vm.purgeExpired());
               },
             ),
           ),
@@ -153,11 +146,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               tasks: cwt.archivedTasks,
               archived: true,
               now: now,
-              onToggleCollapsed: () => _guard(
-                () => _vm.toggleCollapsed(
-                  cwt.category.id,
-                  !cwt.category.collapsed,
-                ),
+              onToggleCollapsed: () => _dispatch(
+                _vm.toggleCollapsed(cwt.category.id, !cwt.category.collapsed),
               ),
               onHeaderMenu: () => _categoryMenu(cwt),
               onTaskTap: _restore,
@@ -175,15 +165,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       listPadding: EdgeInsets.zero,
       itemDragOnLongPress: true,
       listDragOnLongPress: true,
-      onListReorder: (oldIndex, newIndex) {
-        final ids = [for (final c in cats) c.category.id];
-        _guard(
-          () => _vm.reorderCategories(reorderedIds(ids, oldIndex, newIndex)),
-        );
-      },
-      onItemReorder: (oldItemIndex, oldListIndex, newItemIndex, newListIndex) {
-        _onItemReorder(oldItemIndex, oldListIndex, newItemIndex, newListIndex);
-      },
+      onListReorder: (oldIndex, newIndex) =>
+          _dispatch(_vm.reorderCategories(oldIndex, newIndex)),
+      onItemReorder: (oldItemIndex, oldListIndex, newItemIndex, newListIndex) =>
+          _dispatch(
+            _vm.dropTask(
+              oldItemIndex,
+              oldListIndex,
+              newItemIndex,
+              newListIndex,
+            ),
+          ),
       children: [for (final cwt in cats) _dragList(cwt, cats, now)],
     );
   }
@@ -202,7 +194,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           CategoryHeaderContent(
             category: cwt.category,
             taskCount: cwt.activeTasks.length,
-            onToggleCollapsed: () => _onExpandToggle(cwt.category),
+            onToggleCollapsed: () => _dispatch(
+              _vm.toggleActiveCategory(cwt.category.id, cwt.category.collapsed),
+            ),
             onHeaderMenu: () => _categoryMenu(cwt),
           ),
           Container(
@@ -245,87 +239,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     );
   }
 
-  void _onItemReorder(
-    int oldItemIndex,
-    int oldListIndex,
-    int newItemIndex,
-    int newListIndex,
-  ) {
-    // H4: never trust the build-time snapshot — the watch stream may have
-    // emitted mid-drag. Re-read live state and let planReorder validate it.
-    final cats = ref.read(homeViewModelProvider).value;
-    if (cats == null) return;
-    final plan = planReorder(
-      cats,
-      oldItemIndex,
-      oldListIndex,
-      newItemIndex,
-      newListIndex,
-    );
-    switch (plan) {
-      case ReorderNoop():
-        return;
-      case ReorderWithin(:final orderedIds):
-        _guard(() => _vm.reorderTasks(orderedIds));
-      case ReorderAcross(
-        :final movedId,
-        :final toCategoryId,
-        :final orderedTargetIds,
-        :final expandCategoryId,
-      ):
-        _guard(() async {
-          await _vm.moveTaskToCategoryAt(
-            movedId,
-            toCategoryId,
-            orderedTargetIds,
-          );
-          // H3: a collapsed destination renders no items, so the dropped task
-          // would be hidden. Auto-expand it — but only after the move succeeds,
-          // so a failed move never leaves an expanded empty category.
-          if (expandCategoryId != null) {
-            await _vm.toggleCollapsed(expandCategoryId, false);
-          }
-        });
-    }
-  }
-
-  Future<void> _onExpandToggle(Category category) async {
-    final expanding = category.collapsed; // currently collapsed -> expanding
-    final ok = await _guard(
-      () => _vm.toggleCollapsed(category.id, !category.collapsed),
-    );
-    // Persist the remembered default only when the toggle actually succeeded.
-    if (ok && expanding) {
-      _lastCategoryId = category.id;
-      await ref
-          .read(settingsRepositoryProvider)
-          .writeLastCategoryId(category.id);
-    }
-  }
-
-  /// Runs an imperative mutation, surfacing any failure as a localized
-  /// SnackBar instead of an unhandled async error. Bundles B and C route their
-  /// edited/new mutations through this same guard.
-  ///
-  /// Returns `true` when the action completed successfully, `false` when it
-  /// threw (or when the widget was unmounted before the SnackBar could show).
-  /// Callers that need to gate follow-up work (e.g. persisting a default) on
-  /// success should check the return value; pure fire-and-forget callers may
-  /// discard it.
-  Future<bool> _guard(Future<void> Function() action) async {
-    try {
-      await action();
-      return true;
-    } catch (e, st) {
-      // Log so a swallowed failure (incl. a programmer error) is never
-      // invisible; the SnackBar is the user-facing half.
-      debugPrint('Guarded mutation failed: $e\n$st');
-      if (!mounted) return false;
+  /// Awaits a VM command and surfaces a [CommandOutcome.failure] as the
+  /// localized `actionFailed` SnackBar — the single place outcomes map to UI.
+  /// Returns the outcome so callers can gate follow-up UI (e.g. an undo toast)
+  /// on success; fire-and-forget callers may discard it. The VM logs the
+  /// underlying error, so it is never surfaced raw here.
+  Future<CommandOutcome> _dispatch(Future<CommandOutcome> command) async {
+    final outcome = await command;
+    if (outcome == CommandOutcome.failure && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(AppLocalizations.of(context).actionFailed)),
       );
-      return false;
     }
+    return outcome;
   }
 
   // ---- commands + toasts ----
@@ -356,36 +282,32 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   Future<void> _complete(Task task) async {
     final message = AppLocalizations.of(context).undoCompleteMessage;
-    await _vm.completeTask(task.id);
+    // Offer undo only when the complete actually succeeded.
+    if (await _dispatch(_vm.completeTask(task.id)) != CommandOutcome.success) {
+      return;
+    }
     if (!mounted) return;
-    _showUndoToast(message, () => _guard(() => _vm.restoreTask(task.id)));
+    _showUndoToast(message, () => _dispatch(_vm.restoreTask(task.id)));
   }
 
   Future<void> _restore(Task task) async {
     final message = AppLocalizations.of(context).undoRestoreMessage;
-    await _vm.restoreTask(task.id);
+    if (await _dispatch(_vm.restoreTask(task.id)) != CommandOutcome.success) {
+      return;
+    }
     if (!mounted) return;
-    _showUndoToast(message, () => _guard(() => _vm.completeTask(task.id)));
+    _showUndoToast(message, () => _dispatch(_vm.completeTask(task.id)));
   }
 
   Future<void> _addTask(List<CategoryWithTasks> cats) async {
     if (cats.isEmpty) return;
-    final ids = {for (final c in cats) c.category.id};
-    final initial = (_lastCategoryId != null && ids.contains(_lastCategoryId))
-        ? _lastCategoryId!
-        : cats.first.category.id;
+    final initial = _vm.quickAddDefault() ?? cats.first.category.id;
     await showQuickAddDialog(
       context,
       categories: [for (final c in cats) c.category],
       initialCategoryId: initial,
-      onAdd: (name, categoryId) async {
-        if (await _guard(() => _vm.addTask(categoryId, name))) {
-          _lastCategoryId = categoryId;
-          await ref
-              .read(settingsRepositoryProvider)
-              .writeLastCategoryId(categoryId);
-        }
-      },
+      // addTask remembers the category on success; nothing to persist here.
+      onAdd: (name, categoryId) => _dispatch(_vm.addTask(categoryId, name)),
     );
   }
 
@@ -393,16 +315,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final count = cats.fold<int>(0, (sum, c) => sum + c.archivedTasks.length);
     if (count == 0) return;
     final ok = await confirmClearArchive(context, count: count);
-    if (ok) await _vm.clearArchive();
+    if (ok) await _dispatch(_vm.clearArchive());
   }
 
   Future<void> _addCategory() async {
     final result = await showCategoryDialog(context);
     if (result != null) {
-      await _vm.addCategory(
-        result.name,
-        color: result.color,
-        emoji: result.emoji,
+      await _dispatch(
+        _vm.addCategory(result.name, color: result.color, emoji: result.emoji),
       );
     }
   }
@@ -444,8 +364,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           initialEmoji: cwt.category.emoji,
         );
         if (r != null) {
-          await _guard(
-            () => _vm.updateCategory(
+          await _dispatch(
+            _vm.updateCategory(
               id: cwt.category.id,
               name: r.name,
               color: r.color,
@@ -458,8 +378,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           context,
           categories: [cwt.category],
           initialCategoryId: cwt.category.id,
-          onAdd: (name, categoryId) =>
-              _guard(() => _vm.addTask(categoryId, name)),
+          onAdd: (name, categoryId) => _dispatch(_vm.addTask(categoryId, name)),
         );
       case 'delete':
         final ok = await confirmDeleteCategory(
@@ -467,13 +386,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           name: cwt.category.name,
           itemCount: cwt.tasks.length,
         );
-        if (ok) {
-          await _vm.deleteCategory(cwt.category.id);
-          if (cwt.category.id == _lastCategoryId) {
-            _lastCategoryId = null;
-            await ref.read(settingsRepositoryProvider).clearLastCategoryId();
-          }
-        }
+        // deleteCategory forgets the remembered default internally if needed.
+        if (ok) await _dispatch(_vm.deleteCategory(cwt.category.id));
     }
   }
 
@@ -502,10 +416,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       initialName: task.name,
     );
     if (r != null) {
-      await _vm.renameTask(task.id, r.name);
-      if (r.categoryId != task.categoryId) {
-        await _vm.moveTask(task.id, r.categoryId);
-      }
+      await _dispatch(_vm.editTask(task.id, r.name, r.categoryId));
     }
   }
 }

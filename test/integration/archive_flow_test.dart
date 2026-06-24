@@ -1,6 +1,9 @@
 import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:nooka/data/repositories/settings_repository.dart'
+    show sharedPreferencesProvider;
 import 'package:nooka/data/services/database/database.dart';
 import 'package:nooka/data/services/database/database_providers.dart';
 import 'package:nooka/ui/home/home_view_model.dart';
@@ -9,8 +12,14 @@ void main() {
   test('add -> complete -> purge boundary -> restore', () async {
     final db = AppDatabase(NativeDatabase.memory());
     addTearDown(db.close);
+    // addTask remembers its category, so the VM now reaches SharedPreferences.
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
     final container = ProviderContainer(
-      overrides: [appDatabaseProvider.overrideWithValue(db)],
+      overrides: [
+        appDatabaseProvider.overrideWithValue(db),
+        sharedPreferencesProvider.overrideWithValue(prefs),
+      ],
     );
     addTearDown(container.dispose);
 
