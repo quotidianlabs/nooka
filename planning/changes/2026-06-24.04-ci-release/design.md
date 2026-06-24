@@ -1,12 +1,24 @@
 ---
-status: draft
+status: shipped
 date: 2026-06-24
 slug: ci-release
-summary: Tag-driven CI release — a pushed X.Y.Z tag builds a signed universal APK and publishes a GitHub Release, plus real release signing wired into the Android build. Fill at ship time.
+summary: Tag-driven CI release — a pushed X.Y.Z tag builds a signed universal APK and publishes a GitHub Release, plus real release signing wired into the Android build.
 supersedes: null
 superseded_by: null
-pr: null
-outcome: null
+pr: 22
+outcome: |
+  Ported habbits' release apparatus (CI GitHub-Release channel only). Replaced
+  the gradle scaffold stub that debug-signed release builds with
+  key.properties-driven upload signing (graceful debug fallback when keyless).
+  Added .github/workflows/release.yml: a pushed X.Y.Z/X.Y.Z-suffix tag verifies
+  against pubspec, decodes the org keystore secrets (hard-fail if missing),
+  builds nooka-X.Y.Z.apk, and publishes a GitHub Release with notes from
+  planning/releases/<tag>.md. Added docs/release.md (sideload channel) and a
+  1.0.0 notes seed. No ci.yml or app-code change; no Play .aab/compileSdk pin
+  (out of scope), no desugaring (nooka has no notifications). Signing fix proven
+  locally: flutter build apk --release is upload-signed (apksigner DN CN=Unknown,
+  cert SHA-256 matches the keystore), not debug. Workflow end-to-end unexercised
+  — only fires on a real tag push.
 ---
 
 # Design: Tag-driven CI release with signed Android builds
