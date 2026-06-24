@@ -2,9 +2,10 @@
 
 A **local-first to-do list. Your data, on your device.**
 
+[![Release](https://img.shields.io/github/v/release/quotidianlabs/nooka)](https://github.com/quotidianlabs/nooka/releases/latest)
 [![CI](https://github.com/quotidianlabs/nooka/actions/workflows/ci.yml/badge.svg)](https://github.com/quotidianlabs/nooka/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-![Flutter](https://img.shields.io/badge/Flutter-3.44.2-02569B?logo=flutter)
+![Flutter](https://img.shields.io/badge/Flutter-02569B?logo=flutter&logoColor=white)
 
 nooka is a small, fast to-do list built around two ideas: **you own your data**
 (everything lives in an on-device SQLite database — no account, no backend) and
