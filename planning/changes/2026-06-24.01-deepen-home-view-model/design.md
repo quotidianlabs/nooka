@@ -1,12 +1,12 @@
 ---
-status: draft
+status: shipped
 date: 2026-06-24
 slug: deepen-home-view-model
-summary: Move home-screen command coordination out of the widget into a deep HomeViewModel behind a small intent+outcome interface. Fill at ship time.
+summary: Move home-screen command coordination out of the widget into a deep HomeViewModel behind a small intent + CommandOutcome interface; split remembered-category into a pure rule + persistence module.
 supersedes: null
 superseded_by: null
 pr: null
-outcome: null
+outcome: Widget shrank ~140 net lines (203 deleted, 61 added); coordination now tested through the VM interface (home_view_model_test.dart) instead of only via widget pumps. M2/M4/H3/H4 regression guards moved to the VM level. 117 tests green, just lint-ci clean.
 ---
 
 # Design: Deepen HomeViewModel — coordination behind one interface

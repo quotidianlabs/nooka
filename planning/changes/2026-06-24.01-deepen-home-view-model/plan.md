@@ -1,5 +1,5 @@
 ---
-status: draft
+status: shipped
 date: 2026-06-24
 slug: deepen-home-view-model
 spec: deepen-home-view-model
