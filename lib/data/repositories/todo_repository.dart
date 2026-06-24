@@ -1,17 +1,23 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../domain/clock.dart';
 import '../../domain/models/category_with_tasks.dart';
 import '../services/database/database_providers.dart' show todoDaoProvider;
 import '../services/database/todo_dao.dart';
 
 part 'todo_repository.g.dart';
 
-/// The data-layer seam for all to-do data. View models depend on this, never on
-/// the DAO directly. Commands that need the current time inject it here so the
-/// DAO stays deterministic for tests.
+/// The data-layer seam (port) for all to-do data. View models depend on this,
+/// never on the DAO directly; it is also the substitution point four test
+/// doubles use to inject failures. It sources archive-lifecycle time
+/// (`archivedAt`, the purge cutoff) from the injectable [Clock] seam, so those
+/// ops are deterministic in tests. `createdAt` is non-injected write-only
+/// metadata the DAO stamps directly.
 class TodoRepository {
-  TodoRepository(this._dao);
+  TodoRepository(this._dao, {Clock clock = const SystemClock()})
+    : _clock = clock;
   final TodoDao _dao;
+  final Clock _clock;
 
   Stream<List<CategoryWithTasks>> watchCategoriesWithTasks() =>
       _dao.watchCategoriesWithTasks();
@@ -40,7 +46,7 @@ class TodoRepository {
       _dao.moveTask(id, newCategoryId);
   Future<void> renameAndMove(int id, String name, int? newCategoryId) =>
       _dao.renameAndMove(id, name, newCategoryId);
-  Future<void> completeTask(int id) => _dao.completeTask(id, DateTime.now());
+  Future<void> completeTask(int id) => _dao.completeTask(id, _clock.now());
   Future<void> restoreTask(int id) => _dao.restoreTask(id);
   Future<void> reorderTasks(List<int> orderedIds) =>
       _dao.reorderTasks(orderedIds);
@@ -49,10 +55,15 @@ class TodoRepository {
     int newCategoryId,
     List<int> orderedTargetIds,
   ) => _dao.moveTaskToCategoryAt(taskId, newCategoryId, orderedTargetIds);
-  Future<int> purgeExpired() => _dao.purgeExpired(DateTime.now());
+  Future<int> purgeExpired() => _dao.purgeExpired(_clock.now());
   Future<int> clearArchive() => _dao.clearArchive();
 }
 
+/// The app's time source. Overridden with a [FixedClock] in tests that need
+/// deterministic archive-lifecycle time.
+@Riverpod(keepAlive: true)
+Clock clock(Ref ref) => const SystemClock();
+
 @Riverpod(keepAlive: true)
 TodoRepository todoRepository(Ref ref) =>
-    TodoRepository(ref.watch(todoDaoProvider));
+    TodoRepository(ref.watch(todoDaoProvider), clock: ref.watch(clockProvider));
