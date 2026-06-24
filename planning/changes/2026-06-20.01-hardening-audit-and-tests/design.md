@@ -1,12 +1,12 @@
 ---
-status: draft
+status: shipped
 date: 2026-06-20
 slug: hardening-audit-and-tests
 summary: Whole-app bug-hunt audit (findings doc) plus a test pass that adds regression guards for confirmed bugs and fills coverage on the untested drag-board widgets, dialogs, and controllers.
 supersedes: null
 superseded_by: null
-pr: null
-outcome: null
+pr: "#11"
+outcome: "Shipped in PR #11 alongside fix bundles A/B. Audit landed as planning/audits/2026-06-20-whole-app-hardening.md (severity-ranked findings, triaged into fix bundles .02–.05). Test pass filled the coverage gaps it named: new widget tests for category_section, task_row_content, category_header_content, task_dialog, confirm_delete_dialog, plus domain board_reorder/reorder and home_screen additions. Confirmed-bug fixes shipped as the spawned .02–.05 bundles (#11/#12/#13); initiative closed out by the retro (#14) and architecture sync (#16)."
 ---
 
 # Design: Whole-app hardening — bug-hunt audit + test pass
