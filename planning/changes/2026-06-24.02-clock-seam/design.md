@@ -88,7 +88,7 @@ A `@Riverpod(keepAlive: true) Clock clock(Ref) => const SystemClock();`
 **optional named** dependency defaulting to `const SystemClock()`:
 
 ```dart
-TodoRepository(this._dao, {Clock clock = const SystemClock()}) : _clock = clock;
+TodoRepository(this._dao, {this._clock = const SystemClock()});
 ```
 
 `SystemClock` is a safe production default, so the four error-injection doubles
