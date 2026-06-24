@@ -48,7 +48,7 @@ final class HomeViewModelProvider
   HomeViewModel create() => HomeViewModel();
 }
 
-String _$homeViewModelHash() => r'807e68d4528d10ba984344c866274192d393b809';
+String _$homeViewModelHash() => r'41e42609be0890bac574b43947d854eab5fcf450';
 
 /// Streams every category with its tasks and owns the home screen's command
 /// coordination: it issues mutations, gates remembered-category persistence on

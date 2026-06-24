@@ -14,8 +14,7 @@ part 'todo_repository.g.dart';
 /// ops are deterministic in tests. `createdAt` is non-injected write-only
 /// metadata the DAO stamps directly.
 class TodoRepository {
-  TodoRepository(this._dao, {Clock clock = const SystemClock()})
-    : _clock = clock;
+  TodoRepository(this._dao, {this._clock = const SystemClock()});
   final TodoDao _dao;
   final Clock _clock;
 

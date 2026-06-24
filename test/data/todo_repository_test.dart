@@ -32,8 +32,14 @@ void main() {
     final old = await db.todoDao.createTask(categoryId: cat, name: 'old');
     final fresh = await db.todoDao.createTask(categoryId: cat, name: 'fresh');
     // Backdate relative to the fixed clock: one past retention, one within.
-    await db.todoDao.completeTask(old, fixed.subtract(const Duration(days: 31)));
-    await db.todoDao.completeTask(fresh, fixed.subtract(const Duration(days: 1)));
+    await db.todoDao.completeTask(
+      old,
+      fixed.subtract(const Duration(days: 31)),
+    );
+    await db.todoDao.completeTask(
+      fresh,
+      fixed.subtract(const Duration(days: 1)),
+    );
 
     final purged = await repo.purgeExpired();
 
