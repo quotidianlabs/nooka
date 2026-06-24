@@ -165,8 +165,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       listPadding: EdgeInsets.zero,
       itemDragOnLongPress: true,
       listDragOnLongPress: true,
-      onListReorder: (oldIndex, newIndex) =>
-          _dispatch(_vm.reorderCategories(oldIndex, newIndex)),
+      // Pass the rendered snapshot's ids so the reorder resolves against what
+      // the user dragged, not whatever live state has since become.
+      onListReorder: (oldIndex, newIndex) => _dispatch(
+        _vm.reorderCategories(cats.categoryIds, oldIndex, newIndex),
+      ),
       onItemReorder: (oldItemIndex, oldListIndex, newItemIndex, newListIndex) =>
           _dispatch(
             _vm.dropTask(
@@ -302,9 +305,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   Future<void> _addTask(List<CategoryWithTasks> cats) async {
     if (cats.isEmpty) return;
     // Resolve the default against the exact list the dialog will show, so the
-    // preselected id is always one of the dialog's categories.
-    final initial =
-        _vm.quickAddDefault(cats.categoryIds) ?? cats.first.category.id;
+    // preselected id is always one of the dialog's categories. cats is
+    // non-empty here, so the rule always returns an id.
+    final initial = _vm.quickAddDefault(cats.categoryIds)!;
     await showQuickAddDialog(
       context,
       categories: [for (final c in cats) c.category],

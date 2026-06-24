@@ -404,6 +404,27 @@ void main() {
     expect(find.text('Item completed'), findsNothing);
   });
 
+  testWidgets('category menu delete removes the category from the board', (
+    tester,
+  ) async {
+    // Covers the menu → Delete → confirm → vm.deleteCategory wiring end-to-end
+    // (the forget-remembered logic is asserted in home_view_model_test.dart).
+    await db.todoDao.createCategory(name: 'Home', color: 0xFF009688);
+    await tester.pumpWidget(_app(db, prefs));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Home'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('category-menu-1')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('confirm-delete')));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Home'), findsNothing);
+    expect(find.text('No categories yet — add one'), findsOneWidget);
+  });
+
   testWidgets('a throwing mutation surfaces the actionFailed SnackBar', (
     tester,
   ) async {

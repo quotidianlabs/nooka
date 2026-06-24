@@ -21,6 +21,13 @@ void main() {
     expect(remembered.read(), 42);
   });
 
+  test('writing the same id twice keeps it readable', () async {
+    final remembered = await _module();
+    await remembered.write(7);
+    await remembered.write(7); // no-op write must not lose the value
+    expect(remembered.read(), 7);
+  });
+
   test('forget clears a stored id', () async {
     final remembered = await _module();
     await remembered.write(7);

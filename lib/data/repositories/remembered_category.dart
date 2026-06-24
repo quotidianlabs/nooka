@@ -14,8 +14,14 @@ class RememberedCategory {
   /// The stored category id, or null if none has been remembered.
   int? read() => _settings.readLastCategoryId();
 
-  /// Remembers [id] as the last-used category.
-  Future<void> write(int id) => _settings.writeLastCategoryId(id);
+  /// Remembers [id] as the last-used category. Skips the write (an
+  /// `SharedPreferences` disk I/O) when [id] is already the stored value —
+  /// reads are in-memory, so the common "add several to the same category" path
+  /// does no redundant I/O.
+  Future<void> write(int id) async {
+    if (_settings.readLastCategoryId() == id) return;
+    await _settings.writeLastCategoryId(id);
+  }
 
   /// Forgets the remembered category (e.g. after it is deleted).
   Future<void> forget() => _settings.clearLastCategoryId();

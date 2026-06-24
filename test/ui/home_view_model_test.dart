@@ -222,29 +222,21 @@ void main() {
     });
   });
 
-  group('reorderCategories', () {
-    test('reorders categories by index', () async {
+  group('reorderCategories (uses the dragged snapshot, not live state)', () {
+    test('persists the order computed from the passed snapshot', () async {
       final a = await db.todoDao.createCategory(name: 'A', color: 1);
       final b = await db.todoDao.createCategory(name: 'B', color: 2);
       final c = await db.todoDao.createCategory(name: 'C', color: 3);
       final (_, vm) = await build();
 
-      await vm.reorderCategories(0, 2); // A -> end
+      await vm.reorderCategories(
+        [a, b, c],
+        0,
+        2,
+      ); // A -> end of the dragged set
 
       final order = (await snapshot()).map((c) => c.category.id);
       expect(order, [b, c, a]);
-    });
-
-    test('an out-of-range (stale) index is a no-op', () async {
-      final a = await db.todoDao.createCategory(name: 'A', color: 1);
-      final b = await db.todoDao.createCategory(name: 'B', color: 2);
-      final (_, vm) = await build();
-
-      final outcome = await vm.reorderCategories(0, 9); // stale newIndex
-
-      expect(outcome, CommandOutcome.success); // nothing failed
-      final order = (await snapshot()).map((c) => c.category.id);
-      expect(order, [a, b]); // unchanged
     });
   });
 
@@ -304,6 +296,18 @@ void main() {
       final task = (await snapshot()).first.activeTasks.single;
       expect(task.name, 'renamed');
       expect(task.categoryId, a);
+    });
+
+    test('is atomic: a failed move rolls back the rename', () async {
+      final a = await db.todoDao.createCategory(name: 'A', color: 1);
+      final t = await db.todoDao.createTask(categoryId: a, name: 'old');
+      final (_, vm) = await build();
+
+      // Move to a non-existent category → fails → the rename rolls back too.
+      final outcome = await vm.editTask(t, 'new', a, 9999);
+
+      expect(outcome, CommandOutcome.failure);
+      expect((await snapshot()).first.activeTasks.single.name, 'old');
     });
 
     test(

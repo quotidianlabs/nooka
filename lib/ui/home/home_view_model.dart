@@ -83,24 +83,20 @@ class HomeViewModel extends _$HomeViewModel {
     return outcome;
   }
 
-  /// Reorders the category at [oldIndex] to [newIndex] against live state. The
-  /// indices come from the drag widget's build-time snapshot, so an index that
-  /// no longer fits the live list (a mid-drag add/remove) is a no-op rather
-  /// than a reorder against a list it was not computed for.
-  Future<CommandOutcome> reorderCategories(int oldIndex, int newIndex) {
-    final cats = state.value;
-    if (cats == null) return Future.value(CommandOutcome.success);
-    if (oldIndex < 0 ||
-        oldIndex >= cats.length ||
-        newIndex < 0 ||
-        newIndex >= cats.length) {
-      return Future.value(CommandOutcome.success); // stale snapshot; no-op
-    }
-    final ids = cats.categoryIds;
-    return _run(
-      () => _repo.reorderCategories(reorderedIds(ids, oldIndex, newIndex)),
-    );
-  }
+  /// Reorders categories by moving [oldIndex] to [newIndex] within
+  /// [draggedCategoryIds] — the snapshot the drag board actually rendered, so
+  /// the indices and the list always agree (resolving against live state could
+  /// reorder the wrong category after a mid-drag stream emission). The pure
+  /// [reorderedIds] is total, so out-of-range indices clamp rather than throw.
+  Future<CommandOutcome> reorderCategories(
+    List<int> draggedCategoryIds,
+    int oldIndex,
+    int newIndex,
+  ) => _run(
+    () => _repo.reorderCategories(
+      reorderedIds(draggedCategoryIds, oldIndex, newIndex),
+    ),
+  );
 
   /// Deletes [id] and, if it was the remembered quick-add default, forgets it.
   Future<CommandOutcome> deleteCategory(int id) async {
@@ -128,21 +124,20 @@ class HomeViewModel extends _$HomeViewModel {
   /// Renames [id] and moves it from [fromCategoryId] to [toCategoryId] only
   /// when those differ. The move decision is made from the dialog's seed
   /// ([fromCategoryId], captured when the dialog opened), never from live
-  /// state — so a concurrent move is not silently undone. Not transactional; a
-  /// partial failure self-heals visually via the stream.
+  /// state — so a concurrent move is not silently undone. Atomic: rename and
+  /// move commit together, so a failed move never leaves a half-applied edit.
   Future<CommandOutcome> editTask(
     int id,
     String name,
     int fromCategoryId,
     int toCategoryId,
-  ) {
-    return _run(() async {
-      await _repo.renameTask(id, name);
-      if (fromCategoryId != toCategoryId) {
-        await _repo.moveTask(id, toCategoryId);
-      }
-    });
-  }
+  ) => _run(
+    () => _repo.renameAndMove(
+      id,
+      name,
+      fromCategoryId == toCategoryId ? null : toCategoryId,
+    ),
+  );
 
   Future<CommandOutcome> completeTask(int id) =>
       _run(() => _repo.completeTask(id));

@@ -19,9 +19,11 @@ The intents:
 
 - `addCategory` / `updateCategory` / `deleteCategory` / `toggleCollapsed`.
 - `addTask` — remembers its category as the quick-add default **on success**.
-- `editTask(id, name, categoryId)` — renames, and moves only when the category
-  changed (avoiding a needless re-sort). Not transactional; a partial failure
-  self-heals visually via the stream.
+- `editTask(id, name, fromCategoryId, toCategoryId)` — renames, and moves only
+  when `fromCategoryId != toCategoryId`. The move decision uses the dialog's
+  seed (`fromCategoryId`, captured when the dialog opened), not live state, so a
+  concurrent move is not silently undone. Atomic via the DAO's `renameAndMove`
+  (one transaction), so a failed move never leaves a half-applied edit.
 - `completeTask` / `restoreTask` — plain inverse intents. The undo toast is pure
   widget UX layered over them; the VM has no undo concept. Routing complete
   through the outcome path means a failed complete surfaces `actionFailed` and
@@ -34,14 +36,16 @@ The intents:
 
 ## Drag-board drops resolve against live state
 
-`dropTask` and `reorderCategories` re-read the VM's own `state.value` at call
-time — never a build-time snapshot the watch stream may have invalidated
-mid-drag (H4). `dropTask` runs the pure `planReorder` (`domain/board_reorder.dart`)
-and issues the within/across mutation; an out-of-range or stale drop collapses
-to a no-op `success`. A drop into a collapsed destination auto-expands it after
-the move succeeds, so the moved task is never hidden (H3). `reorderCategories`
-runs the pure `reorderedIds` (`domain/reorder.dart`). Both pure functions live
-in `domain/`; the VM only calls them.
+`dropTask` re-reads the VM's own `state.value` at call time — never a
+build-time snapshot the watch stream may have invalidated mid-drag (H4). It runs
+the pure `planReorder` (`domain/board_reorder.dart`) and issues the within/across
+mutation; an out-of-range or stale drop collapses to a no-op `success`. A drop
+into a collapsed destination auto-expands it after the move succeeds, so the
+moved task is never hidden (H3). `reorderCategories` instead takes the
+*dragged* category-id snapshot from the widget and runs the pure `reorderedIds`
+(`domain/reorder.dart`) on it: the indices and the list it reorders always agree,
+where resolving against live state could reorder the wrong category after a
+mid-drag emission. Both pure functions live in `domain/`; the VM only calls them.
 
 ## Remembered category (quick-add default)
 

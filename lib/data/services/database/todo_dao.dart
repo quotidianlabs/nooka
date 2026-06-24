@@ -101,6 +101,14 @@ class TodoDao extends DatabaseAccessor<AppDatabase> with _$TodoDaoMixin {
     tasks,
   )..where((t) => t.id.equals(id))).write(TasksCompanion(name: Value(name)));
 
+  /// Renames [id] and, when [newCategoryId] is non-null, moves it — both in one
+  /// transaction, so a failed move rolls back the rename (no partial edit).
+  Future<void> renameAndMove(int id, String name, int? newCategoryId) =>
+      transaction(() async {
+        await renameTask(id, name);
+        if (newCategoryId != null) await moveTask(id, newCategoryId);
+      });
+
   Future<void> moveTask(int id, int newCategoryId) async {
     await (update(tasks)..where((t) => t.id.equals(id))).write(
       TasksCompanion(
