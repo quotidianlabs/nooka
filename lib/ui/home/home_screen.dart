@@ -301,7 +301,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   Future<void> _addTask(List<CategoryWithTasks> cats) async {
     if (cats.isEmpty) return;
-    final initial = _vm.quickAddDefault() ?? cats.first.category.id;
+    // Resolve the default against the exact list the dialog will show, so the
+    // preselected id is always one of the dialog's categories.
+    final initial =
+        _vm.quickAddDefault(cats.categoryIds) ?? cats.first.category.id;
     await showQuickAddDialog(
       context,
       categories: [for (final c in cats) c.category],
@@ -416,7 +419,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       initialName: task.name,
     );
     if (r != null) {
-      await _dispatch(_vm.editTask(task.id, r.name, r.categoryId));
+      // Pass the seed category (task.categoryId at dialog open) as `from`, so a
+      // concurrent move is not silently undone.
+      await _dispatch(
+        _vm.editTask(task.id, r.name, task.categoryId, r.categoryId),
+      );
     }
   }
 }

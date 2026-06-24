@@ -26,6 +26,13 @@ class _ThrowingMutationRepo extends TodoRepository {
   Future<int> purgeExpired() => Future.error(Exception('locked'));
 }
 
+/// write always throws — a failing best-effort remembered-category persist.
+class _ThrowingRemembered extends RememberedCategory {
+  _ThrowingRemembered(super.settings);
+  @override
+  Future<void> write(int id) => Future.error(Exception('prefs locked'));
+}
+
 void main() {
   late AppDatabase db;
   late SharedPreferences prefs;
@@ -71,7 +78,9 @@ void main() {
 
     test('failed addTask does NOT remember the category', () async {
       final cat = await db.todoDao.createCategory(name: 'Home', color: 1);
-      final (container, vm) = await build(repo: _ThrowingCreateTaskRepo(db.todoDao));
+      final (container, vm) = await build(
+        repo: _ThrowingCreateTaskRepo(db.todoDao),
+      );
 
       final outcome = await vm.addTask(cat, 'Sweep');
 
@@ -104,23 +113,30 @@ void main() {
     });
   });
 
-  group('quickAddDefault', () {
-    test('falls back to the first category when nothing remembered', () async {
-      final first = await db.todoDao.createCategory(name: 'A', color: 1);
-      await db.todoDao.createCategory(name: 'B', color: 2);
+  group('quickAddDefault (resolves against the passed list)', () {
+    test('falls back to the first id when nothing remembered', () async {
       final (_, vm) = await build();
-
-      expect(vm.quickAddDefault(), first);
+      expect(vm.quickAddDefault([10, 20]), 10);
     });
 
-    test('returns the remembered category when it still exists', () async {
-      await db.todoDao.createCategory(name: 'A', color: 1);
-      final b = await db.todoDao.createCategory(name: 'B', color: 2);
+    test('returns the remembered id when it is in the passed list', () async {
       final (container, vm) = await build();
-      await container.read(rememberedCategoryProvider).write(b);
+      await container.read(rememberedCategoryProvider).write(20);
 
-      expect(vm.quickAddDefault(), b);
+      expect(vm.quickAddDefault([10, 20]), 20);
     });
+
+    test(
+      'falls back to first when remembered is absent from the list',
+      () async {
+        final (container, vm) = await build();
+        await container
+            .read(rememberedCategoryProvider)
+            .write(99); // not present
+
+        expect(vm.quickAddDefault([10, 20]), 10);
+      },
+    );
   });
 
   group('dropTask (H3/H4)', () {
@@ -218,6 +234,18 @@ void main() {
       final order = (await snapshot()).map((c) => c.category.id);
       expect(order, [b, c, a]);
     });
+
+    test('an out-of-range (stale) index is a no-op', () async {
+      final a = await db.todoDao.createCategory(name: 'A', color: 1);
+      final b = await db.todoDao.createCategory(name: 'B', color: 2);
+      final (_, vm) = await build();
+
+      final outcome = await vm.reorderCategories(0, 9); // stale newIndex
+
+      expect(outcome, CommandOutcome.success); // nothing failed
+      final order = (await snapshot()).map((c) => c.category.id);
+      expect(order, [a, b]); // unchanged
+    });
   });
 
   group('complete / restore', () {
@@ -249,14 +277,14 @@ void main() {
     });
   });
 
-  group('editTask', () {
-    test('renames and moves when the category changes', () async {
+  group('editTask (move decided by the dialog seed, not live state)', () {
+    test('renames and moves when from != to', () async {
       final a = await db.todoDao.createCategory(name: 'A', color: 1);
       final b = await db.todoDao.createCategory(name: 'B', color: 2);
       final t = await db.todoDao.createTask(categoryId: a, name: 'old');
       final (_, vm) = await build();
 
-      final outcome = await vm.editTask(t, 'new', b);
+      final outcome = await vm.editTask(t, 'new', a, b);
 
       expect(outcome, CommandOutcome.success);
       final byName = {for (final c in await snapshot()) c.category.name: c};
@@ -266,17 +294,40 @@ void main() {
       expect(moved.name, 'new');
     });
 
-    test('renames without moving when the category is unchanged', () async {
+    test('renames without moving when from == to', () async {
       final a = await db.todoDao.createCategory(name: 'A', color: 1);
       final t = await db.todoDao.createTask(categoryId: a, name: 'old');
       final (_, vm) = await build();
 
-      await vm.editTask(t, 'renamed', a);
+      await vm.editTask(t, 'renamed', a, a);
 
       final task = (await snapshot()).first.activeTasks.single;
       expect(task.name, 'renamed');
       expect(task.categoryId, a);
     });
+
+    test(
+      'does not undo a concurrent move when the user kept the seed',
+      () async {
+        final a = await db.todoDao.createCategory(name: 'A', color: 1);
+        final b = await db.todoDao.createCategory(name: 'B', color: 2);
+        final t = await db.todoDao.createTask(categoryId: a, name: 'old');
+        final (_, vm) = await build();
+
+        // Concurrent move A -> B while the edit dialog (seed A) is open.
+        await db.todoDao.moveTask(t, b);
+        // User confirms without changing the category (from == to == A).
+        await vm.editTask(t, 'renamed', a, a);
+
+        // The task stays in B — editTask must not move it back to A.
+        final task = (await snapshot())
+            .firstWhere((c) => c.category.id == b)
+            .activeTasks
+            .single;
+        expect(task.id, t);
+        expect(task.name, 'renamed');
+      },
+    );
   });
 
   group('failure outcomes', () {
@@ -285,6 +336,29 @@ void main() {
       final (_, vm) = await build(repo: _ThrowingMutationRepo(db.todoDao));
 
       expect(await vm.purgeExpired(), CommandOutcome.failure);
+    });
+
+    test('a failing remembered write does not fail or escape addTask', () async {
+      final cat = await db.todoDao.createCategory(name: 'Home', color: 1);
+      final container = ProviderContainer(
+        overrides: [
+          appDatabaseProvider.overrideWithValue(db),
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          rememberedCategoryProvider.overrideWithValue(
+            _ThrowingRemembered(SettingsRepository(prefs)),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      container.listen(homeViewModelProvider, (_, _) {});
+      await container.read(homeViewModelProvider.future);
+      final vm = container.read(homeViewModelProvider.notifier);
+
+      // Best-effort persist: the failure is swallowed, the add still succeeds.
+      final outcome = await vm.addTask(cat, 'Sweep');
+
+      expect(outcome, CommandOutcome.success);
+      expect((await snapshot()).first.activeTasks.single.name, 'Sweep');
     });
   });
 }

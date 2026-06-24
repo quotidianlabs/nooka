@@ -3,7 +3,6 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../data/repositories/remembered_category.dart';
 import '../../data/repositories/todo_repository.dart';
-import '../../data/services/database/database.dart';
 import '../../domain/board_reorder.dart';
 import '../../domain/default_category.dart';
 import '../../domain/models/category_with_tasks.dart';
@@ -43,13 +42,11 @@ class HomeViewModel extends _$HomeViewModel {
     }
   }
 
-  Task? _findTask(List<CategoryWithTasks> cats, int id) {
-    for (final cwt in cats) {
-      for (final t in cwt.tasks) {
-        if (t.id == id) return t;
-      }
-    }
-    return null;
+  /// Runs a best-effort side effect (remembered-category persistence): logs and
+  /// swallows any failure so it never escapes the seam nor fails the command it
+  /// rode in on — the user-visible mutation already succeeded.
+  Future<void> _bestEffort(Future<void> Function() action) async {
+    await _run(action);
   }
 
   // ---- Categories ----
@@ -58,7 +55,8 @@ class HomeViewModel extends _$HomeViewModel {
     String name, {
     int color = kDefaultCategoryColor,
     String? emoji,
-  }) => _run(() => _repo.createCategory(name: name, color: color, emoji: emoji));
+  }) =>
+      _run(() => _repo.createCategory(name: name, color: color, emoji: emoji));
 
   Future<CommandOutcome> updateCategory({
     required int id,
@@ -78,24 +76,37 @@ class HomeViewModel extends _$HomeViewModel {
   Future<CommandOutcome> toggleActiveCategory(int id, bool collapsed) async {
     final outcome = await _run(() => _repo.setCollapsed(id, !collapsed));
     if (outcome == CommandOutcome.success && collapsed) {
-      await _remembered.write(id); // was collapsed → now expanding
+      // was collapsed → now expanding; best-effort so a prefs failure can't
+      // escape or fail the toggle.
+      await _bestEffort(() => _remembered.write(id));
     }
     return outcome;
   }
 
-  /// Reorders the category at [oldIndex] to [newIndex] against live state.
+  /// Reorders the category at [oldIndex] to [newIndex] against live state. The
+  /// indices come from the drag widget's build-time snapshot, so an index that
+  /// no longer fits the live list (a mid-drag add/remove) is a no-op rather
+  /// than a reorder against a list it was not computed for.
   Future<CommandOutcome> reorderCategories(int oldIndex, int newIndex) {
     final cats = state.value;
     if (cats == null) return Future.value(CommandOutcome.success);
-    final ids = [for (final c in cats) c.category.id];
-    return _run(() => _repo.reorderCategories(reorderedIds(ids, oldIndex, newIndex)));
+    if (oldIndex < 0 ||
+        oldIndex >= cats.length ||
+        newIndex < 0 ||
+        newIndex >= cats.length) {
+      return Future.value(CommandOutcome.success); // stale snapshot; no-op
+    }
+    final ids = cats.categoryIds;
+    return _run(
+      () => _repo.reorderCategories(reorderedIds(ids, oldIndex, newIndex)),
+    );
   }
 
   /// Deletes [id] and, if it was the remembered quick-add default, forgets it.
   Future<CommandOutcome> deleteCategory(int id) async {
     final outcome = await _run(() => _repo.deleteCategory(id));
     if (outcome == CommandOutcome.success && _remembered.read() == id) {
-      await _remembered.forget();
+      await _bestEffort(() => _remembered.forget());
     }
     return outcome;
   }
@@ -109,21 +120,26 @@ class HomeViewModel extends _$HomeViewModel {
       () => _repo.createTask(categoryId: categoryId, name: name),
     );
     if (outcome == CommandOutcome.success) {
-      await _remembered.write(categoryId);
+      await _bestEffort(() => _remembered.write(categoryId));
     }
     return outcome;
   }
 
-  /// Renames [id] and moves it to [categoryId] only when that differs from its
-  /// current category (avoiding a needless re-sort). Not transactional; a
+  /// Renames [id] and moves it from [fromCategoryId] to [toCategoryId] only
+  /// when those differ. The move decision is made from the dialog's seed
+  /// ([fromCategoryId], captured when the dialog opened), never from live
+  /// state — so a concurrent move is not silently undone. Not transactional; a
   /// partial failure self-heals visually via the stream.
-  Future<CommandOutcome> editTask(int id, String name, int categoryId) {
-    final cats = state.value;
-    final current = cats == null ? null : _findTask(cats, id);
+  Future<CommandOutcome> editTask(
+    int id,
+    String name,
+    int fromCategoryId,
+    int toCategoryId,
+  ) {
     return _run(() async {
       await _repo.renameTask(id, name);
-      if (current != null && current.categoryId != categoryId) {
-        await _repo.moveTask(id, categoryId);
+      if (fromCategoryId != toCategoryId) {
+        await _repo.moveTask(id, toCategoryId);
       }
     });
   }
@@ -183,12 +199,10 @@ class HomeViewModel extends _$HomeViewModel {
 
   // ---- Reads ----
 
-  /// The category id to preselect for quick-add against live state, or null
-  /// when there are no categories.
-  int? quickAddDefault() {
-    final cats = state.value;
-    if (cats == null) return null;
-    final ids = [for (final c in cats) c.category.id];
-    return defaultCategoryId(_remembered.read(), ids);
-  }
+  /// The category id to preselect for quick-add, resolved against
+  /// [categoryIds] — the exact list the dialog will display — so the result is
+  /// always one of them (or null when the list is empty). Resolving against the
+  /// caller's list, not live state, keeps the default in sync with the dialog.
+  int? quickAddDefault(List<int> categoryIds) =>
+      defaultCategoryId(_remembered.read(), categoryIds);
 }
