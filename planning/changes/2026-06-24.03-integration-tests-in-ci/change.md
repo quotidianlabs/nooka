@@ -12,7 +12,9 @@ outcome: |
   KVM udev rule, plus Gradle + system-image caching, running flutter test
   integration_test/critical_flow_test.dart in parallel with lint/test. Verified
   by a real run — the job passed cold in 7m2s (lint 49s, test 55s alongside).
-  Ports habbits' ci.yml (its PRs #28 + #29).
+  Warm run (caches populated) reused the Gradle (1321 MB) + system-image
+  (~1.48 GB) caches and finished in 4m48s, ~32% faster. Ports habbits' ci.yml
+  (its PRs #28 + #29).
 ---
 
 # Change: Run integration tests in CI
@@ -74,5 +76,6 @@ warm runs reuse.
       runner (cold run: 7m2s).
 - [x] Emulator boots with KVM accel and `flutter test
       integration_test/critical_flow_test.dart` is green in the job log.
-- [ ] Warm run reuses the Gradle + system-image caches (cache-hit in the log).
+- [x] Warm run reuses the Gradle + system-image caches (cache-hit in the log;
+      warm 4m48s vs cold 7m2s, ~32% faster).
 - [x] `lint` + `test` jobs unaffected (lint 49s, test 55s).
