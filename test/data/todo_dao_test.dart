@@ -297,6 +297,50 @@ void main() {
       expect(remaining.map((t) => t.name), ['active']);
     });
 
+    test('renameAndMove applies rename and move together', () async {
+      final a = await db.todoDao.createCategory(name: 'A', color: 1);
+      final b = await db.todoDao.createCategory(name: 'B', color: 2);
+      final t = await db.todoDao.createTask(categoryId: a, name: 'old');
+
+      await db.todoDao.renameAndMove(t, 'new', b);
+
+      final row = await (db.select(
+        db.tasks,
+      )..where((x) => x.id.equals(t))).getSingle();
+      expect(row.name, 'new');
+      expect(row.categoryId, b);
+    });
+
+    test('renameAndMove with a null category renames only', () async {
+      final a = await db.todoDao.createCategory(name: 'A', color: 1);
+      final t = await db.todoDao.createTask(categoryId: a, name: 'old');
+
+      await db.todoDao.renameAndMove(t, 'new', null);
+
+      final row = await (db.select(
+        db.tasks,
+      )..where((x) => x.id.equals(t))).getSingle();
+      expect(row.name, 'new');
+      expect(row.categoryId, a);
+    });
+
+    test('renameAndMove rolls back the rename when the move fails', () async {
+      final a = await db.todoDao.createCategory(name: 'A', color: 1);
+      final t = await db.todoDao.createTask(categoryId: a, name: 'old');
+
+      // Moving to a non-existent category violates the FK → whole tx rolls back.
+      await expectLater(
+        db.todoDao.renameAndMove(t, 'new', 9999),
+        throwsA(anything),
+      );
+
+      final row = await (db.select(
+        db.tasks,
+      )..where((x) => x.id.equals(t))).getSingle();
+      expect(row.name, 'old'); // rename rolled back with the failed move
+      expect(row.categoryId, a);
+    });
+
     test('moveTask changes category', () async {
       final home = await db.todoDao.createCategory(name: 'Home', color: 1);
       final work = await db.todoDao.createCategory(name: 'Work', color: 2);

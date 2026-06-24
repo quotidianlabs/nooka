@@ -19,3 +19,8 @@ class CategoryWithTasks {
       if (t.archivedAt != null) t,
   ]..sort((a, b) => b.archivedAt!.compareTo(a.archivedAt!));
 }
+
+extension CategoryIds on List<CategoryWithTasks> {
+  /// The category ids in their current order.
+  List<int> get categoryIds => [for (final c in this) c.category.id];
+}

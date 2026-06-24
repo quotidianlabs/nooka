@@ -38,6 +38,8 @@ class TodoRepository {
   Future<void> renameTask(int id, String name) => _dao.renameTask(id, name);
   Future<void> moveTask(int id, int newCategoryId) =>
       _dao.moveTask(id, newCategoryId);
+  Future<void> renameAndMove(int id, String name, int? newCategoryId) =>
+      _dao.renameAndMove(id, name, newCategoryId);
   Future<void> completeTask(int id) => _dao.completeTask(id, DateTime.now());
   Future<void> restoreTask(int id) => _dao.restoreTask(id);
   Future<void> reorderTasks(List<int> orderedIds) =>
