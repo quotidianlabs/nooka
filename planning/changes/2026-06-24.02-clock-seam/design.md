@@ -5,7 +5,7 @@ slug: clock-seam
 summary: Deepen TodoRepository with a Clock seam so it sources archive-lifecycle time injectably; retain the repository as the data test-seam (port).
 supersedes: null
 superseded_by: null
-pr: null
+pr: 20
 outcome: Added Clock/SystemClock/FixedClock + clockProvider; TodoRepository sources archivedAt + purge cutoff from the injectable Clock (was hardcoded DateTime.now()), tested through the repo interface. createdAt left as DAO-stamped metadata (zero test churn). Repo-as-port + createdAt decision recorded. 130 tests green, just lint-ci clean.
 ---
 

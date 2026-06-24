@@ -5,7 +5,7 @@ slug: todo-repository-is-the-data-test-seam
 summary: Keep TodoRepository as the data port (the error-injection test seam) and deepen it with a Clock; leave createdAt as write-only metadata.
 supersedes: null
 superseded_by: null
-pr: null
+pr: 20
 ---
 
 # TodoRepository is the data test-seam, deepened by the Clock

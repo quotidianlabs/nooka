@@ -3,7 +3,7 @@ status: shipped
 date: 2026-06-24
 slug: clock-seam
 spec: clock-seam
-pr: null
+pr: 20
 ---
 
 # clock-seam — implementation plan
