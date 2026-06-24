@@ -1,12 +1,18 @@
 ---
-status: draft
+status: shipped
 date: 2026-06-24
 slug: integration-tests-in-ci
 summary: Run the critical-flow integration test in CI on a KVM-accelerated Android emulator, with Gradle + system-image caching to keep the job fast.
 supersedes: null
 superseded_by: null
-pr: null
-outcome: null
+pr: 21
+outcome: |
+  Added an 'integration' job to ci.yml: ubuntu-latest +
+  reactivecircus/android-emulator-runner@v2 (api-34/google_apis/x86_64) with the
+  KVM udev rule, plus Gradle + system-image caching, running flutter test
+  integration_test/critical_flow_test.dart in parallel with lint/test. Verified
+  by a real run — the job passed cold in 7m2s (lint 49s, test 55s alongside).
+  Ports habbits' ci.yml (its PRs #28 + #29).
 ---
 
 # Change: Run integration tests in CI
@@ -64,9 +70,9 @@ warm runs reuse.
 
 ## Verification
 
-- [ ] Push the branch; the `integration` job appears and **passes** on the real
-      runner (the only true test of a CI workflow — can't be run locally).
-- [ ] Emulator boots with KVM accel and `flutter test
+- [x] Push the branch; the `integration` job appears and **passes** on the real
+      runner (cold run: 7m2s).
+- [x] Emulator boots with KVM accel and `flutter test
       integration_test/critical_flow_test.dart` is green in the job log.
 - [ ] Warm run reuses the Gradle + system-image caches (cache-hit in the log).
-- [ ] `lint` + `test` jobs unaffected.
+- [x] `lint` + `test` jobs unaffected (lint 49s, test 55s).
