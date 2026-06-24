@@ -5,7 +5,7 @@ slug: deepen-home-view-model
 summary: Move home-screen command coordination out of the widget into a deep HomeViewModel behind a small intent + CommandOutcome interface; split remembered-category into a pure rule + persistence module.
 supersedes: null
 superseded_by: null
-pr: null
+pr: 19
 outcome: Widget shrank ~140 net lines (203 deleted, 61 added); coordination now tested through the VM interface (home_view_model_test.dart) instead of only via widget pumps. M2/M4/H3/H4 regression guards moved to the VM level. 117 tests green, just lint-ci clean.
 ---
 
@@ -102,8 +102,9 @@ unchanged. Remembered-category splits into three pieces:
 
   ```dart
   /// The category id to preselect for quick-add: the stored id if it still
-  /// exists among [cats], else the first category, else null when empty.
-  int? defaultCategoryId(int? stored, List<Category> cats) { ... }
+  /// exists among [categoryIds], else the first, else null when empty.
+  /// (Takes ids, not Category rows — fake-free to test; refined during grilling.)
+  int? defaultCategoryId(int? stored, List<int> categoryIds) { ... }
   ```
 
 - **`RememberedCategory`** — a thin persistence module
