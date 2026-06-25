@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../domain/clock.dart';
+import '../../domain/models/backup_data.dart';
 import '../../domain/models/category_with_tasks.dart';
 import '../services/database/database_providers.dart' show todoDaoProvider;
 import '../services/database/todo_dao.dart';
@@ -20,6 +21,10 @@ class TodoRepository {
 
   Stream<List<CategoryWithTasks>> watchCategoriesWithTasks() =>
       _dao.watchCategoriesWithTasks();
+
+  Future<List<CategoryWithTasks>> exportSnapshot() => _dao.exportSnapshot();
+  Future<void> importReplace(List<BackupCategory> categories) =>
+      _dao.importReplace(categories);
 
   Future<int> createCategory({
     required String name,

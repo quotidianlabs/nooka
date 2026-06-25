@@ -180,4 +180,50 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get langRussian => 'Русский';
+
+  @override
+  String get exportData => 'Экспорт данных';
+
+  @override
+  String get importData => 'Импорт данных';
+
+  @override
+  String get exportShareSubject => 'Резервная копия Nooka';
+
+  @override
+  String get importReplaceTitle => 'Заменить все данные?';
+
+  @override
+  String importReplaceBody(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count категории',
+      many: '$count категорий',
+      few: '$count категории',
+      one: '$count категория',
+      zero: 'нет категорий',
+    );
+    return 'Будут удалены $_temp0 и все их задачи, затем загрузится копия.';
+  }
+
+  @override
+  String importDone(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count категории',
+      many: '$count категорий',
+      few: '$count категории',
+      one: '$count категория',
+      zero: 'нет категорий',
+    );
+    return 'Импортировано $_temp0';
+  }
+
+  @override
+  String get importInvalidFile => 'Это не похоже на резервную копию Nooka.';
+
+  @override
+  String get replace => 'Заменить';
 }

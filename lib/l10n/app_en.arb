@@ -59,5 +59,19 @@
   "themeDark": "Dark",
   "langSystem": "System",
   "langEnglish": "English",
-  "langRussian": "Russian"
+  "langRussian": "Russian",
+  "exportData": "Export data",
+  "importData": "Import data",
+  "exportShareSubject": "Nooka backup",
+  "importReplaceTitle": "Replace all data?",
+  "importReplaceBody": "This deletes {count, plural, =0{no categories} one{{count} category} other{{count} categories}} and all their items, then loads the backup.",
+  "@importReplaceBody": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "importDone": "Imported {count, plural, =0{no categories} one{{count} category} other{{count} categories}}",
+  "@importDone": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "importInvalidFile": "That isn't a valid Nooka backup.",
+  "replace": "Replace"
 }

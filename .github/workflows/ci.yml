@@ -85,11 +85,11 @@ jobs:
         with:
           path: ${{ env.ANDROID_SYSIMG }}
           key: sysimg-android-34-google_apis-x86_64
-      - name: Run critical-flow integration test
+      - name: Run integration tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
           target: google_apis
           arch: x86_64
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          script: flutter test integration_test/critical_flow_test.dart
+          script: flutter test integration_test/critical_flow_test.dart integration_test/backup_round_trip_test.dart

@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 
 import '../../../domain/archive.dart';
+import '../../../domain/models/backup_data.dart';
 import '../../../domain/models/category_with_tasks.dart';
 import 'database.dart';
 import 'tables.dart';
@@ -200,6 +201,54 @@ class TodoDao extends DatabaseAccessor<AppDatabase> with _$TodoDaoMixin {
       if (task != null) byId[category.id]!.tasks.add(task);
     }
     return [for (final id in order) byId[id]!];
+  }
+
+  /// One-shot read of every category with all its tasks (active + archived),
+  /// ordered identically to [watchCategoriesWithTasks]. Used to build a backup.
+  Future<List<CategoryWithTasks>> exportSnapshot() {
+    final q =
+        select(categories).join([
+          leftOuterJoin(tasks, tasks.categoryId.equalsExp(categories.id)),
+        ])..orderBy([
+          OrderingTerm(expression: categories.sortOrder),
+          OrderingTerm(expression: categories.id),
+          OrderingTerm(expression: tasks.sortOrder),
+          OrderingTerm(expression: tasks.id),
+        ]);
+    return q.get().then(_group);
+  }
+
+  /// Replaces the entire database with [data] in one transaction: clears tasks
+  /// then categories, then re-inserts each category (capturing its new id) and
+  /// its tasks under that id. A mid-import failure rolls back to the prior state.
+  Future<void> importReplace(List<BackupCategory> data) async {
+    await transaction(() async {
+      await delete(tasks).go();
+      await delete(categories).go();
+      for (final c in data) {
+        final categoryId = await into(categories).insert(
+          CategoriesCompanion.insert(
+            name: c.name,
+            color: c.color,
+            emoji: Value(c.emoji),
+            collapsed: Value(c.collapsed),
+            sortOrder: c.sortOrder,
+            createdAt: c.createdAt,
+          ),
+        );
+        for (final t in c.tasks) {
+          await into(tasks).insert(
+            TasksCompanion.insert(
+              categoryId: categoryId,
+              name: t.name,
+              sortOrder: t.sortOrder,
+              createdAt: t.createdAt,
+              archivedAt: Value(t.archivedAt),
+            ),
+          );
+        }
+      }
+    });
   }
 
   /// Reactive stream of every category with its tasks, categories ordered by

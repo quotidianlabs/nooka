@@ -349,6 +349,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Russian'**
   String get langRussian;
+
+  /// No description provided for @exportData.
+  ///
+  /// In en, this message translates to:
+  /// **'Export data'**
+  String get exportData;
+
+  /// No description provided for @importData.
+  ///
+  /// In en, this message translates to:
+  /// **'Import data'**
+  String get importData;
+
+  /// No description provided for @exportShareSubject.
+  ///
+  /// In en, this message translates to:
+  /// **'Nooka backup'**
+  String get exportShareSubject;
+
+  /// No description provided for @importReplaceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace all data?'**
+  String get importReplaceTitle;
+
+  /// No description provided for @importReplaceBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This deletes {count, plural, =0{no categories} one{{count} category} other{{count} categories}} and all their items, then loads the backup.'**
+  String importReplaceBody(int count);
+
+  /// No description provided for @importDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Imported {count, plural, =0{no categories} one{{count} category} other{{count} categories}}'**
+  String importDone(int count);
+
+  /// No description provided for @importInvalidFile.
+  ///
+  /// In en, this message translates to:
+  /// **'That isn\'t a valid Nooka backup.'**
+  String get importInvalidFile;
+
+  /// No description provided for @replace.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace'**
+  String get replace;
 }
 
 class _AppLocalizationsDelegate
