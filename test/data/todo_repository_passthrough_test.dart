@@ -2,6 +2,7 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nooka/data/repositories/todo_repository.dart';
 import 'package:nooka/data/services/database/database.dart';
+import 'package:nooka/domain/models/backup_data.dart';
 
 void main() {
   late AppDatabase db;
@@ -50,5 +51,26 @@ void main() {
 
     final row = (await tasks()).single;
     expect(row.categoryId, b);
+  });
+
+  test('exportSnapshot + importReplace pass through to the DAO', () async {
+    final db = AppDatabase(NativeDatabase.memory());
+    addTearDown(db.close);
+    final repo = TodoRepository(db.todoDao);
+
+    await repo.importReplace([
+      BackupCategory(
+        name: 'Imported',
+        color: 7,
+        emoji: null,
+        collapsed: false,
+        sortOrder: 0,
+        createdAt: DateTime.utc(2026, 6, 1),
+        tasks: const [],
+      ),
+    ]);
+
+    final snapshot = await repo.exportSnapshot();
+    expect(snapshot.single.category.name, 'Imported');
   });
 }
