@@ -1,4 +1,5 @@
 import 'package:drift/native.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nooka/data/repositories/backup_repository.dart';
 import 'package:nooka/data/repositories/todo_repository.dart';
@@ -93,5 +94,14 @@ void main() {
       ..pickFileContents = 'garbage';
     final repo = BackupRepository(todos, io);
     expect(repo.pickAndDecode, throwsA(isA<BackupFormatException>()));
+  });
+
+  test('backupRepositoryProvider builds a BackupRepository', () {
+    final container = ProviderContainer(
+      overrides: [todoRepositoryProvider.overrideWithValue(todos)],
+    );
+    addTearDown(container.dispose);
+
+    expect(container.read(backupRepositoryProvider), isA<BackupRepository>());
   });
 }
