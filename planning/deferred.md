@@ -14,3 +14,7 @@ change bundle when its trigger fires.
   reinforcing.
 - **Search / filter** — find tasks across categories; filter active vs
   archived. *Revisit when* the task list grows large enough to need it.
+- **Runtime schema self-check + migration tests** — Drift's debug-only
+  `validateDatabaseSchema()` in `beforeOpen`, plus a `SchemaVerifier`
+  migration-test harness (`drift_dev schema generate`). *Revisit when* the
+  first real migration lands (`schemaVersion` reaches 2).

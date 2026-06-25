@@ -1,3 +1,5 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:nooka/data/repositories/settings_repository.dart';
@@ -25,5 +27,21 @@ void main() {
 
     await repo.clearLastCategoryId();
     expect(repo.readLastCategoryId(), isNull);
+  });
+
+  test('sharedPreferencesProvider throws until overridden in main', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    expect(
+      () => container.read(sharedPreferencesProvider),
+      throwsA(
+        isA<ProviderException>().having(
+          (e) => e.exception,
+          'exception',
+          isA<UnimplementedError>(),
+        ),
+      ),
+    );
   });
 }

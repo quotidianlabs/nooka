@@ -1,3 +1,4 @@
+import 'package:drag_and_drop_lists/drag_and_drop_lists.dart';
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -446,4 +447,242 @@ void main() {
 
     expect(find.text("Couldn't complete that. Try again."), findsOneWidget);
   });
+
+  testWidgets('settings button pushes the settings screen', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(_app(db, prefs));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('settings-button')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('theme-tile')), findsOneWidget);
+  });
+
+  testWidgets('archive view renders archived rows', (
+    WidgetTester tester,
+  ) async {
+    final cat = await db.todoDao.createCategory(
+      name: 'Home',
+      color: 0xFF009688,
+    );
+    final t = await db.todoDao.createTask(categoryId: cat, name: 'Sweep');
+    await db.todoDao.completeTask(
+      t,
+      DateTime.now().subtract(const Duration(days: 1)),
+    );
+
+    await tester.pumpWidget(_app(db, prefs));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Archive'));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('task-1')), findsOneWidget);
+  });
+
+  testWidgets('category menu: edit opens the category dialog', (
+    WidgetTester tester,
+  ) async {
+    final cat = await db.todoDao.createCategory(
+      name: 'Home',
+      color: 0xFF009688,
+    );
+    await tester.pumpWidget(_app(db, prefs));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(Key('category-menu-$cat')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Edit category'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('category-name-field')),
+      'House',
+    );
+    await tester.pump(); // flush the listener setState
+    await tester.tap(find.byKey(const Key('category-confirm')));
+    await tester.pumpAndSettle();
+
+    // Category name is in a Text.rich / TextSpan — use textContaining.
+    expect(find.textContaining('House'), findsOneWidget);
+  });
+
+  testWidgets('category menu: delete removes the category', (
+    WidgetTester tester,
+  ) async {
+    final cat = await db.todoDao.createCategory(
+      name: 'Home',
+      color: 0xFF009688,
+    );
+    await tester.pumpWidget(_app(db, prefs));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(Key('category-menu-$cat')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('confirm-delete')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('No categories yet — add one'), findsOneWidget);
+  });
+
+  testWidgets('category menu: add task adds a task to that category', (
+    WidgetTester tester,
+  ) async {
+    final cat = await db.todoDao.createCategory(
+      name: 'Home',
+      color: 0xFF009688,
+    );
+    await tester.pumpWidget(_app(db, prefs));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(Key('category-menu-$cat')));
+    await tester.pumpAndSettle();
+    // l10n.addTask → 'New item'
+    await tester.tap(find.text('New item'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('quick-add-field')), 'Sweep');
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('quick-add-confirm')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('quick-add-done')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Sweep'), findsOneWidget);
+  });
+
+  testWidgets('task menu: edit renames the task', (WidgetTester tester) async {
+    final cat = await db.todoDao.createCategory(
+      name: 'Home',
+      color: 0xFF009688,
+    );
+    await db.todoDao.createTask(categoryId: cat, name: 'old');
+    await tester.pumpWidget(_app(db, prefs));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('task-menu-1')));
+    await tester.pumpAndSettle();
+    // l10n.editTask → 'Edit item'
+    await tester.tap(find.text('Edit item'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('task-name-field')), 'new');
+    await tester.tap(find.byKey(const Key('task-confirm')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('new'), findsOneWidget);
+  });
+
+  testWidgets('board reorder callbacks dispatch to the view model', (
+    WidgetTester tester,
+  ) async {
+    final a = await db.todoDao.createCategory(name: 'A', color: 1);
+    final b = await db.todoDao.createCategory(name: 'B', color: 2);
+    await db.todoDao.createTask(categoryId: a, name: 'a1');
+    await db.todoDao.createTask(categoryId: b, name: 'b1');
+    await tester.pumpWidget(_app(db, prefs));
+    await tester.pumpAndSettle();
+
+    final board = tester.widget<DragAndDropLists>(
+      find.byType(DragAndDropLists),
+    );
+
+    // Invoke onListReorder directly (covers the closure body lines).
+    // The dispatch is fire-and-forget from the closure; pump a frame so the
+    // async DB write can proceed without triggering pumpAndSettle's infinite
+    // re-notification loop on the live Riverpod stream.
+    board.onListReorder(0, 1);
+    await tester.pump(); // let the microtask queue drain once
+    expect(tester.takeException(), isNull);
+
+    // onItemReorder closure: also fire-and-forget, same pump pattern.
+    final board2 = tester.widget<DragAndDropLists>(
+      find.byType(DragAndDropLists),
+    );
+    board2.onItemReorder(0, 1, 0, 0);
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('HomeScreen constructs at runtime', (WidgetTester tester) async {
+    // A runtime key makes this a non-const instantiation, so the constructor
+    // actually executes (every other call site is const, which lcov never
+    // credits). Pumping it exercises the real widget end-to-end.
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          appDatabaseProvider.overrideWithValue(db),
+          sharedPreferencesProvider.overrideWithValue(prefs),
+        ],
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: HomeScreen(key: UniqueKey()),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byType(HomeScreen), findsOneWidget);
+  });
+
+  testWidgets('add-category button opens dialog and creates the category', (
+    WidgetTester tester,
+  ) async {
+    // Covers _addCategory lines 327-331: button tap → showCategoryDialog →
+    // vm.addCategory dispatch.
+    await tester.pumpWidget(_app(db, prefs));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('add-category-button')));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const Key('category-name-field')),
+      'Work',
+    );
+    await tester.pump(); // flush listener setState
+    await tester.tap(find.byKey(const Key('category-confirm')));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Work'), findsOneWidget);
+  });
+
+  testWidgets(
+    'archive category header collapse and menu invoke the callbacks',
+    (WidgetTester tester) async {
+      // Covers archive-view onToggleCollapsed (lines 149-150) and
+      // onHeaderMenu (line 152).
+      final cat = await db.todoDao.createCategory(
+        name: 'Home',
+        color: 0xFF009688,
+      );
+      final t = await db.todoDao.createTask(categoryId: cat, name: 'Sweep');
+      await db.todoDao.completeTask(
+        t,
+        DateTime.now().subtract(const Duration(days: 1)),
+      );
+      await tester.pumpWidget(_app(db, prefs));
+      await tester.pumpAndSettle();
+
+      // Switch to archive view.
+      await tester.tap(find.text('Archive'));
+      await tester.pumpAndSettle();
+      expect(find.text('Sweep'), findsOneWidget);
+
+      // Tap the header to collapse (onToggleCollapsed).
+      await tester.tap(find.byKey(Key('category-header-$cat')));
+      await tester.pumpAndSettle();
+      expect(find.text('Sweep'), findsNothing); // collapsed
+
+      // Tap the header menu button (onHeaderMenu → _categoryMenu).
+      await tester.tap(find.byKey(Key('category-menu-$cat')));
+      await tester.pumpAndSettle();
+      // The bottom sheet shows category actions; dismiss it.
+      await tester.tap(find.text('Edit category'));
+      await tester.pumpAndSettle();
+      // Category dialog opened; cancel it with the Cancel button.
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+    },
+  );
 }

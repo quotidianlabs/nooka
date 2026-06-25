@@ -80,4 +80,54 @@ void main() {
     expect(find.textContaining('Auto-removes in'), findsOneWidget);
     expect(find.byKey(const Key('task-menu-1')), findsNothing);
   });
+
+  testWidgets('shows empty-category text when expanded with no tasks', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      _host(
+        CategorySection(
+          category: _cat(),
+          tasks: const [],
+          archived: false,
+          now: DateTime(2026, 6, 25),
+          onToggleCollapsed: () {},
+          onHeaderMenu: () {},
+          onTaskTap: (_) {},
+          onTaskMenu: (_) {},
+        ),
+      ),
+    );
+
+    expect(find.text('No items'), findsOneWidget); // l10n.emptyCategory
+  });
+
+  testWidgets('swiping an active row right invokes onTaskTap (complete)', (
+    WidgetTester tester,
+  ) async {
+    Task? completed;
+    final t = _task(1, 'Sweep');
+    await tester.pumpWidget(
+      _host(
+        CategorySection(
+          category: _cat(),
+          tasks: [t],
+          archived: false,
+          now: DateTime(2026, 6, 25),
+          onToggleCollapsed: () {},
+          onHeaderMenu: () {},
+          onTaskTap: (task) => completed = task,
+          onTaskMenu: (_) {},
+        ),
+      ),
+    );
+
+    await tester.drag(
+      find.byKey(const ValueKey('dismiss-1')),
+      const Offset(500, 0),
+    );
+    await tester.pumpAndSettle();
+
+    expect(completed?.id, 1); // confirmDismiss ran onTaskTap
+  });
 }

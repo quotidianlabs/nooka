@@ -5,10 +5,15 @@ import 'package:nooka/l10n/app_localizations.dart';
 import 'package:nooka/ui/home/widgets/task_row_content.dart';
 
 // Field names + required createdAt match the generated `Task` data class.
-Task _task({DateTime? archivedAt}) => Task(
-  id: 1,
+Task _task({
+  int id = 1,
+  String name =
+      'A very very very long task name that would overflow the row badly',
+  DateTime? archivedAt,
+}) => Task(
+  id: id,
   categoryId: 1,
-  name: 'A very very very long task name that would overflow the row badly',
+  name: name,
   sortOrder: 0,
   createdAt: DateTime(2026, 1, 1),
   archivedAt: archivedAt,
@@ -94,5 +99,28 @@ void main() {
     );
     await tester.tap(find.byKey(const Key('task-1')));
     expect(tapped?.id, 1);
+  });
+
+  testWidgets('tapping the trailing menu button invokes onTaskMenu', (
+    WidgetTester tester,
+  ) async {
+    Task? tapped;
+    final t = _task(id: 5, name: 'Sweep');
+    await tester.pumpWidget(
+      _host(
+        TaskRowContent(
+          task: t,
+          color: const Color(0xFF009688),
+          now: DateTime(2026, 6, 25),
+          onTaskTap: (_) {},
+          onTaskMenu: (task) => tapped = task,
+        ),
+      ),
+    );
+
+    await tester.tap(find.byKey(const Key('task-menu-5')));
+    await tester.pump();
+
+    expect(tapped?.id, 5);
   });
 }
