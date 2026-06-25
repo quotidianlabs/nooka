@@ -105,7 +105,8 @@ quick-add default falls back to the first available category from the new data.
 
 `PlatformBackupIo` (`lib/data/services/backup/platform_backup_io.dart`) uses
 `share_plus` and `file_picker` — both require a real device or emulator and are
-excluded from the line-coverage gate via `// coverage:ignore-file`. All
+excluded from the line-coverage gate via a `skip-by-glob` entry in
+`coverde.yaml` (the same mechanism used for `connection.dart`). All
 orchestration logic lives in `BackupRepository`, which is fully tested through
 the injected `BackupIo` interface using a `FakeBackupIo` test double.
 

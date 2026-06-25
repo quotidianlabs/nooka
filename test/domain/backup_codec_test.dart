@@ -49,6 +49,13 @@ void main() {
     expect(decodeBackup(json).categories, isEmpty);
   });
 
+  test('BackupFormatException.toString includes the message', () {
+    expect(
+      const BackupFormatException('bad file').toString(),
+      contains('bad file'),
+    );
+  });
+
   group('decode rejects', () {
     void rejects(String source) => expect(
       () => decodeBackup(source),
