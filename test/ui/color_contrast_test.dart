@@ -39,6 +39,9 @@ void main() {
       const Color(0xFFFFFFFF),
       minRatio: 99,
     );
-    expect(result, const Color(0xFF000000)); // black: darkest on a light surface
+    expect(
+      result,
+      const Color(0xFF000000),
+    ); // black: darkest on a light surface
   });
 }
