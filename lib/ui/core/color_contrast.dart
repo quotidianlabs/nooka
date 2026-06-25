@@ -14,7 +14,6 @@ Color readableOn(Color color, Color surface, {double minRatio = 4.5}) {
     lightness = (darken ? lightness - 0.02 : lightness + 0.02).clamp(0.0, 1.0);
     final candidate = hsl.withLightness(lightness).toColor();
     if (_contrastRatio(candidate, surface) >= minRatio) return candidate;
-    if (lightness == 0.0 || lightness == 1.0) return candidate;
   }
   return hsl.withLightness(darken ? 0.0 : 1.0).toColor();
 }

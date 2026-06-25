@@ -30,4 +30,15 @@ void main() {
     const black = Color(0xFF000000);
     expect(readableOn(black, lightSurface), black);
   });
+
+  test('returns the clamped extreme when no candidate can meet the ratio', () {
+    // minRatio above the theoretical max (21) is never satisfiable, so the
+    // search exhausts and falls back to the clamped extreme.
+    final result = readableOn(
+      const Color(0xFF808080),
+      const Color(0xFFFFFFFF),
+      minRatio: 99,
+    );
+    expect(result, const Color(0xFF000000)); // black: darkest on a light surface
+  });
 }
