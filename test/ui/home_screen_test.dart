@@ -604,6 +604,27 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('HomeScreen constructs at runtime', (WidgetTester tester) async {
+    // A runtime key makes this a non-const instantiation, so the constructor
+    // actually executes (every other call site is const, which lcov never
+    // credits). Pumping it exercises the real widget end-to-end.
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          appDatabaseProvider.overrideWithValue(db),
+          sharedPreferencesProvider.overrideWithValue(prefs),
+        ],
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: HomeScreen(key: UniqueKey()),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byType(HomeScreen), findsOneWidget);
+  });
+
   testWidgets('add-category button opens dialog and creates the category', (
     WidgetTester tester,
   ) async {

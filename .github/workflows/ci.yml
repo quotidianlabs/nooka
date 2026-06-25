@@ -44,7 +44,7 @@ jobs:
         run: |
           export PATH="$PATH":"$HOME/.pub-cache/bin"
           coverde transform --input coverage/lcov.info --output coverage/lcov.info --mode w --transformations preset=exclude-untestable
-          coverde check --input coverage/lcov.info 85
+          coverde check --input coverage/lcov.info 100
       - name: Coverage comment on PR
         if: github.event_name == 'pull_request'
         uses: romeovs/lcov-reporter-action@v0.4.0

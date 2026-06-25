@@ -6,7 +6,7 @@ summary: Drive coverage to a meaningful 100% (production DB glue excluded); repl
 supersedes: null
 superseded_by: null
 pr: null
-outcome: "99.76% on filtered set (817/819); 2 unrunnable lines flagged (database.dart:17 openConnection(), home_screen.dart:23 const ctor artifact); 157 tests; coverde gate at 85 pending controller decision on exclusions"
+outcome: "100% on the filtered set (816/816); coverde gate at 100 in Justfile + CI; tool/coverage.py replaced; production DB glue isolated in connection.dart (resolveExecutor); 158 tests"
 ---
 
 # Design: Drive line coverage to a meaningful 100% on off-the-shelf tooling

@@ -8,14 +8,7 @@ part 'database.g.dart';
 
 @DriftDatabase(tables: [Categories, Tasks], daos: [TodoDao])
 class AppDatabase extends _$AppDatabase {
-  AppDatabase([QueryExecutor? executor])
-    : super(
-        executor != null
-            // Tests pass an explicit executor; close streams synchronously so
-            // fake-async sees no pending timer after the last listener detaches.
-            ? DatabaseConnection(executor, closeStreamsSynchronously: true)
-            : openConnection(),
-      );
+  AppDatabase([QueryExecutor? executor]) : super(resolveExecutor(executor));
 
   @override
   int get schemaVersion => 1;

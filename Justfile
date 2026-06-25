@@ -18,7 +18,7 @@ test *args:
 coverage:
     flutter test --coverage
     coverde transform --input coverage/lcov.info --output coverage/lcov.info --mode w --transformations preset=exclude-untestable
-    coverde check --input coverage/lcov.info 85
+    coverde check --input coverage/lcov.info 100
 
 # Print the planning change index (grouped by status) to stdout.
 index:
