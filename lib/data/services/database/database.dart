@@ -1,6 +1,6 @@
 import 'package:drift/drift.dart';
-import 'package:drift_flutter/drift_flutter.dart';
 
+import 'connection.dart';
 import 'todo_dao.dart';
 
 part 'database.g.dart';
@@ -33,7 +33,7 @@ class AppDatabase extends _$AppDatabase {
             // Tests pass an explicit executor; close streams synchronously so
             // fake-async sees no pending timer after the last listener detaches.
             ? DatabaseConnection(executor, closeStreamsSynchronously: true)
-            : driftDatabase(name: 'nooka'),
+            : openConnection(),
       );
 
   @override
