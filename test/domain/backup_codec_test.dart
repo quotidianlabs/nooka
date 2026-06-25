@@ -98,5 +98,117 @@ void main() {
         '"archivedAt":"not-a-date"}]}]}',
       ),
     );
+    test(
+      'missing exportedAt',
+      () => rejects('{"app":"nooka","version":1,"categories":[]}'),
+    );
+    test(
+      'invalid exportedAt type',
+      () => rejects(
+        '{"app":"nooka","version":1,"exportedAt":123,"categories":[]}',
+      ),
+    );
+    test(
+      'category entry not a map',
+      () => rejects(
+        '{"app":"nooka","version":1,'
+        '"exportedAt":"2026-06-25T00:00:00.000","categories":[42]}',
+      ),
+    );
+    test(
+      'category color not an int',
+      () => rejects(
+        '{"app":"nooka","version":1,'
+        '"exportedAt":"2026-06-25T00:00:00.000","categories":[{"name":"C",'
+        '"color":"red","emoji":null,"collapsed":false,"sortOrder":0,'
+        '"createdAt":"2026-06-25T00:00:00.000","tasks":[]}]}',
+      ),
+    );
+    test(
+      'category emoji wrong type',
+      () => rejects(
+        '{"app":"nooka","version":1,'
+        '"exportedAt":"2026-06-25T00:00:00.000","categories":[{"name":"C",'
+        '"color":1,"emoji":5,"collapsed":false,"sortOrder":0,'
+        '"createdAt":"2026-06-25T00:00:00.000","tasks":[]}]}',
+      ),
+    );
+    test(
+      'category collapsed not a bool',
+      () => rejects(
+        '{"app":"nooka","version":1,'
+        '"exportedAt":"2026-06-25T00:00:00.000","categories":[{"name":"C",'
+        '"color":1,"emoji":null,"collapsed":"yes","sortOrder":0,'
+        '"createdAt":"2026-06-25T00:00:00.000","tasks":[]}]}',
+      ),
+    );
+    test(
+      'category sortOrder not an int',
+      () => rejects(
+        '{"app":"nooka","version":1,'
+        '"exportedAt":"2026-06-25T00:00:00.000","categories":[{"name":"C",'
+        '"color":1,"emoji":null,"collapsed":false,"sortOrder":"0",'
+        '"createdAt":"2026-06-25T00:00:00.000","tasks":[]}]}',
+      ),
+    );
+    test(
+      'category createdAt unparseable',
+      () => rejects(
+        '{"app":"nooka","version":1,'
+        '"exportedAt":"2026-06-25T00:00:00.000","categories":[{"name":"C",'
+        '"color":1,"emoji":null,"collapsed":false,"sortOrder":0,'
+        '"createdAt":"not-a-date","tasks":[]}]}',
+      ),
+    );
+    test(
+      'category tasks not a list',
+      () => rejects(
+        '{"app":"nooka","version":1,'
+        '"exportedAt":"2026-06-25T00:00:00.000","categories":[{"name":"C",'
+        '"color":1,"emoji":null,"collapsed":false,"sortOrder":0,'
+        '"createdAt":"2026-06-25T00:00:00.000","tasks":{}}]}',
+      ),
+    );
+    test(
+      'task entry not a map',
+      () => rejects(
+        '{"app":"nooka","version":1,'
+        '"exportedAt":"2026-06-25T00:00:00.000","categories":[{"name":"C",'
+        '"color":1,"emoji":null,"collapsed":false,"sortOrder":0,'
+        '"createdAt":"2026-06-25T00:00:00.000","tasks":[42]}]}',
+      ),
+    );
+    test(
+      'task missing name',
+      () => rejects(
+        '{"app":"nooka","version":1,'
+        '"exportedAt":"2026-06-25T00:00:00.000","categories":[{"name":"C",'
+        '"color":1,"emoji":null,"collapsed":false,"sortOrder":0,'
+        '"createdAt":"2026-06-25T00:00:00.000","tasks":[{"sortOrder":0,'
+        '"createdAt":"2026-06-25T00:00:00.000","archivedAt":null}]}]}',
+      ),
+    );
+    test(
+      'task sortOrder not an int',
+      () => rejects(
+        '{"app":"nooka","version":1,'
+        '"exportedAt":"2026-06-25T00:00:00.000","categories":[{"name":"C",'
+        '"color":1,"emoji":null,"collapsed":false,"sortOrder":0,'
+        '"createdAt":"2026-06-25T00:00:00.000","tasks":[{"name":"T",'
+        '"sortOrder":"0","createdAt":"2026-06-25T00:00:00.000",'
+        '"archivedAt":null}]}]}',
+      ),
+    );
+    test(
+      'task createdAt unparseable',
+      () => rejects(
+        '{"app":"nooka","version":1,'
+        '"exportedAt":"2026-06-25T00:00:00.000","categories":[{"name":"C",'
+        '"color":1,"emoji":null,"collapsed":false,"sortOrder":0,'
+        '"createdAt":"2026-06-25T00:00:00.000","tasks":[{"name":"T",'
+        '"sortOrder":0,"createdAt":"not-a-date",'
+        '"archivedAt":null}]}]}',
+      ),
+    );
   });
 }
