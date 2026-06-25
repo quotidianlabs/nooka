@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:nooka/data/repositories/settings_repository.dart';
 import 'package:nooka/l10n/app_localizations.dart';
+import 'package:nooka/ui/core/locale_controller.dart';
 import 'package:nooka/ui/core/theme_controller.dart';
 import 'package:nooka/ui/settings/settings_screen.dart';
 
@@ -42,5 +43,41 @@ void main() {
 
     expect(container.read(themeControllerProvider), AppThemeMode.dark);
     expect(prefs.getString('theme'), 'dark');
+  });
+
+  testWidgets('selecting a language updates the locale controller', (
+    WidgetTester tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final container = ProviderContainer(
+      overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(
+          locale: Locale('en'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: SettingsScreen(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(
+      find.descendant(
+        of: find.byKey(const Key('language-tile')),
+        matching: find.byType(DropdownButton<AppLocale>),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Russian').last);
+    await tester.pumpAndSettle();
+
+    expect(container.read(localeControllerProvider), AppLocale.ru);
   });
 }
