@@ -814,7 +814,10 @@ void main() {
       ..toReturnOnPick = '/tmp/bad.json'
       ..pickFileContents = 'garbage';
     final repo = BackupRepository(todos, io);
-    expect(repo.pickAndDecode, throwsA(isA<BackupFormatException>()));
+    await expectLater(
+      repo.pickAndDecode(),
+      throwsA(isA<BackupFormatException>()),
+    );
   });
 }
 ```
@@ -1299,6 +1302,111 @@ Expected: analyzer clean, formatting already applied, **100% coverage** (the new
 ```bash
 git add lib/l10n/ lib/ui/settings/settings_screen.dart test/ui/settings_screen_test.dart architecture/ planning/
 git commit -m "feat(backup): wire export/import into Settings + promote architecture"
+```
+
+---
+
+### Task 8: Emulator integration test — real export→file→import round-trip
+
+**Files:**
+- Create: `integration_test/backup_round_trip_test.dart`
+- Modify: `.github/workflows/ci.yml` (the integration job's `script:` line)
+
+**Interfaces:**
+- Consumes: `PlatformBackupIo` (Task 4), `TodoRepository.exportSnapshot/importReplace` (Task 3), `buildBackup`/`encodeBackup`/`decodeBackup` (Task 1), `AppDatabase` over a real on-device sqlite file.
+
+**Why:** the unit/widget suite covers all backup *logic* with a fake `BackupIo`. The real `PlatformBackupIo.writeTemp`/`readFile` (path_provider temp dir + `dart:io`) only run on a device. This test drives that real file I/O on the CI emulator — matching the existing `critical_flow_test.dart` precedent that covers the production DB glue. `shareFile` (OS share sheet) and `pickFile` (native picker) cannot be driven headlessly and stay manual-verify; this test exercises the file path directly, which is the maximum an emulator can cover.
+
+- [ ] **Step 1: Write the integration test**
+
+Create `integration_test/backup_round_trip_test.dart` (model the DB-file setup on `critical_flow_test.dart`):
+
+```dart
+import 'dart:io';
+
+import 'package:drift/native.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:integration_test/integration_test.dart';
+import 'package:nooka/data/repositories/todo_repository.dart';
+import 'package:nooka/data/services/backup/platform_backup_io.dart';
+import 'package:nooka/data/services/database/database.dart';
+import 'package:nooka/domain/backup_codec.dart';
+
+void main() {
+  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+
+  testWidgets('exports to a real file and re-imports it losslessly', (
+    WidgetTester tester,
+  ) async {
+    const io = PlatformBackupIo();
+
+    // Source DB: seed a category with one active + one archived task.
+    final srcFile = File('${Directory.systemTemp.path}/it_backup_src.sqlite');
+    if (srcFile.existsSync()) srcFile.deleteSync();
+    final src = AppDatabase(NativeDatabase(srcFile));
+    final srcRepo = TodoRepository(src.todoDao);
+    final cat = await src.todoDao.createCategory(
+      name: 'Work',
+      color: 0xFF009688,
+      emoji: '💼',
+    );
+    await src.todoDao.createTask(categoryId: cat, name: 'Active');
+    final archived = await src.todoDao.createTask(
+      categoryId: cat,
+      name: 'Archived',
+    );
+    await src.todoDao.completeTask(archived, DateTime(2026, 6, 10));
+
+    // Export through the REAL platform file I/O.
+    final snapshot = await srcRepo.exportSnapshot();
+    final json = encodeBackup(buildBackup(snapshot, DateTime(2026, 6, 25)));
+    final path = await io.writeTemp('nooka-backup-2026-06-25.json', json);
+    expect(File(path).existsSync(), isTrue);
+    await src.close();
+
+    // Re-read the real file and import into a fresh DB.
+    final decoded = decodeBackup(await io.readFile(path));
+    final dstFile = File('${Directory.systemTemp.path}/it_backup_dst.sqlite');
+    if (dstFile.existsSync()) dstFile.deleteSync();
+    final dst = AppDatabase(NativeDatabase(dstFile));
+    addTearDown(dst.close);
+    final dstRepo = TodoRepository(dst.todoDao);
+    await dstRepo.importReplace(decoded.categories);
+
+    // The fresh DB reproduces the source exactly, archive state included.
+    final after = await dstRepo.exportSnapshot();
+    expect(after, hasLength(1));
+    expect(after.single.category.name, 'Work');
+    expect(after.single.category.emoji, '💼');
+    expect(after.single.tasks, hasLength(2));
+    expect(
+      after.single.tasks.where((t) => t.archivedAt != null),
+      hasLength(1),
+    );
+  });
+}
+```
+
+- [ ] **Step 2: Wire it into CI**
+
+In `.github/workflows/ci.yml`, change the integration job's run step so it runs both files in the one emulator boot. Update the `script:` value (currently `flutter test integration_test/critical_flow_test.dart`) to:
+
+```yaml
+          script: flutter test integration_test/critical_flow_test.dart integration_test/backup_round_trip_test.dart
+```
+
+Rename the step's `name:` from "Run critical-flow integration test" to "Run integration tests" for accuracy.
+
+- [ ] **Step 3: Verify locally as far as possible**
+
+Run: `flutter analyze integration_test/backup_round_trip_test.dart`
+Expected: no issues. (The test itself needs an emulator/device — it runs in CI; do not block on running it on the host. If a device/emulator is available, `flutter test integration_test/backup_round_trip_test.dart` should pass.)
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add integration_test/backup_round_trip_test.dart .github/workflows/ci.yml
+git commit -m "test(backup): emulator integration test for export/import round-trip + run in CI"
 ```
 
 ---

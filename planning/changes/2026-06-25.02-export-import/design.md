@@ -1,12 +1,22 @@
 ---
-status: draft
+status: shipped
 date: 2026-06-25
 slug: export-import
 summary: Full-DB JSON export/import (share-sheet out, file-picker in) with a pure backup codec, a coverage-isolated platform-I/O seam, and a destructive replace-all import behind a confirm dialog.
 supersedes: null
 superseded_by: null
 pr: null
-outcome: null
+outcome: |
+  Shipped habbits-style: pure `backup_codec` + `BackupData` models, `TodoDao`
+  `exportSnapshot`/`importReplace` (one-shot read + atomic replace-all),
+  `TodoRepository` pass-throughs, `BackupRepository` over an injectable
+  `BackupIo` seam (platform leaf isolated in `platform_backup_io.dart`,
+  coverde-excluded), a `@riverpod SettingsViewModel`, Settings Export/Import
+  tiles + confirm dialog, and bilingual strings. Archive state round-trips via
+  `archivedAt`; import resets the remembered category. New capability doc
+  `architecture/backup-io.md`. An emulator integration test
+  (`backup_round_trip_test.dart`) drives the real file I/O in CI next to
+  `critical_flow_test.dart`. 205 unit/widget tests; coverage 100% (1033/1033).
 ---
 
 # Design: JSON export/import — full-DB backup and restore
@@ -277,8 +287,15 @@ gate:
 - `test/ui/settings_screen_test.dart` — Export/Import tiles render; confirm
   dialog replaces data + success SnackBar with count; invalid-file SnackBar.
 
-`platform_backup_io.dart` is coverage-excluded and verified manually on device.
-Final gate: `just lint-ci` clean, `just test` green at 100%.
+`platform_backup_io.dart` is coverage-excluded. Its real file I/O
+(`writeTemp`/`readFile`, path_provider + `dart:io`) is exercised by an
+**emulator integration test** (`integration_test/backup_round_trip_test.dart`,
+run in CI next to `critical_flow_test.dart`) that does a real
+export→file→import round-trip — matching the precedent by which
+`connection.dart` is excluded-but-emulator-covered. Only `shareFile` (OS share
+sheet) and `pickFile` (native picker) remain manual-verify, as neither can be
+driven headlessly. Final gate: `just lint-ci` clean, `just coverage` green at
+100%, integration test green in CI.
 
 ## Risk
 
