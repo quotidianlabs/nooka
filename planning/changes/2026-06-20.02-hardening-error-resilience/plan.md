@@ -1,11 +1,3 @@
----
-status: shipped
-date: 2026-06-20
-slug: hardening-error-resilience
-spec: hardening-error-resilience
-pr: null
----
-
 # hardening-error-resilience — implementation plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use

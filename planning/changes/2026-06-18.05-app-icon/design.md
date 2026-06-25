@@ -1,12 +1,5 @@
 ---
-status: shipped
-date: 2026-06-18
-slug: app-icon
 summary: Custom launcher icon: a white ticked checkbox on brand teal, generated for iOS + Android via flutter_launcher_icons.
-supersedes: null
-superseded_by: null
-pr: "6 (f786490)"
-outcome: "White ticked-checkbox app icon on brand teal, generated for iOS + Android via flutter_launcher_icons."
 ---
 
 # Design: Custom app icon — ticked checkbox

@@ -1,12 +1,5 @@
 ---
-status: shipped
-date: 2026-06-18
-slug: adopt-planning-convention
 summary: Stand up planning/ mirroring habbits, add CLAUDE.md, and migrate the two superpowers specs into archive bundles.
-supersedes: null
-superseded_by: null
-pr: 775dcef
-outcome: 775dcef — planning/ stood up (convention README, templates, active/archive tree, deferred.md), CLAUDE.md added, two superpowers specs migrated into archive bundles.
 ---
 
 # Design: Adopt the portable planning convention

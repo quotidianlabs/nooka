@@ -1,11 +1,3 @@
----
-status: shipped
-date: 2026-06-24
-slug: clock-seam
-spec: clock-seam
-pr: 20
----
-
 # clock-seam — implementation plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use

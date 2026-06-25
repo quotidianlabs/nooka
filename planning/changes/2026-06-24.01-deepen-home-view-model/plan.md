@@ -1,11 +1,3 @@
----
-status: shipped
-date: 2026-06-24
-slug: deepen-home-view-model
-spec: deepen-home-view-model
-pr: 19
----
-
 # deepen-home-view-model — implementation plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use

@@ -1,11 +1,3 @@
----
-status: shipped
-date: 2026-06-18
-slug: drag-reorder-board
-spec: drag-reorder-board
-pr: "#9"
----
-
 # drag-reorder-board — implementation plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use
