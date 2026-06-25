@@ -55,6 +55,17 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
+      # The api-34 AVD needs ~7.4 GB for its userdata partition; the hosted
+      # runner can drop below that as the Gradle/system-image caches grow,
+      # making the emulator FATAL-exit at boot ("Not enough space to create
+      # userdata partition" → never registers with adb → "boot timeout").
+      # Reclaim a few GB of preinstalled tooling the Flutter/Android build
+      # never uses, before the emulator step. (Preventive — see habbits CI.)
+      - name: Free disk space for the emulator
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost /opt/hostedtoolcache/CodeQL
+          sudo docker image prune --all --force || true
+          df -h /
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: 3.44.2
