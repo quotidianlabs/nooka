@@ -41,5 +41,19 @@
   "themeDark": "Тёмная",
   "langSystem": "Системный",
   "langEnglish": "Английский",
-  "langRussian": "Русский"
+  "langRussian": "Русский",
+  "exportData": "Экспорт данных",
+  "importData": "Импорт данных",
+  "exportShareSubject": "Резервная копия Nooka",
+  "importReplaceTitle": "Заменить все данные?",
+  "importReplaceBody": "Будут удалены {count, plural, =0{нет категорий} one{{count} категория} few{{count} категории} many{{count} категорий} other{{count} категории}} и все их задачи, затем загрузится копия.",
+  "@importReplaceBody": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "importDone": "Импортировано {count, plural, =0{нет категорий} one{{count} категория} few{{count} категории} many{{count} категорий} other{{count} категории}}",
+  "@importDone": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "importInvalidFile": "Это не похоже на резервную копию Nooka.",
+  "replace": "Заменить"
 }

@@ -9,9 +9,6 @@ change bundle when its trigger fires.
 - **Due dates + reminders** — per-task due dates and on-device local
   notifications (habbits ships per-habit reminders). *Revisit when* nooka
   moves from a list to a planner.
-- **JSON export/import** — full-DB export/import for data portability (habbits
-  ships this). *Revisit when* the local-first / your-data story needs
-  reinforcing.
 - **Search / filter** — find tasks across categories; filter active vs
   archived. *Revisit when* the task list grows large enough to need it.
 - **Runtime schema self-check + migration tests** — Drift's debug-only

@@ -172,4 +172,46 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get langRussian => 'Russian';
+
+  @override
+  String get exportData => 'Export data';
+
+  @override
+  String get importData => 'Import data';
+
+  @override
+  String get exportShareSubject => 'Nooka backup';
+
+  @override
+  String get importReplaceTitle => 'Replace all data?';
+
+  @override
+  String importReplaceBody(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count categories',
+      one: '$count category',
+      zero: 'no categories',
+    );
+    return 'This deletes $_temp0 and all their items, then loads the backup.';
+  }
+
+  @override
+  String importDone(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count categories',
+      one: '$count category',
+      zero: 'no categories',
+    );
+    return 'Imported $_temp0';
+  }
+
+  @override
+  String get importInvalidFile => 'That isn\'t a valid Nooka backup.';
+
+  @override
+  String get replace => 'Replace';
 }

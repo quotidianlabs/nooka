@@ -15,3 +15,4 @@ Reactive `watchCategoriesWithTasks()` propagates changes back to the UI.
 - [Archive & retention](archive.md)
 - [Error handling](error-handling.md)
 - [i18n & theming](i18n-theming.md)
+- [Backup I/O](backup-io.md)
