@@ -1,22 +1,5 @@
 ---
-status: shipped
-date: 2026-06-25
-slug: export-import
 summary: Full-DB JSON export/import (share-sheet out, file-picker in) with a pure backup codec, a coverage-isolated platform-I/O seam, and a destructive replace-all import behind a confirm dialog.
-supersedes: null
-superseded_by: null
-pr: 26
-outcome: |
-  Shipped habbits-style: pure `backup_codec` + `BackupData` models, `TodoDao`
-  `exportSnapshot`/`importReplace` (one-shot read + atomic replace-all),
-  `TodoRepository` pass-throughs, `BackupRepository` over an injectable
-  `BackupIo` seam (platform leaf isolated in `platform_backup_io.dart`,
-  coverde-excluded), a `@riverpod SettingsViewModel`, Settings Export/Import
-  tiles + confirm dialog, and bilingual strings. Archive state round-trips via
-  `archivedAt`; import resets the remembered category. New capability doc
-  `architecture/backup-io.md`. An emulator integration test
-  (`backup_round_trip_test.dart`) drives the real file I/O in CI next to
-  `critical_flow_test.dart`. 205 unit/widget tests; coverage 100% (1033/1033).
 ---
 
 # Design: JSON export/import — full-DB backup and restore

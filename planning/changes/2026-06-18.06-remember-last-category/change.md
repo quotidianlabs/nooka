@@ -1,12 +1,5 @@
 ---
-status: shipped
-date: 2026-06-18
-slug: remember-last-category
 summary: Persist the last-used category through SettingsRepository so the add-task FAB defaults to it across app restarts.
-supersedes: null
-superseded_by: null
-pr: "7 (206b457)"
-outcome: "Last-used category persisted via SettingsRepository; the add-task FAB now defaults to it across restarts."
 ---
 
 # Change: Persist the last-used category for quick add

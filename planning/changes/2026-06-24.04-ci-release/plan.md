@@ -1,11 +1,3 @@
----
-status: shipped
-date: 2026-06-24
-slug: ci-release
-spec: ci-release
-pr: 22
----
-
 # ci-release — implementation plan
 
 **Goal:** A pushed `X.Y.Z` tag builds a signed universal APK and publishes a

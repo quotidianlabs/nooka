@@ -1,12 +1,5 @@
 ---
-status: shipped
-date: 2026-06-18
-slug: menu-alignment
 summary: Rebuild the category header as a ListTile so its chevron, title, and ⋮ menu align with the item rows' columns.
-supersedes: null
-superseded_by: null
-pr: 4
-outcome: PR #4 — category header rebuilt as a ListTile; leading chevron, title, and ⋮ menu now align with the item rows' columns.
 ---
 
 # Change: Align category-header and item ⋮ menus on one vertical line

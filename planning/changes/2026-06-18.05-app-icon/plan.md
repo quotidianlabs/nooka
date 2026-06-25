@@ -1,11 +1,3 @@
----
-status: shipped
-date: 2026-06-18
-slug: app-icon
-spec: app-icon
-pr: "#6 (f786490)"
----
-
 # app-icon — implementation plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use

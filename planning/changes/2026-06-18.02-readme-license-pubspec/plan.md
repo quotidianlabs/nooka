@@ -1,11 +1,3 @@
----
-status: approved
-date: 2026-06-18
-slug: readme-license-pubspec
-spec: readme-license-pubspec
-pr: null
----
-
 # README, LICENSE, pubspec & screenshots — Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use

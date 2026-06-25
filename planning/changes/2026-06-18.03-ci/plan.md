@@ -1,11 +1,3 @@
----
-status: approved
-date: 2026-06-18
-slug: ci
-spec: ci
-pr: null
----
-
 # GitHub Actions CI — Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use

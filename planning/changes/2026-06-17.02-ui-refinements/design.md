@@ -1,12 +1,5 @@
 ---
-status: shipped
-date: 2026-06-17
-slug: ui-refinements
 summary: Distinct category section-label headers, a single-grapheme relabeled icon field, and a reliably auto-dismissing undo toast.
-supersedes: null
-superseded_by: null
-pr: null
-outcome: 6d11b30 — distinct category section-label headers, single-grapheme relabeled icon field, and a reliably auto-dismissing undo toast.
 ---
 
 # Nooka UI Refinements — Design Spec

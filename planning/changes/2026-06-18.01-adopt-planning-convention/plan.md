@@ -1,11 +1,3 @@
----
-status: approved
-date: 2026-06-18
-slug: adopt-planning-convention
-spec: adopt-planning-convention
-pr: null
----
-
 # Adopt the planning convention — Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use

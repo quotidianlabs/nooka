@@ -1,12 +1,5 @@
 ---
-status: shipped
-date: 2026-06-18
-slug: ci
 summary: GitHub Actions running just lint-ci + just test on push and PRs, plus the README CI badge.
-supersedes: null
-superseded_by: null
-pr: 3
-outcome: PR #3 — GitHub Actions lint + test workflow on push/PR, plus the README CI badge.
 ---
 
 # Design: GitHub Actions CI

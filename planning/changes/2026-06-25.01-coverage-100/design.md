@@ -1,12 +1,5 @@
 ---
-status: shipped
-date: 2026-06-25
-slug: coverage-100
 summary: Drive coverage to a meaningful 100% (production DB glue excluded); replace tool/coverage.py with coverde and migrate the CI gate off deprecated very_good_coverage.
-supersedes: null
-superseded_by: null
-pr: 25
-outcome: "100% on the filtered set (816/816); coverde gate at 100 in Justfile + CI; tool/coverage.py replaced; production DB glue isolated in connection.dart (resolveExecutor); 158 tests"
 ---
 
 # Design: Drive line coverage to a meaningful 100% on off-the-shelf tooling
