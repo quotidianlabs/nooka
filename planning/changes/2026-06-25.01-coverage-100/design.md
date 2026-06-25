@@ -74,8 +74,13 @@ coverde check --input coverage/lcov.info 100
 
 `coverde transform` filters by a named preset; `coverde check <min>` is the gate.
 Only the `100` threshold is a CLI arg. The per-area Markdown job-summary table
-that `coverage.py` emitted is dropped; per-file detail still comes from the
-existing `lcov-reporter-action` PR comment.
+that `coverage.py` emitted is dropped.
+
+> **Amended at ship:** the `lcov-reporter-action` per-file PR comment is also
+> removed. Under a hard 100% gate it carries no signal — when coverage is 100%
+> every file shows green, and when it drops `coverde check` fails the job first
+> and logs the uncovered lines + content. A static `coverage 100%` README badge
+> (truthful because the gate enforces it) replaces the at-a-glance number.
 
 ### 2. Exclusions live in `coverde.yaml`, not command args
 
@@ -149,7 +154,9 @@ through the modal sheets and dialogs.
 Replace the deprecated `very_good_coverage` step in `.github/workflows/ci.yml`
 with `dart pub global activate coverde` + the `coverde transform`/`coverde check
 ... 100` invocation from §1. Pin the `coverde` version so the
-`transform`/`filter` flag surface does not drift. Keep `lcov-reporter-action`.
+`transform`/`filter` flag surface does not drift. Remove `lcov-reporter-action`
+and its `pull-requests: write` permission — redundant under the hard 100% gate
+(see the amendment in §1).
 
 ## Operations
 

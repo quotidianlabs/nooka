@@ -4,6 +4,7 @@ A **local-first to-do list. Your data, on your device.**
 
 [![Release](https://img.shields.io/github/v/release/quotidianlabs/nooka)](https://github.com/quotidianlabs/nooka/releases/latest)
 [![CI](https://github.com/quotidianlabs/nooka/actions/workflows/ci.yml/badge.svg)](https://github.com/quotidianlabs/nooka/actions/workflows/ci.yml)
+[![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)](https://github.com/quotidianlabs/nooka/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 ![Flutter](https://img.shields.io/badge/Flutter-02569B?logo=flutter&logoColor=white)
 
