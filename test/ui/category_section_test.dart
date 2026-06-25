@@ -122,7 +122,10 @@ void main() {
       ),
     );
 
-    await tester.drag(find.byKey(const ValueKey('dismiss-1')), const Offset(500, 0));
+    await tester.drag(
+      find.byKey(const ValueKey('dismiss-1')),
+      const Offset(500, 0),
+    );
     await tester.pumpAndSettle();
 
     expect(completed?.id, 1); // confirmDismiss ran onTaskTap
