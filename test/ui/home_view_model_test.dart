@@ -365,4 +365,62 @@ void main() {
       expect((await snapshot()).first.activeTasks.single.name, 'Sweep');
     });
   });
+
+  group('category command pass-throughs', () {
+    test('addCategory creates a category', () async {
+      final (_, vm) = await build();
+
+      final outcome = await vm.addCategory('Home', color: 7, emoji: '🏠');
+
+      expect(outcome, CommandOutcome.success);
+      final cwt = (await snapshot()).single;
+      expect(cwt.category.name, 'Home');
+      expect(cwt.category.color, 7);
+    });
+
+    test('updateCategory edits name, color and emoji', () async {
+      final cat = await db.todoDao.createCategory(name: 'Home', color: 1);
+      final (_, vm) = await build();
+
+      final outcome = await vm.updateCategory(
+        id: cat,
+        name: 'House',
+        color: 2,
+        emoji: null,
+      );
+
+      expect(outcome, CommandOutcome.success);
+      final cwt = (await snapshot()).single;
+      expect(cwt.category.name, 'House');
+      expect(cwt.category.color, 2);
+    });
+
+    test('toggleCollapsed persists the collapsed flag', () async {
+      final cat = await db.todoDao.createCategory(name: 'Home', color: 1);
+      final (_, vm) = await build();
+
+      final outcome = await vm.toggleCollapsed(cat, true);
+
+      expect(outcome, CommandOutcome.success);
+      expect((await snapshot()).single.category.collapsed, isTrue);
+    });
+  });
+
+  group('dropTask guard', () {
+    test('returns success when state has not loaded (cats == null)', () async {
+      // A fresh container whose stream has not yet emitted: state.value is null.
+      final container = ProviderContainer(
+        overrides: [
+          appDatabaseProvider.overrideWithValue(db),
+          sharedPreferencesProvider.overrideWithValue(prefs),
+        ],
+      );
+      addTearDown(container.dispose);
+      final vm = container.read(homeViewModelProvider.notifier);
+
+      final outcome = await vm.dropTask(0, 0, 0, 0);
+
+      expect(outcome, CommandOutcome.success); // no-op, no throw
+    });
+  });
 }
