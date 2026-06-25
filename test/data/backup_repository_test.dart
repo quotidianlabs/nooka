@@ -73,7 +73,7 @@ void main() {
   });
 
   test('pickAndDecode returns null when cancelled', () async {
-    final io = FakeBackupIo()..toReturnOnPick = null;
+    final io = FakeBackupIo();
     final repo = BackupRepository(todos, io);
     expect(await repo.pickAndDecode(), isNull);
   });
@@ -93,7 +93,10 @@ void main() {
       ..toReturnOnPick = '/tmp/bad.json'
       ..pickFileContents = 'garbage';
     final repo = BackupRepository(todos, io);
-    expect(repo.pickAndDecode, throwsA(isA<BackupFormatException>()));
+    await expectLater(
+      repo.pickAndDecode(),
+      throwsA(isA<BackupFormatException>()),
+    );
   });
 
   test('backupRepositoryProvider builds a BackupRepository', () {
