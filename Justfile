@@ -14,11 +14,13 @@ lint-ci:
 test *args:
     flutter test {{ args }}
 
-# tests with coverage; excludes generated + DB glue, gates the % (matches CI)
+# tests with coverage; excludes generated + DB glue, gates the % (matches CI).
+# One-time setup: `dart pub global activate coverde` — `pub global run` then
+# finds it without needing ~/.pub-cache/bin on PATH.
 coverage:
     flutter test --coverage
-    coverde transform --input coverage/lcov.info --output coverage/lcov.info --mode w --transformations preset=exclude-untestable
-    coverde check --input coverage/lcov.info 100
+    dart pub global run coverde transform --input coverage/lcov.info --output coverage/lcov.info --mode w --transformations preset=exclude-untestable
+    dart pub global run coverde check --input coverage/lcov.info 100
 
 # Print the planning change index (grouped by status) to stdout.
 index:

@@ -33,6 +33,11 @@ A `release` build without `key.properties` silently falls back to the debug key
 building, confirm the signing identity:
 
 ```bash
+# apksigner needs a JDK + the SDK build-tools on PATH (Homebrew layout); without
+# them it fails with "Unable to locate a Java Runtime".
+export JAVA_HOME=/opt/homebrew/opt/openjdk@17
+export PATH="$JAVA_HOME/bin:$(ls -d /opt/homebrew/share/android-commandlinetools/build-tools/* | sort -V | tail -1):$PATH"
+
 apksigner verify --print-certs build/app/outputs/flutter-apk/app-release.apk
 # The certificate DN must NOT be CN=Android Debug.
 ```
