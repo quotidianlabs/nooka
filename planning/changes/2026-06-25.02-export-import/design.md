@@ -5,7 +5,7 @@ slug: export-import
 summary: Full-DB JSON export/import (share-sheet out, file-picker in) with a pure backup codec, a coverage-isolated platform-I/O seam, and a destructive replace-all import behind a confirm dialog.
 supersedes: null
 superseded_by: null
-pr: null
+pr: 26
 outcome: |
   Shipped habbits-style: pure `backup_codec` + `BackupData` models, `TodoDao`
   `exportSnapshot`/`importReplace` (one-shot read + atomic replace-all),
