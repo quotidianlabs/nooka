@@ -38,6 +38,13 @@ dependencies:
   file_picker: ^8.1.0
   path_provider: ^2.1.5
 
+# file_picker pulls a newer flutter_plugin_android_lifecycle whose AAR metadata
+# demands a higher compileSdk than flutter.compileSdkVersion (Flutter 3.44.2)
+# provides, failing :file_picker:checkDebugAarMetadata in the Android build. Pin
+# it to the last version compatible with the current compileSdk.
+dependency_overrides:
+  flutter_plugin_android_lifecycle: 2.0.22
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

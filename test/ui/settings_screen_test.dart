@@ -126,6 +126,15 @@ void main() {
   });
   tearDown(() => db.close());
 
+  // A non-const construction so the constructor declaration line is recorded
+  // as covered deterministically: every other call site is const (resolved at
+  // compile time), and whether that registers the declaration line as hit is
+  // toolchain-dependent (it flaked between local and CI on the same Flutter).
+  test('SettingsScreen constructs', () {
+    // ignore: prefer_const_constructors
+    expect(SettingsScreen(), isA<SettingsScreen>());
+  });
+
   // -------------------------------------------------------------------------
   // Existing theme / language tests (keep passing)
   // -------------------------------------------------------------------------
