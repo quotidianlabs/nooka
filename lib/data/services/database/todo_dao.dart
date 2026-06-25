@@ -3,6 +3,7 @@ import 'package:drift/drift.dart';
 import '../../../domain/archive.dart';
 import '../../../domain/models/category_with_tasks.dart';
 import 'database.dart';
+import 'tables.dart';
 
 part 'todo_dao.g.dart';
 
