@@ -82,14 +82,23 @@ class FakeCloudBackupIo implements CloudBackupIo {
   DateTime uploadCreatedAt = DateTime.utc(2030);
   bool throwOnUpload = false;
   bool throwOnList = false;
+  bool throwOnConnect = false;
+  bool throwOnDisconnect = false;
 
   @override
   Future<CloudAccount?> currentAccount() async => account;
   @override
-  Future<CloudAccount?> connect() async =>
-      account ??= const CloudAccount('a@b.com');
+  Future<CloudAccount?> connect() async {
+    if (throwOnConnect) throw Exception('connect boom');
+    return account ??= const CloudAccount('a@b.com');
+  }
+
   @override
-  Future<void> disconnect() async => account = null;
+  Future<void> disconnect() async {
+    if (throwOnDisconnect) throw Exception('disconnect boom');
+    account = null;
+  }
+
   @override
   Future<List<CloudBackupRef>> list() async {
     if (throwOnList) throw Exception('list boom');
@@ -415,5 +424,38 @@ void main() {
     expect(await vm.cloudAccount(), isNotNull);
     await vm.disconnectCloud();
     expect(await vm.cloudAccount(), isNull);
+  });
+
+  test('connectCloud returns null when connect throws', () async {
+    final io = FakeCloudBackupIo()..throwOnConnect = true;
+    final container = ProviderContainer(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+        cloudBackupRepositoryProvider.overrideWith(
+          (ref) => CloudBackupRepository(todos, io),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    final vm = container.read(settingsViewModelProvider.notifier);
+
+    expect(await vm.connectCloud(), isNull);
+  });
+
+  test('disconnectCloud handles error gracefully', () async {
+    final io = FakeCloudBackupIo()..throwOnDisconnect = true;
+    final container = ProviderContainer(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+        cloudBackupRepositoryProvider.overrideWith(
+          (ref) => CloudBackupRepository(todos, io),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    final vm = container.read(settingsViewModelProvider.notifier);
+
+    // Should not throw
+    await vm.disconnectCloud();
   });
 }

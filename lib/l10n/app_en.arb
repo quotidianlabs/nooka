@@ -73,5 +73,15 @@
     "placeholders": { "count": { "type": "int" } }
   },
   "importInvalidFile": "That isn't a valid Nooka backup.",
-  "replace": "Replace"
+  "replace": "Replace",
+  "cloudBackupSection": "Cloud backup (Google Drive)",
+  "cloudConnect": "Connect Google Drive",
+  "cloudDisconnect": "Disconnect",
+  "cloudConnectedAs": "Connected as {email}",
+  "@cloudConnectedAs": { "placeholders": { "email": { "type": "String" } } },
+  "cloudBackupNow": "Back up now",
+  "cloudBackupDone": "Backed up to Drive.",
+  "cloudRestore": "Restore from Drive",
+  "cloudNoBackups": "No backups found in Drive.",
+  "cloudLatest": "Latest"
 }
