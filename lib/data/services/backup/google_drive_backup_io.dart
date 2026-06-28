@@ -22,12 +22,22 @@ class GoogleDriveBackupIo implements CloudBackupIo {
   /// Obtains a current OAuth2 access token for [_scope] (silent; no UI) and
   /// returns an authenticated [drive.DriveApi].
   ///
-  /// Throws [StateError] if the scope is not yet authorized — callers must
-  /// call [connect] first.
+  /// Resolves the signed-in account first, then fetches the token via that
+  /// account's [GoogleSignInAuthorizationClient] — matching [connect]'s
+  /// per-account `authorizeScopes` call and the documented v7 pattern.
+  ///
+  /// Throws [StateError] if no account is signed in or the scope is not yet
+  /// authorized — callers must call [connect] first.
   Future<drive.DriveApi> _api() async {
     await _ensureInitialized();
-    final auth = await GoogleSignIn.instance.authorizationClient
-        .authorizationForScopes([_scope]);
+    final future = GoogleSignIn.instance.attemptLightweightAuthentication();
+    final account = future == null ? null : await future;
+    if (account == null) {
+      throw StateError('Not signed in to Google; call connect() first.');
+    }
+    final auth = await account.authorizationClient.authorizationForScopes([
+      _scope,
+    ]);
     if (auth == null) {
       throw StateError(
         'Drive appdata scope not authorized; call connect() first.',
