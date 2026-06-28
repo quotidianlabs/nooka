@@ -226,4 +226,33 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get replace => 'Заменить';
+
+  @override
+  String get cloudBackupSection => 'Облачная копия (Google Drive)';
+
+  @override
+  String get cloudConnect => 'Подключить Google Drive';
+
+  @override
+  String get cloudDisconnect => 'Отключить';
+
+  @override
+  String cloudConnectedAs(String email) {
+    return 'Вход: $email';
+  }
+
+  @override
+  String get cloudBackupNow => 'Создать копию';
+
+  @override
+  String get cloudBackupDone => 'Копия сохранена в Drive.';
+
+  @override
+  String get cloudRestore => 'Восстановить из Drive';
+
+  @override
+  String get cloudNoBackups => 'Резервные копии в Drive не найдены.';
+
+  @override
+  String get cloudLatest => 'Последняя';
 }

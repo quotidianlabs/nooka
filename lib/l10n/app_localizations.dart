@@ -397,6 +397,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Replace'**
   String get replace;
+
+  /// No description provided for @cloudBackupSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Cloud backup (Google Drive)'**
+  String get cloudBackupSection;
+
+  /// No description provided for @cloudConnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect Google Drive'**
+  String get cloudConnect;
+
+  /// No description provided for @cloudDisconnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnect'**
+  String get cloudDisconnect;
+
+  /// No description provided for @cloudConnectedAs.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected as {email}'**
+  String cloudConnectedAs(String email);
+
+  /// No description provided for @cloudBackupNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Back up now'**
+  String get cloudBackupNow;
+
+  /// No description provided for @cloudBackupDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Backed up to Drive.'**
+  String get cloudBackupDone;
+
+  /// No description provided for @cloudRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore from Drive'**
+  String get cloudRestore;
+
+  /// No description provided for @cloudNoBackups.
+  ///
+  /// In en, this message translates to:
+  /// **'No backups found in Drive.'**
+  String get cloudNoBackups;
+
+  /// No description provided for @cloudLatest.
+  ///
+  /// In en, this message translates to:
+  /// **'Latest'**
+  String get cloudLatest;
 }
 
 class _AppLocalizationsDelegate

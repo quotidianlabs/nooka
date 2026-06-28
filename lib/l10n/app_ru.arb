@@ -55,5 +55,15 @@
     "placeholders": { "count": { "type": "int" } }
   },
   "importInvalidFile": "Это не похоже на резервную копию Nooka.",
-  "replace": "Заменить"
+  "replace": "Заменить",
+  "cloudBackupSection": "Облачная копия (Google Drive)",
+  "cloudConnect": "Подключить Google Drive",
+  "cloudDisconnect": "Отключить",
+  "cloudConnectedAs": "Вход: {email}",
+  "@cloudConnectedAs": { "placeholders": { "email": { "type": "String" } } },
+  "cloudBackupNow": "Создать копию",
+  "cloudBackupDone": "Копия сохранена в Drive.",
+  "cloudRestore": "Восстановить из Drive",
+  "cloudNoBackups": "Резервные копии в Drive не найдены.",
+  "cloudLatest": "Последняя"
 }

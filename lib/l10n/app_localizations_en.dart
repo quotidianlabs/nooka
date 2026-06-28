@@ -214,4 +214,33 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get replace => 'Replace';
+
+  @override
+  String get cloudBackupSection => 'Cloud backup (Google Drive)';
+
+  @override
+  String get cloudConnect => 'Connect Google Drive';
+
+  @override
+  String get cloudDisconnect => 'Disconnect';
+
+  @override
+  String cloudConnectedAs(String email) {
+    return 'Connected as $email';
+  }
+
+  @override
+  String get cloudBackupNow => 'Back up now';
+
+  @override
+  String get cloudBackupDone => 'Backed up to Drive.';
+
+  @override
+  String get cloudRestore => 'Restore from Drive';
+
+  @override
+  String get cloudNoBackups => 'No backups found in Drive.';
+
+  @override
+  String get cloudLatest => 'Latest';
 }

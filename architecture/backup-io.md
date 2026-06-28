@@ -115,3 +115,100 @@ the injected `BackupIo` interface using a `FakeBackupIo` test double.
 End-to-end validation of the share sheet and file picker (the excluded
 `PlatformBackupIo` code) requires a running emulator and belongs in the
 `integration_test/` suite, not in unit/widget tests.
+
+---
+
+## Cloud backup (Google Drive)
+
+Nooka also supports manual cloud backup and restore to the user's own Google
+Drive, shipping a new "Cloud backup (Google Drive)" section in Settings.
+
+### CloudBackupIo seam
+
+`lib/data/services/backup/cloud_backup_io.dart` defines the cloud platform
+seam, mirroring the `BackupIo` pattern:
+
+```
+abstract interface class CloudBackupIo
+  currentAccount() → CloudAccount?     // null = not connected
+  connect()        → CloudAccount?     // interactive sign-in + authorize scope; null if cancelled
+  disconnect()
+  list()           → List<CloudBackupRef>   // appDataFolder files, unordered
+  upload(name, contents)
+  download(id)     → String
+  delete(id)
+```
+
+Value types: `CloudBackupRef{id, name, createdAt}` (a Drive file entry) and
+`CloudAccount{email}` (minimal projection for the UI).
+
+`list()` returns raw appDataFolder entries in whatever order Drive delivers
+them. `listBackups()` in `CloudBackupRepository` is what filters to
+`nooka-backup-*` entries and sorts them newest-first before returning them to
+callers.
+
+### GoogleDriveBackupIo (concrete impl — coverage-excluded)
+
+`lib/data/services/backup/google_drive_backup_io.dart` implements
+`CloudBackupIo` using `google_sign_in` v7 and `googleapis` Drive v3.
+
+`google_sign_in` v7 splits authentication from authorization. `connect()`
+calls `GoogleSignIn.instance.authenticate()` for identity, then
+`account.authorizationClient.authorizeScopes([DriveApi.driveAppdataScope])`
+to obtain a Drive token. Subsequent API calls resolve the current account via
+`attemptLightweightAuthentication()` (silent, no UI) and fetch a token via
+`authorizationForScopes`, then build an authenticated `http.Client` for the
+`googleapis` Drive client. All Drive operations set `spaces: 'appDataFolder'`
+and `parents: ['appDataFolder']` so files are stored in the hidden per-app
+folder, invisible to the user and other apps, reached with the non-sensitive
+`drive.appdata` scope.
+
+`google_drive_backup_io.dart` is excluded from the line-coverage gate via a
+`skip-by-glob` entry in `coverde.yaml`, exactly like `platform_backup_io.dart`
+and `connection.dart` — it is platform glue that cannot run under
+`flutter test`. All orchestration logic above it is fully covered through the
+injected `CloudBackupIo` interface using a `FakeCloudBackupIo` test double.
+
+### CloudBackupRepository (orchestration — fully tested via fake)
+
+`lib/data/repositories/cloud_backup_repository.dart` orchestrates cloud I/O
+against the seam:
+
+- `backupNow()`: reads `TodoRepository.exportSnapshot()`, encodes with
+  `buildBackup` / `encodeBackup` (reusing the existing codec), uploads as
+  `nooka-backup-<YYYY-MM-DDTHH-MM-SS>.json`, then prunes so only the newest
+  **5** files remain (deletes oldest by `createdAt`).
+- `listBackups()`: returns entries sorted newest-first.
+- `fetch(id)`: downloads and decodes with `decodeBackup` (may throw
+  `BackupFormatException` for a corrupt cloud file — same exception the local
+  import path already handles).
+- `account()`, `connect()`, `disconnect()` delegate to the seam directly.
+
+A keep-alive `cloudBackupRepositoryProvider` wires `TodoRepository` +
+`GoogleDriveBackupIo` + the injectable `Clock`.
+
+### Restore and confirm-dialog invariant
+
+**Applying** a cloud restore is not re-implemented: after `fetch(id)` returns
+`BackupData`, the screen calls the existing `SettingsViewModel.applyImport(data)`,
+which does `TodoRepository.importReplace` + `RememberedCategory.forget()`
+atomically — identical to the local file-import path. The same replace-all
+confirm `AlertDialog` (`importReplaceTitle` / `importReplaceBody(count)`,
+`Key('confirm-import')`) guards the destructive step, preserving the
+replace-all + confirm-dialog invariant and the remembered-category reset
+described above.
+
+### Integration test note
+
+End-to-end validation of Drive auth, upload, and restore requires a real device
+or emulator with a Google account. It belongs in `integration_test/`, not the
+headless unit/widget suite, for the same reasons as `PlatformBackupIo`.
+
+### Phase-2 (documented, not built)
+
+Automatic backup (opt-in toggle, triggered on app-backgrounded, throttled to at
+most once per N hours, with silent-failure handling) is the documented next phase.
+It will call the same `cloudBackupNow()` path and rely on the 5-file rolling
+retention as its safety net. Multi-device sync is also deferred — the current
+design treats each install as an independent backup source; conflict resolution
+across devices is out of scope until a later phase.
