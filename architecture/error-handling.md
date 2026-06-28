@@ -20,3 +20,15 @@ message (`errorLoading`), never the raw exception.
 
 Logging is `debugPrint` (no remote crash sink); that is the hook point if a
 reporting backend is ever added.
+
+The Settings screen maps cloud backup/restore outcomes to localized SnackBars in
+one place, following the same pattern:
+
+| Outcome | SnackBar key |
+|---|---|
+| Backup uploaded successfully | `cloudBackupDone` |
+| Restore applied successfully | `importDone(count)` |
+| No backups found in Drive | `cloudNoBackups` |
+| Corrupt or alien Drive file (`BackupFormatException`) | `importInvalidFile` |
+| Any other Drive / network / auth failure | `actionFailed` |
+| User cancels the connect dialog | silent (mirrors cancelled file-pick) |

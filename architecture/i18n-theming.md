@@ -7,3 +7,8 @@ countdown. User-facing errors are localized too — the stream-error screen
 [error handling](error-handling.md). `LocaleController` and `ThemeController`
 persist the choice via `SettingsRepository` (shared_preferences). Material 3
 light/dark from `appLightTheme()` / `appDarkTheme()`.
+
+The cloud backup feature (`2026-06-28.01`) added the following bilingual EN + RU
+keys: `cloudBackupSection`, `cloudConnect`, `cloudDisconnect`,
+`cloudConnectedAs` (parametric: `{email}`), `cloudBackupNow`, `cloudBackupDone`,
+`cloudRestore`, `cloudNoBackups`, `cloudLatest`.
