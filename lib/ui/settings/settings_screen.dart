@@ -179,17 +179,31 @@ class _CloudBackupSectionState extends ConsumerState<_CloudBackupSection> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
 
+    final header = ListTile(
+      key: const Key('cloud-section-header'),
+      title: Text(
+        l10n.cloudBackupSection,
+        style: Theme.of(context).textTheme.titleSmall,
+      ),
+    );
+
     if (_account == null) {
-      return ListTile(
-        key: const Key('cloud-connect-tile'),
-        title: Text(l10n.cloudConnect),
-        enabled: !_loading,
-        onTap: _loading ? null : _connect,
+      return Column(
+        children: [
+          header,
+          ListTile(
+            key: const Key('cloud-connect-tile'),
+            title: Text(l10n.cloudConnect),
+            enabled: !_loading,
+            onTap: _loading ? null : _connect,
+          ),
+        ],
       );
     }
 
     return Column(
       children: [
+        header,
         ListTile(title: Text(l10n.cloudConnectedAs(_account!.email))),
         ListTile(
           key: const Key('cloud-backup-now-tile'),

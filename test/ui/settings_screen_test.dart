@@ -552,6 +552,8 @@ void main() {
     await tester.pumpWidget(_buildScreen(container));
     await tester.pumpAndSettle();
 
+    expect(find.byKey(const Key('cloud-section-header')), findsOneWidget);
+    expect(find.text('Cloud backup (Google Drive)'), findsOneWidget);
     expect(find.byKey(const Key('cloud-connect-tile')), findsOneWidget);
     expect(find.byKey(const Key('cloud-backup-now-tile')), findsNothing);
     expect(find.byKey(const Key('cloud-restore-tile')), findsNothing);
@@ -582,6 +584,8 @@ void main() {
     await tester.tap(find.byKey(const Key('cloud-connect-tile')));
     await tester.pumpAndSettle();
 
+    expect(find.byKey(const Key('cloud-section-header')), findsOneWidget);
+    expect(find.text('Cloud backup (Google Drive)'), findsOneWidget);
     expect(find.byKey(const Key('cloud-connect-tile')), findsNothing);
     expect(find.text('Connected as a@b.com'), findsOneWidget);
     expect(find.byKey(const Key('cloud-backup-now-tile')), findsOneWidget);
