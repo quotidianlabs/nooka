@@ -2,9 +2,11 @@ import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nooka/data/repositories/backup_repository.dart';
+import 'package:nooka/data/repositories/cloud_backup_repository.dart';
 import 'package:nooka/data/repositories/settings_repository.dart';
 import 'package:nooka/data/repositories/todo_repository.dart';
 import 'package:nooka/data/services/backup/backup_io.dart';
+import 'package:nooka/data/services/backup/cloud_backup_io.dart';
 import 'package:nooka/data/services/database/database.dart';
 import 'package:nooka/domain/backup_codec.dart';
 import 'package:nooka/domain/models/backup_data.dart';
@@ -67,6 +69,51 @@ class FakeBackupIo implements BackupIo {
 }
 
 // ---------------------------------------------------------------------------
+// Configurable fake CloudBackupIo
+// ---------------------------------------------------------------------------
+
+class FakeCloudBackupIo implements CloudBackupIo {
+  FakeCloudBackupIo({this.account});
+  CloudAccount? account;
+  final Map<String, String> contents = {}; // id -> json
+  final List<CloudBackupRef> refs = [];
+  final List<String> deleted = [];
+  int _seq = 0;
+  DateTime uploadCreatedAt = DateTime.utc(2030);
+  bool throwOnUpload = false;
+  bool throwOnList = false;
+
+  @override
+  Future<CloudAccount?> currentAccount() async => account;
+  @override
+  Future<CloudAccount?> connect() async =>
+      account ??= const CloudAccount('a@b.com');
+  @override
+  Future<void> disconnect() async => account = null;
+  @override
+  Future<List<CloudBackupRef>> list() async {
+    if (throwOnList) throw Exception('list boom');
+    return List.of(refs);
+  }
+
+  @override
+  Future<void> upload(String name, String c) async {
+    if (throwOnUpload) throw Exception('upload boom');
+    final id = 'id${_seq++}';
+    contents[id] = c;
+    refs.add(CloudBackupRef(id: id, name: name, createdAt: uploadCreatedAt));
+  }
+
+  @override
+  Future<String> download(String id) async => contents[id]!;
+  @override
+  Future<void> delete(String id) async {
+    deleted.add(id);
+    refs.removeWhere((r) => r.id == id);
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
@@ -88,10 +135,12 @@ BackupData _minimalBackup() => BackupData(
 
 void main() {
   late AppDatabase db;
+  late TodoRepository todos;
   late SharedPreferences prefs;
 
   setUp(() async {
     db = AppDatabase(NativeDatabase.memory());
+    todos = TodoRepository(db.todoDao);
     SharedPreferences.setMockInitialValues({'last_category': 5});
     prefs = await SharedPreferences.getInstance();
   });
@@ -245,5 +294,72 @@ void main() {
         .applyImport(_minimalBackup());
 
     expect(ok, isFalse);
+  });
+
+  // -------------------------------------------------------------------------
+  // cloud commands
+  // -------------------------------------------------------------------------
+
+  test('cloudBackupNow returns true and uploads', () async {
+    final io = FakeCloudBackupIo();
+    final container = ProviderContainer(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+        cloudBackupRepositoryProvider.overrideWith(
+          (ref) => CloudBackupRepository(todos, io),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    final vm = container.read(settingsViewModelProvider.notifier);
+
+    expect(await vm.cloudBackupNow(), isTrue);
+    expect(io.refs, isNotEmpty);
+  });
+
+  test('cloudBackups returns refs; null on failure', () async {
+    final io = FakeCloudBackupIo()
+      ..refs.add(
+        CloudBackupRef(id: 'a', name: 'a', createdAt: DateTime.utc(2026)),
+      );
+    final container = ProviderContainer(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+        cloudBackupRepositoryProvider.overrideWith(
+          (ref) => CloudBackupRepository(todos, io),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    final vm = container.read(settingsViewModelProvider.notifier);
+
+    expect((await vm.cloudBackups())!.single.id, 'a');
+
+    io.throwOnList = true;
+    expect(await vm.cloudBackups(), isNull);
+  });
+
+  test('fetchCloudBackup maps good/corrupt to Ready/Invalid', () async {
+    final io = FakeCloudBackupIo()
+      ..refs.addAll([
+        CloudBackupRef(id: 'good', name: 'g', createdAt: DateTime.utc(2026)),
+        CloudBackupRef(id: 'bad', name: 'b', createdAt: DateTime.utc(2026)),
+      ])
+      ..contents['good'] =
+          '{"app":"nooka","version":1,"exportedAt":"2026-06-28T00:00:00.000","categories":[]}'
+      ..contents['bad'] = 'not json';
+    final container = ProviderContainer(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+        cloudBackupRepositoryProvider.overrideWith(
+          (ref) => CloudBackupRepository(todos, io),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    final vm = container.read(settingsViewModelProvider.notifier);
+
+    expect(await vm.fetchCloudBackup('good'), isA<ImportPickReady>());
+    expect(await vm.fetchCloudBackup('bad'), isA<ImportPickInvalid>());
   });
 }
