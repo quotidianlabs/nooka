@@ -329,7 +329,11 @@ void main() {
   test('cloudBackups returns refs; null on failure', () async {
     final io = FakeCloudBackupIo()
       ..refs.add(
-        CloudBackupRef(id: 'a', name: 'a', createdAt: DateTime.utc(2026)),
+        CloudBackupRef(
+          id: 'a',
+          name: 'nooka-backup-a',
+          createdAt: DateTime.utc(2026),
+        ),
       );
     final container = ProviderContainer(
       overrides: [

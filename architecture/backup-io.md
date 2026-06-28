@@ -133,7 +133,7 @@ abstract interface class CloudBackupIo
   currentAccount() → CloudAccount?     // null = not connected
   connect()        → CloudAccount?     // interactive sign-in + authorize scope; null if cancelled
   disconnect()
-  list()           → List<CloudBackupRef>   // appDataFolder, any order
+  list()           → List<CloudBackupRef>   // appDataFolder files, unordered
   upload(name, contents)
   download(id)     → String
   delete(id)
@@ -141,6 +141,11 @@ abstract interface class CloudBackupIo
 
 Value types: `CloudBackupRef{id, name, createdAt}` (a Drive file entry) and
 `CloudAccount{email}` (minimal projection for the UI).
+
+`list()` returns raw appDataFolder entries in whatever order Drive delivers
+them. `listBackups()` in `CloudBackupRepository` is what filters to
+`nooka-backup-*` entries and sorts them newest-first before returning them to
+callers.
 
 ### GoogleDriveBackupIo (concrete impl — coverage-excluded)
 
@@ -204,4 +209,6 @@ headless unit/widget suite, for the same reasons as `PlatformBackupIo`.
 Automatic backup (opt-in toggle, triggered on app-backgrounded, throttled to at
 most once per N hours, with silent-failure handling) is the documented next phase.
 It will call the same `cloudBackupNow()` path and rely on the 5-file rolling
-retention as its safety net.
+retention as its safety net. Multi-device sync is also deferred — the current
+design treats each install as an independent backup source; conflict resolution
+across devices is out of scope until a later phase.

@@ -752,7 +752,7 @@ void main() {
           ..refs.add(
             CloudBackupRef(
               id: 'ref1',
-              name: 'backup.json',
+              name: 'nooka-backup-2026-06-01T00-00-00.json',
               createdAt: DateTime.utc(2026, 6, 1),
             ),
           )
@@ -799,7 +799,7 @@ void main() {
             ..refs.add(
               CloudBackupRef(
                 id: 'bad1',
-                name: 'bad.json',
+                name: 'nooka-backup-bad.json',
                 createdAt: DateTime.utc(2026, 6, 2),
               ),
             )
@@ -840,7 +840,7 @@ void main() {
           ..refs.add(
             CloudBackupRef(
               id: 'fail1',
-              name: 'fail.json',
+              name: 'nooka-backup-fail.json',
               createdAt: DateTime.utc(2026, 6, 3),
             ),
           );
@@ -880,12 +880,12 @@ void main() {
           ..refs.addAll([
             CloudBackupRef(
               id: 'ref1',
-              name: 'latest.json',
+              name: 'nooka-backup-latest.json',
               createdAt: DateTime.utc(2026, 6, 10),
             ),
             CloudBackupRef(
               id: 'ref2',
-              name: 'older.json',
+              name: 'nooka-backup-older.json',
               createdAt: DateTime.utc(2026, 6, 1),
             ),
           ])

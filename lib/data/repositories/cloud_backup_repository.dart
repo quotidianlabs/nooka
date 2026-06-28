@@ -37,8 +37,9 @@ class CloudBackupRepository {
 
   Future<List<CloudBackupRef>> listBackups() async {
     final all = await _io.list();
-    all.sort((a, b) => b.createdAt.compareTo(a.createdAt)); // newest first
-    return all;
+    final nooka = all.where((r) => r.name.startsWith('nooka-backup-')).toList();
+    nooka.sort((a, b) => b.createdAt.compareTo(a.createdAt)); // newest first
+    return nooka;
   }
 
   Future<BackupData> fetch(String id) async =>

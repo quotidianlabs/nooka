@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/services/backup/cloud_backup_io.dart';
+import '../../domain/models/backup_data.dart';
 import '../../l10n/app_localizations.dart';
 import '../core/locale_controller.dart';
 import '../core/theme_controller.dart';
@@ -111,34 +112,47 @@ Future<void> _import(BuildContext context, WidgetRef ref) async {
         context,
       ).showSnackBar(SnackBar(content: Text(l10n.actionFailed)));
     case ImportPickReady(:final data):
-      final count = data.categories.length;
-      final confirmed = await showDialog<bool>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: Text(l10n.importReplaceTitle),
-          content: Text(l10n.importReplaceBody(count)),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: Text(l10n.cancel),
-            ),
-            TextButton(
-              key: const Key('confirm-import'),
-              onPressed: () => Navigator.pop(ctx, true),
-              child: Text(l10n.replace),
-            ),
-          ],
-        ),
-      );
-      if (confirmed != true || !context.mounted) return;
-      final messenger = ScaffoldMessenger.of(context);
-      final ok = await vm.applyImport(data);
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(ok ? l10n.importDone(count) : l10n.actionFailed),
-        ),
-      );
+      await _confirmAndApply(context, ref, data);
   }
+}
+
+/// Shows the replace-all confirm dialog; on confirmation calls [applyImport]
+/// and shows the result snackbar. Used by both the local-file import path and
+/// the cloud-restore path to ensure the destructive-replace invariant is
+/// never duplicated.
+Future<void> _confirmAndApply(
+  BuildContext context,
+  WidgetRef ref,
+  BackupData data,
+) async {
+  final l10n = AppLocalizations.of(context);
+  final count = data.categories.length;
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(l10n.importReplaceTitle),
+      content: Text(l10n.importReplaceBody(count)),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, false),
+          child: Text(l10n.cancel),
+        ),
+        TextButton(
+          key: const Key('confirm-import'),
+          onPressed: () => Navigator.pop(ctx, true),
+          child: Text(l10n.replace),
+        ),
+      ],
+    ),
+  );
+  if (confirmed != true || !context.mounted) return;
+  final messenger = ScaffoldMessenger.of(context);
+  final ok = await ref
+      .read(settingsViewModelProvider.notifier)
+      .applyImport(data);
+  messenger.showSnackBar(
+    SnackBar(content: Text(ok ? l10n.importDone(count) : l10n.actionFailed)),
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -252,104 +266,82 @@ class _CloudBackupSectionState extends ConsumerState<_CloudBackupSection> {
   Future<void> _backupNow() async {
     final l10n = AppLocalizations.of(context);
     setState(() => _loading = true);
-    final ok = await ref
-        .read(settingsViewModelProvider.notifier)
-        .cloudBackupNow();
-    if (!mounted) return;
-    setState(() => _loading = false);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(ok ? l10n.cloudBackupDone : l10n.actionFailed)),
-    );
+    try {
+      final ok = await ref
+          .read(settingsViewModelProvider.notifier)
+          .cloudBackupNow();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ok ? l10n.cloudBackupDone : l10n.actionFailed)),
+      );
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   Future<void> _restore() async {
     final l10n = AppLocalizations.of(context);
     setState(() => _loading = true);
-    final refs = await ref
-        .read(settingsViewModelProvider.notifier)
-        .cloudBackups();
-    if (!mounted) return;
-    setState(() => _loading = false);
+    try {
+      final refs = await ref
+          .read(settingsViewModelProvider.notifier)
+          .cloudBackups();
+      if (!mounted) return;
 
-    if (refs == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.actionFailed)));
-      return;
-    }
-
-    if (refs.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.cloudNoBackups)));
-      return;
-    }
-
-    final picked = await showDialog<CloudBackupRef>(
-      context: context,
-      builder: (ctx) => SimpleDialog(
-        title: Text(l10n.cloudRestore),
-        children: [
-          for (var i = 0; i < refs.length; i++)
-            SimpleDialogOption(
-              key: Key('cloud-backup-entry-$i'),
-              onPressed: () => Navigator.pop(ctx, refs[i]),
-              child: Text(
-                i == 0 ? l10n.cloudLatest : _formatDate(refs[i].createdAt),
-              ),
-            ),
-        ],
-      ),
-    );
-
-    if (picked == null || !mounted) return;
-
-    final pick = await ref
-        .read(settingsViewModelProvider.notifier)
-        .fetchCloudBackup(picked.id);
-    if (!mounted) return;
-
-    switch (pick) {
-      case ImportPickCancelled():
-        return;
-      case ImportPickInvalid():
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(l10n.importInvalidFile)));
-      case ImportPickFailed():
+      if (refs == null) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(l10n.actionFailed)));
-      case ImportPickReady(:final data):
-        final count = data.categories.length;
-        final confirmed = await showDialog<bool>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: Text(l10n.importReplaceTitle),
-            content: Text(l10n.importReplaceBody(count)),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, false),
-                child: Text(l10n.cancel),
+        return;
+      }
+
+      if (refs.isEmpty) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.cloudNoBackups)));
+        return;
+      }
+
+      final picked = await showDialog<CloudBackupRef>(
+        context: context,
+        builder: (ctx) => SimpleDialog(
+          title: Text(l10n.cloudRestore),
+          children: [
+            for (var i = 0; i < refs.length; i++)
+              SimpleDialogOption(
+                key: Key('cloud-backup-entry-$i'),
+                onPressed: () => Navigator.pop(ctx, refs[i]),
+                child: Text(
+                  i == 0 ? l10n.cloudLatest : _formatDate(refs[i].createdAt),
+                ),
               ),
-              TextButton(
-                key: const Key('confirm-import'),
-                onPressed: () => Navigator.pop(ctx, true),
-                child: Text(l10n.replace),
-              ),
-            ],
-          ),
-        );
-        if (confirmed != true || !mounted) return;
-        final messenger = ScaffoldMessenger.of(context);
-        final ok = await ref
-            .read(settingsViewModelProvider.notifier)
-            .applyImport(data);
-        messenger.showSnackBar(
-          SnackBar(
-            content: Text(ok ? l10n.importDone(count) : l10n.actionFailed),
-          ),
-        );
+          ],
+        ),
+      );
+
+      if (picked == null || !mounted) return;
+
+      final pick = await ref
+          .read(settingsViewModelProvider.notifier)
+          .fetchCloudBackup(picked.id);
+      if (!mounted) return;
+
+      switch (pick) {
+        case ImportPickCancelled():
+          return;
+        case ImportPickInvalid():
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(l10n.importInvalidFile)));
+        case ImportPickFailed():
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(l10n.actionFailed)));
+        case ImportPickReady(:final data):
+          await _confirmAndApply(context, ref, data);
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
     }
   }
 

@@ -90,7 +90,7 @@ void main() {
       io.refs.add(
         CloudBackupRef(
           id: 'old$i',
-          name: 'old$i',
+          name: 'nooka-backup-old-$i',
           createdAt: DateTime.utc(2026, 1, i),
         ),
       );
@@ -108,9 +108,21 @@ void main() {
   test('listBackups returns newest-first', () async {
     final io = FakeCloudBackupIo()
       ..refs.addAll([
-        CloudBackupRef(id: 'a', name: 'a', createdAt: DateTime.utc(2026, 1, 1)),
-        CloudBackupRef(id: 'b', name: 'b', createdAt: DateTime.utc(2026, 3, 1)),
-        CloudBackupRef(id: 'c', name: 'c', createdAt: DateTime.utc(2026, 2, 1)),
+        CloudBackupRef(
+          id: 'a',
+          name: 'nooka-backup-a',
+          createdAt: DateTime.utc(2026, 1, 1),
+        ),
+        CloudBackupRef(
+          id: 'b',
+          name: 'nooka-backup-b',
+          createdAt: DateTime.utc(2026, 3, 1),
+        ),
+        CloudBackupRef(
+          id: 'c',
+          name: 'nooka-backup-c',
+          createdAt: DateTime.utc(2026, 2, 1),
+        ),
       ]);
     final repo = CloudBackupRepository(todos, io);
 
@@ -143,8 +155,52 @@ void main() {
       ..contents['x'] = 'not json';
     final repo = CloudBackupRepository(todos, io);
 
-    expect(() => repo.fetch('x'), throwsA(isA<BackupFormatException>()));
+    await expectLater(repo.fetch('x'), throwsA(isA<BackupFormatException>()));
   });
+
+  test(
+    'listBackups excludes non-nooka files; backupNow prune never deletes them',
+    () async {
+      final io = FakeCloudBackupIo();
+      // Foreign file that must never be listed or pruned.
+      io.refs.add(
+        CloudBackupRef(
+          id: 'foreign',
+          name: 'other.txt',
+          createdAt: DateTime.utc(2025),
+        ),
+      );
+      io.contents['foreign'] = '{}';
+      // 5 nooka backups already present.
+      for (var i = 1; i <= 5; i++) {
+        io.refs.add(
+          CloudBackupRef(
+            id: 'nooka$i',
+            name: 'nooka-backup-2026-0$i-01T00-00-00.json',
+            createdAt: DateTime.utc(2026, i),
+          ),
+        );
+        io.contents['nooka$i'] = '{}';
+      }
+      final repo = CloudBackupRepository(todos, io);
+
+      // listBackups excludes the foreign file.
+      final listed = await repo.listBackups();
+      expect(listed.map((r) => r.id), isNot(contains('foreign')));
+      expect(listed.length, 5);
+
+      // backupNow uploads 1 more nooka backup → 6 nooka total → prunes oldest 1.
+      // The foreign file must not appear in deleted.
+      io.uploadCreatedAt = DateTime.utc(2027);
+      await repo.backupNow();
+
+      expect(io.deleted, isNot(contains('foreign')));
+      expect(
+        io.refs.where((r) => r.name.startsWith('nooka-backup-')).length,
+        5,
+      );
+    },
+  );
 
   test('connect / account / disconnect pass through', () async {
     final io = FakeCloudBackupIo();
