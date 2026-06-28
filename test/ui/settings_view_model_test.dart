@@ -362,4 +362,58 @@ void main() {
     expect(await vm.fetchCloudBackup('good'), isA<ImportPickReady>());
     expect(await vm.fetchCloudBackup('bad'), isA<ImportPickInvalid>());
   });
+
+  test('cloudBackupNow returns false on failure', () async {
+    final io = FakeCloudBackupIo()..throwOnUpload = true;
+    final container = ProviderContainer(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+        cloudBackupRepositoryProvider.overrideWith(
+          (ref) => CloudBackupRepository(todos, io),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    final vm = container.read(settingsViewModelProvider.notifier);
+
+    expect(await vm.cloudBackupNow(), isFalse);
+  });
+
+  test('fetchCloudBackup maps a non-format error to Failed', () async {
+    // No content for the id => the fake's download(id) panics on contents[id]!,
+    // a generic error (not BackupFormatException) => ImportPickFailed.
+    final io = FakeCloudBackupIo();
+    final container = ProviderContainer(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+        cloudBackupRepositoryProvider.overrideWith(
+          (ref) => CloudBackupRepository(todos, io),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    final vm = container.read(settingsViewModelProvider.notifier);
+
+    expect(await vm.fetchCloudBackup('missing-id'), isA<ImportPickFailed>());
+  });
+
+  test('connect / account / disconnect round-trip', () async {
+    final io = FakeCloudBackupIo();
+    final container = ProviderContainer(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+        cloudBackupRepositoryProvider.overrideWith(
+          (ref) => CloudBackupRepository(todos, io),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    final vm = container.read(settingsViewModelProvider.notifier);
+
+    expect(await vm.cloudAccount(), isNull);
+    expect(await vm.connectCloud(), isA<CloudAccount>());
+    expect(await vm.cloudAccount(), isNotNull);
+    await vm.disconnectCloud();
+    expect(await vm.cloudAccount(), isNull);
+  });
 }
