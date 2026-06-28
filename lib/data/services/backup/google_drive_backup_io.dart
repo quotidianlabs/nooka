@@ -12,12 +12,23 @@ class GoogleDriveBackupIo implements CloudBackupIo {
   static const _scope = drive.DriveApi.driveAppdataScope;
   static const _space = 'appDataFolder';
 
+  /// Android requires the Web OAuth client ID as `serverClientId` (this app
+  /// does not apply the google-services Gradle plugin, so it is not picked up
+  /// from `google-services.json`). Supply it at build/run time with
+  /// `--dart-define=GOOGLE_SERVER_CLIENT_ID=<web client id>`; when unset, init
+  /// runs without it (iOS reads `GIDClientID` from Info.plist regardless).
+  static const _serverClientId = String.fromEnvironment(
+    'GOOGLE_SERVER_CLIENT_ID',
+  );
+
   /// Lazily initializes [GoogleSignIn.instance] exactly once.
   /// The `??=` assignment is safe in Dart's single-threaded event model.
   static Future<void>? _initFuture;
 
   Future<void> _ensureInitialized() =>
-      _initFuture ??= GoogleSignIn.instance.initialize();
+      _initFuture ??= GoogleSignIn.instance.initialize(
+        serverClientId: _serverClientId.isEmpty ? null : _serverClientId,
+      );
 
   /// Obtains a current OAuth2 access token for [_scope] (silent; no UI) and
   /// returns an authenticated [drive.DriveApi].

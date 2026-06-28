@@ -46,3 +46,7 @@ app.*.map.json
 
 # Brainstorming visual companion (local mockups)
 .superpowers/
+
+# Google Sign-In / Drive config (env-specific client IDs; supply per checkout)
+/android/app/google-services.json
+/ios/Runner/GoogleService-Info.plist
