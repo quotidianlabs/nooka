@@ -937,19 +937,86 @@ runs the full gate.
 
 ---
 
-## Operations checklist (out-of-repo, maintainer — prerequisite to a working build)
+## Operations checklist (out-of-repo, maintainer — prerequisite to the live Drive path)
 
-These are not code tasks but must be done for the Drive path to function on
-device (the unit/widget suite passes without them):
+One-time Google setup. Not needed for CI or the test suite (those use a fake
+seam); purely to light up the real "Connect Google Drive" flow. ~30 minutes.
+App identifiers (already set): Android `applicationId` and iOS bundle id are both
+`io.github.quotidianlabs.nooka`; scope requested is the **non-sensitive**
+`https://www.googleapis.com/auth/drive.appdata`.
 
-- [ ] Create an OAuth client in Google Cloud Console: Android (package name +
-  release & debug SHA-1) and iOS (bundle id); configure the consent screen.
-- [ ] Add the `.../auth/drive.appdata` scope (non-sensitive — should avoid full
-  OAuth verification, but configure test users on the consent screen).
-- [ ] iOS: add the reversed-client-id URL scheme to `ios/Runner/Info.plist` per
-  `google_sign_in` iOS setup.
-- [ ] Manual/emulator verify: connect → back up now → confirm a file appears →
-  restore → data replaced (this exercises the coverage-excluded leaf).
+**Why `drive.appdata`:** requesting only the hidden per-app-folder scope (Google
+classifies it non-sensitive) should keep the app out of Google's full OAuth
+verification / security assessment. Configure the consent screen below; you
+should avoid the audit that broader Drive scopes trigger.
+
+**1. Project** — easiest via [Firebase](https://console.firebase.google.com)
+(creates the GCP project and generates the platform config files + OAuth
+clients). Manual alternative: a plain [Cloud Console](https://console.cloud.google.com)
+project where you create each OAuth client by hand (no config files generated;
+you pass the client IDs to the app instead).
+
+**2. Drive API + consent screen** (Cloud Console):
+- [ ] APIs & Services → Library → **Google Drive API → Enable**.
+- [ ] OAuth consent screen → User type **External**; app name `nooka`, support +
+  developer emails; **Scopes → add `.../auth/drive.appdata`** (non-sensitive);
+  while in **Testing**, add your Google account(s) under **Test users**.
+
+**3. Android client + SHA-1:**
+- [ ] Get the signing SHA-1 (and SHA-256): `cd android && ./gradlew :app:signingReport`
+  (use the **debug** SHA-1 for local testing; add the **release** keystore SHA-1
+  before shipping).
+- [ ] Firebase → Add app → Android: package `io.github.quotidianlabs.nooka` +
+  SHA-1; download `google-services.json` into `android/app/`. *(Manual path:
+  create an **Android** OAuth client (package + SHA-1) and a **Web application**
+  OAuth client; no JSON to download — use the Web client ID as `serverClientId`,
+  see step 5.)*
+
+**4. iOS client + Info.plist:**
+- [ ] Firebase → Add app → iOS: bundle id `io.github.quotidianlabs.nooka`;
+  download `GoogleService-Info.plist` into `ios/Runner/`. *(Manual path: create
+  an **iOS** OAuth client; it yields `CLIENT_ID` + `REVERSED_CLIENT_ID`.)*
+- [ ] Add to `ios/Runner/Info.plist` (the app's `initialize()` takes no
+  `clientId`, so the plugin reads `GIDClientID` here):
+  ```xml
+  <key>GIDClientID</key>
+  <string>YOUR_IOS_CLIENT_ID.apps.googleusercontent.com</string>  <!-- CLIENT_ID -->
+  <key>CFBundleURLTypes</key>
+  <array><dict>
+    <key>CFBundleTypeRole</key><string>Editor</string>
+    <key>CFBundleURLSchemes</key>
+    <array><string>com.googleusercontent.apps.YOUR_IOS_CLIENT_ID</string></array>  <!-- REVERSED_CLIENT_ID -->
+  </dict></array>
+  ```
+
+**5. Android runtime — likely one-line code follow-up.**
+`GoogleDriveBackupIo` calls `GoogleSignIn.instance.initialize()` with **no
+args**. That suffices on iOS (reads `GIDClientID` from Info.plist), but on
+Android the v7 Credential Manager flow generally needs the **Web client ID**,
+supplied either by applying the google-services Gradle plugin (this repo does
+**not** apply it today) or — simpler — explicitly:
+```dart
+_initFuture ??= GoogleSignIn.instance.initialize(
+  serverClientId: '<WEB client ID>.apps.googleusercontent.com',
+);
+```
+Decide on first device test: if Android `connect()` fails while iOS works, add
+the `serverClientId`. Isolated change in the coverage-excluded leaf, no test
+impact.
+
+**6. Keep config files out of git.** Add to `.gitignore` (not there today):
+`android/app/google-services.json`, `ios/Runner/GoogleService-Info.plist`. The
+`GIDClientID` / `REVERSED_CLIENT_ID` pasted into `Info.plist` are fine to commit
+(client IDs are public by design).
+
+**7. Verify on device/emulator** (signed with the registered SHA-1, using a
+test-user account):
+- [ ] Settings → **Connect Google Drive** → "Connected as <email>".
+- [ ] **Back up now** succeeds — confirm a `connect()` immediately followed by an
+  upload does **not** throw `StateError` (the review's first on-device check).
+- [ ] **Restore from Drive** → backup listed → confirm replace → data matches.
+- [ ] Second clean install, same account → restore brings everything back (the
+  "new phone" recovery path).
 
 ## Self-review notes
 
