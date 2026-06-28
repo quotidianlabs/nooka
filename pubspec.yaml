@@ -37,6 +37,9 @@ dependencies:
   share_plus: ^11.0.0
   file_picker: ^8.1.0
   path_provider: ^2.1.5
+  google_sign_in: ^7.2.0
+  googleapis: ^14.0.0
+  http: ^1.2.0
 
 # file_picker pulls a newer flutter_plugin_android_lifecycle whose AAR metadata
 # demands a higher compileSdk than flutter.compileSdkVersion (Flutter 3.44.2)

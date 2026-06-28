@@ -1,8 +1,13 @@
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
 import '../../domain/backup_codec.dart';
 import '../../domain/clock.dart';
 import '../../domain/models/backup_data.dart';
 import '../services/backup/cloud_backup_io.dart';
+import '../services/backup/google_drive_backup_io.dart';
 import 'todo_repository.dart';
+
+part 'cloud_backup_repository.g.dart';
 
 /// Orchestrates cloud backup/restore: builds + encodes a snapshot and uploads
 /// it (pruning to the newest [_keep]); lists and downloads + decodes backups.
@@ -52,3 +57,10 @@ class CloudBackupRepository {
         'T${p(d.hour)}-${p(d.minute)}-${p(d.second)}';
   }
 }
+
+@Riverpod(keepAlive: true)
+CloudBackupRepository cloudBackupRepository(Ref ref) => CloudBackupRepository(
+  ref.watch(todoRepositoryProvider),
+  GoogleDriveBackupIo(),
+  clock: ref.watch(clockProvider),
+);
