@@ -138,6 +138,18 @@ class TodoDao extends DatabaseAccessor<AppDatabase> with _$TodoDaoMixin {
     );
   }
 
+  /// Hard-deletes the active task [id]. No sortOrder renumber: the ordering key
+  /// is (sortOrder, id), so the gap left behind is harmless and keeps the slot
+  /// open for an undo re-insert. Idempotent: deleting an absent id is a no-op.
+  Future<void> deleteTask(int id) =>
+      (delete(tasks)..where((t) => t.id.equals(id))).go();
+
+  /// Re-inserts a previously-deleted [task], preserving its id, category,
+  /// sortOrder, createdAt and archivedAt — the inverse of [deleteTask] used by
+  /// the widget's undo toast. `Task` is Insertable, so the explicit id (just
+  /// freed by the delete) and the original position are restored exactly.
+  Future<void> insertTask(Task task) => into(tasks).insert(task);
+
   /// Persists a new order by writing each id's index in [orderedIds] as its
   /// sortOrder, in one transaction.
   ///

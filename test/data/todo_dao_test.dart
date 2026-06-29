@@ -365,5 +365,77 @@ void main() {
         expect(snapshot.last.activeTasks, isEmpty);
       },
     );
+
+    test('deleteTask removes only that task, no cascade to category', () async {
+      final cat = await db.todoDao.createCategory(name: 'Home', color: 1);
+      final keep = await db.todoDao.createTask(categoryId: cat, name: 'keep');
+      final gone = await db.todoDao.createTask(categoryId: cat, name: 'gone');
+
+      await db.todoDao.deleteTask(gone);
+
+      final rows = await db.select(db.tasks).get();
+      expect(rows.map((t) => t.id), [keep]);
+      // Category itself is untouched.
+      final cats = await db.select(db.categories).get();
+      expect(cats.map((c) => c.id), [cat]);
+    });
+
+    test(
+      'deleteTask leaves siblings sortOrder untouched (gap, no renumber)',
+      () async {
+        final cat = await db.todoDao.createCategory(name: 'Home', color: 1);
+        final t1 = await db.todoDao.createTask(
+          categoryId: cat,
+          name: 't1',
+        ); // 0
+        final t2 = await db.todoDao.createTask(
+          categoryId: cat,
+          name: 't2',
+        ); // 1
+        final t3 = await db.todoDao.createTask(
+          categoryId: cat,
+          name: 't3',
+        ); // 2
+
+        await db.todoDao.deleteTask(t2);
+
+        Future<int> orderOf(int id) async => (await (db.select(
+          db.tasks,
+        )..where((t) => t.id.equals(id))).getSingle()).sortOrder;
+        expect(await orderOf(t1), 0);
+        expect(await orderOf(t3), 2); // gap at 1, not renumbered
+      },
+    );
+
+    test(
+      'insertTask restores a deleted task in its original position',
+      () async {
+        final cat = await db.todoDao.createCategory(name: 'Home', color: 1);
+        final t1 = await db.todoDao.createTask(categoryId: cat, name: 't1');
+        final t2 = await db.todoDao.createTask(categoryId: cat, name: 't2');
+        final t3 = await db.todoDao.createTask(categoryId: cat, name: 't3');
+
+        // Capture the full row (as the widget does), delete it, then re-insert.
+        final row = await (db.select(
+          db.tasks,
+        )..where((t) => t.id.equals(t2))).getSingle();
+        await db.todoDao.deleteTask(t2);
+        await db.todoDao.insertTask(row);
+
+        final restored = await (db.select(
+          db.tasks,
+        )..where((t) => t.id.equals(t2))).getSingle();
+        expect(restored.id, t2); // same id preserved
+        expect(restored.sortOrder, row.sortOrder); // same slot
+        expect(restored.archivedAt, isNull);
+        // Active order is back to t1, t2, t3.
+        final active = (await db.todoDao.watchCategoriesWithTasks().first)
+            .first
+            .activeTasks
+            .map((t) => t.id)
+            .toList();
+        expect(active, [t1, t2, t3]);
+      },
+    );
   });
 }
