@@ -1,5 +1,5 @@
 ---
-summary: Add a per-task Delete action for active tasks, with undo toast and no schema change.
+summary: Added a per-task Delete action for active tasks (menu + undo toast); hard-delete with re-insert on undo, no schema change.
 ---
 
 # Design: Delete an active task

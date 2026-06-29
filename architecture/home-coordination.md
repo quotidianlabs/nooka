@@ -28,6 +28,10 @@ The intents:
   widget UX layered over them; the VM has no undo concept. Routing complete
   through the outcome path means a failed complete surfaces `actionFailed` and
   simply skips offering undo.
+- `deleteTask(id)` / `restoreDeletedTask(task)` — plain inverse intents,
+  identical pattern to complete/restore. The undo toast is pure widget UX; the
+  VM has no undo concept. The widget captures the full `Task` before the delete
+  so undo can re-insert it without a lookup.
 - `dropTask(4 indices)` and `reorderCategories(oldIndex, newIndex)` — drag-board
   drops (below).
 - `toggleActiveCategory(id, collapsed)` — the active-board header toggle;
