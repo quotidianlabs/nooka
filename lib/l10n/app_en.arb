@@ -48,6 +48,7 @@
   "emptyArchive": "Nothing archived",
   "undoCompleteMessage": "Item completed",
   "undoRestoreMessage": "Item restored",
+  "undoDeleteMessage": "Item deleted",
   "undoAction": "Undo",
   "errorLoading": "Something went wrong",
   "actionFailed": "Couldn't complete that. Try again.",

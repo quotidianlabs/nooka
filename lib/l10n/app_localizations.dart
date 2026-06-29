@@ -278,6 +278,12 @@ abstract class AppLocalizations {
   /// **'Item restored'**
   String get undoRestoreMessage;
 
+  /// No description provided for @undoDeleteMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Item deleted'**
+  String get undoDeleteMessage;
+
   /// No description provided for @undoAction.
   ///
   /// In en, this message translates to:
