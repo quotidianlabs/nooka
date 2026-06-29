@@ -3,6 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../domain/clock.dart';
 import '../../domain/models/backup_data.dart';
 import '../../domain/models/category_with_tasks.dart';
+import '../services/database/database.dart';
 import '../services/database/database_providers.dart' show todoDaoProvider;
 import '../services/database/todo_dao.dart';
 
@@ -52,6 +53,8 @@ class TodoRepository {
       _dao.renameAndMove(id, name, newCategoryId);
   Future<void> completeTask(int id) => _dao.completeTask(id, _clock.now());
   Future<void> restoreTask(int id) => _dao.restoreTask(id);
+  Future<void> deleteTask(int id) => _dao.deleteTask(id);
+  Future<void> insertTask(Task task) => _dao.insertTask(task);
   Future<void> reorderTasks(List<int> orderedIds) =>
       _dao.reorderTasks(orderedIds);
   Future<void> moveTaskToCategoryAt(

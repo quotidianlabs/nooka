@@ -26,6 +26,13 @@ class _ThrowingMutationRepo extends TodoRepository {
   Future<int> purgeExpired() => Future.error(Exception('locked'));
 }
 
+/// deleteTask always throws; the watch stream stays real so the board loads.
+class _ThrowingDeleteTaskRepo extends TodoRepository {
+  _ThrowingDeleteTaskRepo(super.dao);
+  @override
+  Future<void> deleteTask(int id) => Future.error(Exception('db locked'));
+}
+
 /// write always throws — a failing best-effort remembered-category persist.
 class _ThrowingRemembered extends RememberedCategory {
   _ThrowingRemembered(super.settings);
@@ -266,6 +273,46 @@ void main() {
       final cwt = (await snapshot()).first;
       expect(cwt.activeTasks.map((t) => t.id), [t]);
       expect(cwt.archivedTasks, isEmpty);
+    });
+  });
+
+  group('delete / restore-deleted', () {
+    test('deleteTask removes the task from the board', () async {
+      final cat = await db.todoDao.createCategory(name: 'Home', color: 1);
+      final t = await db.todoDao.createTask(categoryId: cat, name: 'Sweep');
+      final (_, vm) = await build();
+
+      final outcome = await vm.deleteTask(t);
+
+      expect(outcome, CommandOutcome.success);
+      expect((await snapshot()).first.activeTasks, isEmpty);
+      expect((await snapshot()).first.archivedTasks, isEmpty); // not archived
+    });
+
+    test('restoreDeletedTask re-inserts a deleted task in place', () async {
+      final cat = await db.todoDao.createCategory(name: 'Home', color: 1);
+      final t = await db.todoDao.createTask(categoryId: cat, name: 'Sweep');
+      final (_, vm) = await build();
+      // Capture the row, delete it (as the widget would), then restore.
+      final row = (await snapshot()).first.activeTasks.single;
+      await vm.deleteTask(t);
+
+      final outcome = await vm.restoreDeletedTask(row);
+
+      expect(outcome, CommandOutcome.success);
+      final active = (await snapshot()).first.activeTasks;
+      expect(active.map((x) => x.id), [t]);
+      expect(active.single.name, 'Sweep');
+    });
+
+    test('a throwing deleteTask returns CommandOutcome.failure', () async {
+      final cat = await db.todoDao.createCategory(name: 'Home', color: 1);
+      await db.todoDao.createTask(categoryId: cat, name: 'Sweep');
+      final (_, vm) = await build(repo: _ThrowingDeleteTaskRepo(db.todoDao));
+
+      expect(await vm.deleteTask(1), CommandOutcome.failure);
+      // Nothing was deleted: the task is still active.
+      expect((await snapshot()).first.activeTasks.single.name, 'Sweep');
     });
   });
 
