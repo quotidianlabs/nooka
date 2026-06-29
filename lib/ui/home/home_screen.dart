@@ -302,6 +302,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     _showUndoToast(message, () => _dispatch(_vm.completeTask(task.id)));
   }
 
+  Future<void> _deleteTask(Task task) async {
+    final message = AppLocalizations.of(context).undoDeleteMessage;
+    // Offer undo only when the delete actually succeeded.
+    if (await _dispatch(_vm.deleteTask(task.id)) != CommandOutcome.success) {
+      return;
+    }
+    if (!mounted) return;
+    _showUndoToast(message, () => _dispatch(_vm.restoreDeletedTask(task)));
+  }
+
   Future<void> _addTask(List<CategoryWithTasks> cats) async {
     if (cats.isEmpty) return;
     // Resolve the default against the exact list the dialog will show, so the
@@ -410,23 +420,33 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               title: Text(l10n.editTask),
               onTap: () => Navigator.pop(context, 'edit'),
             ),
+            ListTile(
+              leading: const Icon(Icons.delete),
+              title: Text(l10n.delete),
+              onTap: () => Navigator.pop(context, 'delete'),
+            ),
           ],
         ),
       ),
     );
-    if (!mounted || choice != 'edit') return;
-    final r = await showTaskDialog(
-      context,
-      categories: [for (final c in cats) c.category],
-      initialCategoryId: task.categoryId,
-      initialName: task.name,
-    );
-    if (r != null) {
-      // Pass the seed category (task.categoryId at dialog open) as `from`, so a
-      // concurrent move is not silently undone.
-      await _dispatch(
-        _vm.editTask(task.id, r.name, task.categoryId, r.categoryId),
-      );
+    if (!mounted) return;
+    switch (choice) {
+      case 'edit':
+        final r = await showTaskDialog(
+          context,
+          categories: [for (final c in cats) c.category],
+          initialCategoryId: task.categoryId,
+          initialName: task.name,
+        );
+        if (r != null) {
+          // Pass the seed category (task.categoryId at dialog open) as `from`,
+          // so a concurrent move is not silently undone.
+          await _dispatch(
+            _vm.editTask(task.id, r.name, task.categoryId, r.categoryId),
+          );
+        }
+      case 'delete':
+        await _deleteTask(task);
     }
   }
 }
