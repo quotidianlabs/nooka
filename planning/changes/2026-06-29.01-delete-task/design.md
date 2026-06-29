@@ -105,8 +105,9 @@ the two inverse intents (exactly like complete/restore).
 ### 3. i18n
 
 - Menu label: reuse the existing `l10n.delete`.
-- New `undoDeleteMessage` ARB key (e.g. EN "Task deleted", RU "Задача удалена"),
-  added to both `app_en.arb` and `app_ru.arb`, then regenerate localizations.
+- New `undoDeleteMessage` ARB key (EN "Item deleted", RU "Дело удалено" — matching
+  the existing "Item completed"/"Дело выполнено" terminology), added to both
+  `app_en.arb` and `app_ru.arb`, then regenerate localizations.
 
 ## Operations
 
