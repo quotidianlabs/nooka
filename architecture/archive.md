@@ -19,3 +19,7 @@ surviving item never reads 0 and only an already-expired one does. The label's
 so the countdown can't go stale across midnight. Each archived item also shows
 its locale-formatted completion date. A manual "Clear archive" action
 (`clearArchive`) deletes all archived items regardless of age.
+
+Deleting an active task (`deleteTask`) is distinct from completing it: the row
+is hard-deleted immediately and never enters the Archive view (unlike
+completing, which sets `archivedAt` and parks the task there for 30 days).

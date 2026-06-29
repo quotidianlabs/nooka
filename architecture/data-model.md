@@ -22,4 +22,7 @@ against a freshly re-read snapshot: indices left stale by a mid-drag stream
 update collapse to a no-op, and dropping a task into a collapsed category
 auto-expands it so the moved task is never hidden. Editing a category's name,
 color, and emoji is a single batched `updateCategory` write (one stream
-rebuild).
+rebuild). An individual active task can be hard-deleted (`deleteTask`); the
+delete leaves a `sortOrder` gap (no renumber), keeping the slot open for undo.
+Undo re-inserts the captured row (`insertTask`), restoring the exact id and
+position.

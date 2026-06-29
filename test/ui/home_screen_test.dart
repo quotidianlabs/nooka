@@ -26,6 +26,12 @@ class _ThrowingMutationRepo extends TodoRepository {
   Future<int> purgeExpired() => Future.error(Exception('locked'));
 }
 
+class _ThrowingDeleteTaskRepo extends TodoRepository {
+  _ThrowingDeleteTaskRepo(super.dao);
+  @override
+  Future<void> deleteTask(int id) => Future.error(Exception('db locked'));
+}
+
 Widget _app(
   AppDatabase db,
   SharedPreferences prefs, {
@@ -572,6 +578,58 @@ void main() {
 
     expect(find.text('new'), findsOneWidget);
   });
+
+  testWidgets('task menu: delete removes the row and undo restores it', (
+    tester,
+  ) async {
+    final cat = await db.todoDao.createCategory(
+      name: 'Home',
+      color: 0xFF009688,
+    );
+    await db.todoDao.createTask(categoryId: cat, name: 'Sweep');
+    await tester.pumpWidget(_app(db, prefs));
+    await tester.pumpAndSettle();
+
+    // Open the per-task menu and choose Delete.
+    await tester.tap(find.byKey(const Key('task-menu-1')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete'));
+    await tester.pump(); // flush the deleteTask await
+    await tester.pump(const Duration(milliseconds: 300)); // snackbar entrance
+
+    expect(find.text('Sweep'), findsNothing); // row gone
+    expect(find.text('Item deleted'), findsOneWidget); // undo toast
+
+    // Undo brings it back in place.
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+    expect(find.text('Sweep'), findsOneWidget);
+  });
+
+  testWidgets(
+    'task menu: a failing delete surfaces actionFailed, keeps the row',
+    (tester) async {
+      final cat = await db.todoDao.createCategory(
+        name: 'Home',
+        color: 0xFF009688,
+      );
+      await db.todoDao.createTask(categoryId: cat, name: 'Sweep');
+      await tester.pumpWidget(
+        _appWithRepo(_ThrowingDeleteTaskRepo(db.todoDao), prefs),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('task-menu-1')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Delete'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.text("Couldn't complete that. Try again."), findsOneWidget);
+      expect(find.text('Sweep'), findsOneWidget); // row remains
+      expect(find.text('Item deleted'), findsNothing); // no undo toast
+    },
+  );
 
   testWidgets('board reorder callbacks dispatch to the view model', (
     WidgetTester tester,

@@ -3,6 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../data/repositories/remembered_category.dart';
 import '../../data/repositories/todo_repository.dart';
+import '../../data/services/database/database.dart';
 import '../../domain/board_reorder.dart';
 import '../../domain/default_category.dart';
 import '../../domain/models/category_with_tasks.dart';
@@ -143,6 +144,15 @@ class HomeViewModel extends _$HomeViewModel {
       _run(() => _repo.completeTask(id));
   Future<CommandOutcome> restoreTask(int id) =>
       _run(() => _repo.restoreTask(id));
+
+  /// Permanently deletes active task [id]. Undo is layered in the widget via
+  /// [restoreDeletedTask]; the VM holds no undo state (mirrors complete/restore).
+  Future<CommandOutcome> deleteTask(int id) => _run(() => _repo.deleteTask(id));
+
+  /// Re-inserts a just-deleted [task] (the inverse of [deleteTask]), restoring
+  /// its id and position. The widget passes the Task it captured before delete.
+  Future<CommandOutcome> restoreDeletedTask(Task task) =>
+      _run(() => _repo.insertTask(task));
 
   /// Resolves a drag-board drop against live state (re-read here, never trusted
   /// from a build-time snapshot) and issues the within/across mutation. A

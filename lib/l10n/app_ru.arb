@@ -30,6 +30,7 @@
   "emptyArchive": "В архиве пусто",
   "undoCompleteMessage": "Дело выполнено",
   "undoRestoreMessage": "Дело возвращено",
+  "undoDeleteMessage": "Дело удалено",
   "undoAction": "Отменить",
   "errorLoading": "Что-то пошло не так",
   "actionFailed": "Не удалось выполнить действие. Попробуйте ещё раз.",

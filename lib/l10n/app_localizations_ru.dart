@@ -145,6 +145,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get undoRestoreMessage => 'Дело возвращено';
 
   @override
+  String get undoDeleteMessage => 'Дело удалено';
+
+  @override
   String get undoAction => 'Отменить';
 
   @override

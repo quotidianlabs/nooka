@@ -138,6 +138,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get undoRestoreMessage => 'Item restored';
 
   @override
+  String get undoDeleteMessage => 'Item deleted';
+
+  @override
   String get undoAction => 'Undo';
 
   @override
