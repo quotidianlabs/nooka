@@ -87,8 +87,13 @@ jobs:
 
       - run: flutter pub get
 
+      # GOOGLE_SERVER_CLIENT_ID is the Web OAuth client ID consumed by
+      # GoogleDriveBackupIo on Android. OAuth client IDs are public identifiers
+      # (not secrets), so it is committed here rather than stored as a secret.
       - name: Build signed release APK
-        run: flutter build apk --release
+        run: |
+          flutter build apk --release \
+            --dart-define=GOOGLE_SERVER_CLIENT_ID=103089031104-03r0mq3lfdkg6snffok3ptfjae4cmq17.apps.googleusercontent.com
 
       - name: Rename APK
         run: |
