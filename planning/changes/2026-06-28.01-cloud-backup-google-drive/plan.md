@@ -939,6 +939,18 @@ runs the full gate.
 
 ## Operations checklist (out-of-repo, maintainer — prerequisite to the live Drive path)
 
+> **Status — COMPLETED on Android (2026-06-30), manual path.** GCP project +
+> Drive API enabled; OAuth consent screen configured and **published to
+> production** (non-sensitive `drive.appdata` → no verification, no test-user
+> cap, "unverified app" warning gone); **Android** OAuth client registered with
+> the release/upload-key SHA-1 `20:B6:C4:…:C1:02`; **Web** OAuth client created
+> and its ID wired into release APKs via `--dart-define=GOOGLE_SERVER_CLIENT_ID`
+> in `.github/workflows/release.yml` (not the hardcoded `initialize()` of
+> step 5). On-device connect + "Back up now" verified ("Backed up to Drive.").
+> Shipping fix: the silent `authorizationForScopes` returns null on Android, so
+> `_api()` now falls back to `authorizeScopes` (release **1.2.1**). **iOS path
+> (step 4) not done** — deferred until iOS ships.
+
 One-time Google setup. Not needed for CI or the test suite (those use a fake
 seam); purely to light up the real "Connect Google Drive" flow. ~30 minutes.
 App identifiers (already set): Android `applicationId` and iOS bundle id are both
@@ -957,20 +969,21 @@ project where you create each OAuth client by hand (no config files generated;
 you pass the client IDs to the app instead).
 
 **2. Drive API + consent screen** (Cloud Console):
-- [ ] APIs & Services → Library → **Google Drive API → Enable**.
-- [ ] OAuth consent screen → User type **External**; app name `nooka`, support +
-  developer emails; **Scopes → add `.../auth/drive.appdata`** (non-sensitive);
-  while in **Testing**, add your Google account(s) under **Test users**.
+- [x] APIs & Services → Library → **Google Drive API → Enable**.
+- [x] OAuth consent screen → User type **External**; app name `nooka`, support +
+  developer emails; `.../auth/drive.appdata` (non-sensitive). *(In the newer
+  Google Auth Platform UI the scope is requested at runtime, not pre-listed.)*
+  Now **published to production**, so the Testing-only test-user list no longer
+  gates access.
 
 **3. Android client + SHA-1:**
-- [ ] Get the signing SHA-1 (and SHA-256): `cd android && ./gradlew :app:signingReport`
-  (use the **debug** SHA-1 for local testing; add the **release** keystore SHA-1
-  before shipping).
-- [ ] Firebase → Add app → Android: package `io.github.quotidianlabs.nooka` +
-  SHA-1; download `google-services.json` into `android/app/`. *(Manual path:
-  create an **Android** OAuth client (package + SHA-1) and a **Web application**
-  OAuth client; no JSON to download — use the Web client ID as `serverClientId`,
-  see step 5.)*
+- [x] Got the SHA-1 from the **release/upload** keystore (the key that signs the
+  distributed/CI APKs), via `keytool` on `key.properties`'s `storeFile`:
+  `20:B6:C4:A2:A1:A2:29:66:45:2E:44:01:06:63:BD:55:3C:ED:C1:02`.
+- [x] **Manual path** used: created an **Android** OAuth client (package
+  `io.github.quotidianlabs.nooka` + the release SHA-1) and a **Web application**
+  OAuth client. No `google-services.json`; the Web client ID is the
+  `serverClientId` (step 5).
 
 **4. iOS client + Info.plist:**
 - [ ] Firebase → Add app → iOS: bundle id `io.github.quotidianlabs.nooka`;
@@ -1000,9 +1013,11 @@ _initFuture ??= GoogleSignIn.instance.initialize(
   serverClientId: '<WEB client ID>.apps.googleusercontent.com',
 );
 ```
-Decide on first device test: if Android `connect()` fails while iOS works, add
-the `serverClientId`. Isolated change in the coverage-excluded leaf, no test
-impact.
+- [x] **Done differently:** the `serverClientId` is supplied at build time via
+  `--dart-define=GOOGLE_SERVER_CLIENT_ID=…` (read by `GoogleDriveBackupIo`,
+  wired into `release.yml`), not hardcoded in `initialize()`. Android `connect()`
+  then succeeded. A second, separate bug surfaced at upload time (silent
+  `authorizationForScopes` → null → `StateError`); fixed in **1.2.1**.
 
 **6. Keep config files out of git.** Add to `.gitignore` (not there today):
 `android/app/google-services.json`, `ios/Runner/GoogleService-Info.plist`. The
@@ -1011,12 +1026,13 @@ impact.
 
 **7. Verify on device/emulator** (signed with the registered SHA-1, using a
 test-user account):
-- [ ] Settings → **Connect Google Drive** → "Connected as <email>".
-- [ ] **Back up now** succeeds — confirm a `connect()` immediately followed by an
-  upload does **not** throw `StateError` (the review's first on-device check).
+- [x] Settings → **Connect Google Drive** → "Connected as lesnik512@gmail.com".
+- [x] **Back up now** succeeds ("Backed up to Drive.") — the `connect()`-then-
+  upload `StateError` this check warned about *did* occur and is fixed in 1.2.1.
 - [ ] **Restore from Drive** → backup listed → confirm replace → data matches.
+  *(Exercised on device; full data-match not formally re-verified.)*
 - [ ] Second clean install, same account → restore brings everything back (the
-  "new phone" recovery path).
+  "new phone" recovery path). *(Not yet verified.)*
 
 ## Self-review notes
 
