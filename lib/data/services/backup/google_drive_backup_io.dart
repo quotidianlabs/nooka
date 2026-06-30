@@ -46,14 +46,14 @@ class GoogleDriveBackupIo implements CloudBackupIo {
     if (account == null) {
       throw StateError('Not signed in to Google; call connect() first.');
     }
-    final auth = await account.authorizationClient.authorizationForScopes([
-      _scope,
-    ]);
-    if (auth == null) {
-      throw StateError(
-        'Drive appdata scope not authorized; call connect() first.',
-      );
-    }
+    // The silent `authorizationForScopes` returns null on Android even when the
+    // scope was granted during connect() (it won't mint a token without a
+    // gesture). Fall back to `authorizeScopes`, which returns the token for an
+    // already-granted scope without UI; these calls originate from a button tap,
+    // so prompting is allowed if the grant is somehow missing.
+    final auth =
+        await account.authorizationClient.authorizationForScopes([_scope]) ??
+        await account.authorizationClient.authorizeScopes([_scope]);
     return drive.DriveApi(_AuthenticatedClient(auth.accessToken));
   }
 

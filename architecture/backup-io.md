@@ -156,9 +156,14 @@ callers.
 calls `GoogleSignIn.instance.authenticate()` for identity, then
 `account.authorizationClient.authorizeScopes([DriveApi.driveAppdataScope])`
 to obtain a Drive token. Subsequent API calls resolve the current account via
-`attemptLightweightAuthentication()` (silent, no UI) and fetch a token via
-`authorizationForScopes`, then build an authenticated `http.Client` for the
-`googleapis` Drive client. All Drive operations set `spaces: 'appDataFolder'`
+`attemptLightweightAuthentication()` (silent, no UI), then fetch a token via
+`authorizationForScopes`. On Android that silent call returns null even when
+the scope was granted during `connect()`, so `_api()` falls back to
+`authorizeScopes` (which returns the token for an already-granted scope, and
+prompts only if the grant is genuinely missing); without this fallback every
+Drive operation threw `StateError` and surfaced the generic error. The token
+then builds an authenticated `http.Client` for the `googleapis` Drive client.
+All Drive operations set `spaces: 'appDataFolder'`
 and `parents: ['appDataFolder']` so files are stored in the hidden per-app
 folder, invisible to the user and other apps, reached with the non-sensitive
 `drive.appdata` scope.
