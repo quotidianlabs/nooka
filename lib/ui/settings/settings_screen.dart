@@ -267,18 +267,12 @@ class _CloudBackupSectionState extends ConsumerState<_CloudBackupSection> {
     final l10n = AppLocalizations.of(context);
     setState(() => _loading = true);
     try {
-      final vm = ref.read(settingsViewModelProvider.notifier);
-      final ok = await vm.cloudBackupNow();
+      final ok = await ref
+          .read(settingsViewModelProvider.notifier)
+          .cloudBackupNow();
       if (!mounted) return;
-      // DIAGNOSTIC (temporary): show the real error text instead of the generic
-      // message so on-device backup failures can be triaged without adb.
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          duration: const Duration(seconds: 12),
-          content: Text(
-            ok ? l10n.cloudBackupDone : (vm.lastCloudError ?? l10n.actionFailed),
-          ),
-        ),
+        SnackBar(content: Text(ok ? l10n.cloudBackupDone : l10n.actionFailed)),
       );
     } finally {
       if (mounted) setState(() => _loading = false);

@@ -115,18 +115,13 @@ class SettingsViewModel extends _$SettingsViewModel {
     }
   }
 
-  /// DIAGNOSTIC (temporary): last cloud-backup error text, for on-device triage.
-  String? lastCloudError;
-
   /// Backs up to Drive. Returns false on any failure (logged).
   Future<bool> cloudBackupNow() async {
     try {
       await _cloud.backupNow();
-      lastCloudError = null;
       return true;
     } catch (e, st) {
       debugPrint('cloud backup failed: $e\n$st');
-      lastCloudError = '$e';
       return false;
     }
   }
