@@ -113,6 +113,8 @@ jobs:
       # GitHub does not mark it "Latest".
       - name: Resolve release metadata
         id: meta
+        env:
+          PLAY_CLOSED_TRACK: ${{ vars.PLAY_CLOSED_TRACK }}
         run: |
           set -euo pipefail
           notes="planning/releases/${GITHUB_REF_NAME}.md"
@@ -121,8 +123,11 @@ jobs:
           fi
           if [[ "$GITHUB_REF_NAME" == *-* ]]; then
             echo "prerelease=true" >> "$GITHUB_OUTPUT"
+            # Prerelease tags feed the closed testing track (default: alpha).
+            echo "play_track=${PLAY_CLOSED_TRACK:-alpha}" >> "$GITHUB_OUTPUT"
           else
             echo "prerelease=false" >> "$GITHUB_OUTPUT"
+            echo "play_track=production" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Publish GitHub Release
@@ -133,3 +138,29 @@ jobs:
           prerelease: ${{ steps.meta.outputs.prerelease }}
           generate_release_notes: true
           draft: false
+
+      # Only upload to Play when the service-account secret is configured. This
+      # keeps tag pushes working (GitHub Release still ships) before the Play
+      # account/service account exist.
+      - name: Check Play credentials
+        id: play
+        env:
+          SA_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          set -euo pipefail
+          if [ -n "${SA_JSON:-}" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::PLAY_SERVICE_ACCOUNT_JSON not set — skipping Play upload."
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Upload AAB to Google Play
+        if: steps.play.outputs.enabled == 'true'
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: io.github.quotidianlabs.nooka
+          releaseFiles: build/app/outputs/bundle/release/app-release.aab
+          tracks: ${{ steps.meta.outputs.play_track }}
+          status: completed
