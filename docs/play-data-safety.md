@@ -12,7 +12,7 @@ own Google Drive. Keep this in sync with
 |---|---|
 | Does your app collect or share any of the required user data types? | **No** — the developer collects and shares nothing. |
 | Is all user data encrypted in transit? | **Yes** — the optional Drive backup uses Google APIs over HTTPS. |
-| Do you provide a way for users to request data deletion? | **Yes** — uninstall removes on-device data; users delete cloud backups from the app or their Drive, and can revoke Drive access in their Google account. |
+| Do you provide a way for users to request data deletion? | **Yes** — uninstall removes on-device data; users delete cloud backups from their own Google Drive, and can revoke Drive access in their Google account. |
 
 ## Rationale (why "no data collected")
 
