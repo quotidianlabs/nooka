@@ -1,5 +1,5 @@
 ---
-summary: Add a Play-ready signed AAB build and CI upload (r0adkll action) to the existing release workflow, plus a GitHub Pages privacy policy, a Data Safety mapping doc, and a manual signup/listing/closed-testing runbook; production is gated by Google's new-account 12-tester/14-day rule.
+summary: Release workflow now builds a signed AAB and uploads it to Google Play (prerelease->closed track, stable->production, guarded on a service-account secret); adds a GitHub Pages privacy policy, a Data Safety mapping doc, and a signup/closed-testing runbook.
 ---
 
 # Design: Publish nooka to Google Play
