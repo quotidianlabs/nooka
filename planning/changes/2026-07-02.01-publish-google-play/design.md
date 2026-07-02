@@ -89,12 +89,12 @@ existing APK/GitHub-Release steps:
 
 - name: Upload AAB to Google Play
   if: steps.play.outputs.enabled == 'true'
-  uses: r0adkll/upload-google-play@v1
+  uses: r0adkll/upload-google-play@v1        # v1.1.5 at time of writing
   with:
     serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
     packageName: io.github.quotidianlabs.nooka
     releaseFiles: build/app/outputs/bundle/release/app-release.aab
-    track: ${{ steps.meta.outputs.play_track }}
+    tracks: ${{ steps.meta.outputs.play_track }}   # `tracks` (plural); `track` is deprecated
     status: completed
 ```
 
@@ -124,11 +124,17 @@ Play requires a publicly reachable privacy policy URL, and the Drive-backup
 OAuth makes it mandatory. Serve it from this repo without exposing the developer
 `docs/`:
 
-- Source: `site/privacy.md` (policy) + `site/index.md` (minimal landing).
-- A new `.github/workflows/pages.yml` builds `site/` and deploys to GitHub Pages
-  via the official Pages actions (Actions as the Pages source), so only `site/`
-  is published — the dev `docs/` and `planning/` stay private.
-- URL: `https://quotidianlabs.github.io/nooka/privacy`.
+- Source: **plain static HTML** — `site/privacy/index.html` (policy) +
+  `site/index.html` (minimal landing). Static HTML (not Jekyll/markdown) keeps
+  the pipeline build-free and deterministic: no Gemfile, no theme, no `baseurl`
+  handling (links are relative), and each file opens locally for verification.
+- A new `.github/workflows/pages.yml` uploads only the `site/` directory as the
+  Pages artifact and deploys it via the official Pages actions
+  (`actions/configure-pages@v5`, `actions/upload-pages-artifact@v3`,
+  `actions/deploy-pages@v5`), with the Pages source set to **GitHub Actions**.
+  Only `site/` is published — the dev `docs/` and `planning/` stay private.
+- URL: `https://quotidianlabs.github.io/nooka/privacy` (served by
+  `site/privacy/index.html` as the directory index).
 
 Policy content, matching the code (`architecture/backup-io.md`): nooka is
 local-first; **no developer backend, analytics, ads, or tracking**; all task
