@@ -5,7 +5,9 @@ APK and publishes a GitHub Release with it attached. Driven by
 [`.github/workflows/release.yml`](../.github/workflows/release.yml).
 
 This is a sideload distribution channel (download the APK from the release page
-and install it). There is no Play Store `.aab` pipeline.
+and install it). The same tag push also builds an `.aab` and, when Play
+credentials are configured, uploads it to Google Play — see
+[`play-release.md`](play-release.md).
 
 ## Signing
 
@@ -106,3 +108,16 @@ Release as a **pre-release** so it is not marked "Latest". Notes resolve from
 > beta and its final share a `versionName`; the differing `versionCode` (`+N`)
 > is what orders installs. The `-beta.1` label lives in the tag, asset name, and
 > GitHub Release, not inside the APK.
+
+## Google Play
+
+Alongside the APK, the release job builds a signed **AAB**
+(`flutter build appbundle --release`) and uploads it with
+`r0adkll/upload-google-play`. The upload is **guarded**: it runs only when the
+`PLAY_SERVICE_ACCOUNT_JSON` secret is set, so tags still cut a GitHub Release
+before the Play account exists. The track follows the tag — a prerelease tag
+goes to the closed testing track (`vars.PLAY_CLOSED_TRACK`, default `alpha`), a
+stable tag goes to `production`.
+
+The one-time account signup, store listing, Data Safety, and closed-testing
+steps live in [`play-release.md`](play-release.md).
