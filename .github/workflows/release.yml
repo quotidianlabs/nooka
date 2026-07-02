@@ -95,6 +95,13 @@ jobs:
           flutter build apk --release \
             --dart-define=GOOGLE_SERVER_CLIENT_ID=103089031104-03r0mq3lfdkg6snffok3ptfjae4cmq17.apps.googleusercontent.com
 
+      # Same dart-define and reconstructed upload keystore as the APK build.
+      # Output: build/app/outputs/bundle/release/app-release.aab
+      - name: Build signed release AAB
+        run: |
+          flutter build appbundle --release \
+            --dart-define=GOOGLE_SERVER_CLIENT_ID=103089031104-03r0mq3lfdkg6snffok3ptfjae4cmq17.apps.googleusercontent.com
+
       - name: Rename APK
         run: |
           set -euo pipefail
