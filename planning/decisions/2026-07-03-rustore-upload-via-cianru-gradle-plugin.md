@@ -1,6 +1,6 @@
 ---
 status: accepted
-summary: Upload to RuStore with the cianru Gradle plugin (applied only under -PrustorePublish), not a hand-rolled API script or manual-only uploads; the plugin encapsulates RuStore's RSA-JWE auth.
+summary: Upload to RuStore with the cianru Gradle plugin (applied unconditionally; it only registers inert publishRustore* tasks), not a hand-rolled API script or manual-only uploads; the plugin encapsulates RuStore's RSA-JWE auth.
 supersedes: null
 superseded_by: null
 ---
@@ -8,8 +8,8 @@ superseded_by: null
 # RuStore uploads use the cianru Gradle plugin
 
 **Decision:** CI uploads the release APK to RuStore with
-`ru.cian.rustore-publish-gradle-plugin`, applied in `android/app/build.gradle.kts`
-only when `-PrustorePublish` is passed, fed a `key_id`/`client_secret` credential
+`ru.cian.rustore-publish-gradle-plugin`, applied unconditionally in
+`android/app/build.gradle.kts`'s `plugins {}` block, fed a `key_id`/`client_secret` credential
 from the `RUSTORE_CREDENTIALS` secret.
 
 ## Context
@@ -36,9 +36,14 @@ Play-equivalent automation, and RuStore uploads are frequent enough to be worth
 automating.
 
 The plugin's one real downside — coupling publishing into the Android Gradle
-build (the very thing the Play decision avoided) — is neutralized by applying it
-**only under `-PrustorePublish`**, so normal `flutter build` / `analyze` / `test`
-never resolve or run it, and it executes only on stable-tag release runs.
+build (the very thing the Play decision avoided) — is mitigated instead by the
+plugin registering only **inert** `publishRustore*` tasks (no build-output
+change), with the upload running solely in the guarded stable-tag release step.
+Conditional application under `-PrustorePublish` was considered but rejected:
+configuring the `rustorePublish` extension that way requires naming the
+plugin's extension class, which is undocumented. `flutter analyze` and
+`flutter test` are pure-Dart and never touch Gradle; only `flutter build`
+resolves the pinned, cached plugin.
 
 ## Revisit trigger
 
