@@ -1,5 +1,5 @@
 ---
-summary: Publish nooka to RuStore as a new channel — a guarded CI upload of the existing signed universal APK via the cianru Gradle plugin (stable tags only), reusing the GitHub Pages privacy policy, plus an account/listing runbook; the unverifiable Google Play path is dropped.
+summary: RuStore publishing added — a guarded CI upload of the existing signed universal APK via the cianru Gradle plugin 0.5.5 (stable tags only, publishRustoreRelease), reusing the GitHub Pages privacy policy, plus an account/listing runbook; the unverifiable Google Play path is dropped.
 ---
 
 # Design: Publish nooka to RuStore
@@ -108,7 +108,7 @@ opposite of the Play decision, where a thin action existed — recorded in
       set -euo pipefail
       printf '%s' "$RUSTORE_CREDENTIALS" > rustore-credentials.json
       ./gradlew :app:publishRustoreRelease \
-        --buildFile="$GITHUB_WORKSPACE/build/app/outputs/flutter-apk/app-release.apk"
+        --buildFile="$GITHUB_WORKSPACE/build/app/outputs/flutter-apk/nooka-${GITHUB_REF_NAME}.apk"
   ```
 
   Absent secret or a prerelease tag → the step is skipped with a `::notice::`;

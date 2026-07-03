@@ -215,7 +215,7 @@ secret so tags still cut a GitHub Release before the RuStore account exists.
           set -euo pipefail
           printf '%s' "$RUSTORE_CREDENTIALS" > rustore-credentials.json
           ./gradlew :app:publishRustoreRelease \
-            --buildFile="$GITHUB_WORKSPACE/build/app/outputs/flutter-apk/app-release.apk"
+            --buildFile="$GITHUB_WORKSPACE/build/app/outputs/flutter-apk/nooka-${GITHUB_REF_NAME}.apk"
   ```
 
 - [ ] **Step 2: Verify the workflow YAML parses**
