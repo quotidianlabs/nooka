@@ -5,7 +5,8 @@ APK and publishes a GitHub Release with it attached. Driven by
 [`.github/workflows/release.yml`](../.github/workflows/release.yml).
 
 This is a sideload distribution channel (download the APK from the release page
-and install it). There is no Play Store `.aab` pipeline.
+and install it). The same stable tag also uploads that APK to **RuStore** when
+credentials are configured — see [`rustore-release.md`](rustore-release.md).
 
 ## Signing
 
@@ -106,3 +107,15 @@ Release as a **pre-release** so it is not marked "Latest". Notes resolve from
 > beta and its final share a `versionName`; the differing `versionCode` (`+N`)
 > is what orders installs. The `-beta.1` label lives in the tag, asset name, and
 > GitHub Release, not inside the APK.
+
+## RuStore
+
+On a **stable** tag, the release job uploads the same signed universal APK to
+RuStore via `ru.cian.rustore-publish-gradle-plugin` (task
+`publishRustoreRelease`). The upload is **guarded**: it runs only when the
+`RUSTORE_CREDENTIALS` secret is set and the tag is not a prerelease, so tags
+still cut a GitHub Release otherwise. RuStore has no Play-style app signing —
+the APK's own signature (the existing upload keystore) is the app identity.
+
+Account signup, API-key generation, and the Russian store listing are in
+[`rustore-release.md`](rustore-release.md).
