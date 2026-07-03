@@ -152,4 +152,4 @@ jobs:
           set -euo pipefail
           printf '%s' "$RUSTORE_CREDENTIALS" > rustore-credentials.json
           ./gradlew :app:publishRustoreRelease \
-            --buildFile="$GITHUB_WORKSPACE/build/app/outputs/flutter-apk/app-release.apk"
+            --buildFile="$GITHUB_WORKSPACE/build/app/outputs/flutter-apk/nooka-${GITHUB_REF_NAME}.apk"
