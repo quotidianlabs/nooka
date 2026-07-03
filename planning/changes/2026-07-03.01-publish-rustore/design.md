@@ -71,13 +71,17 @@ encapsulates that auth, so it is the sensible automation path (this is the
 opposite of the Play decision, where a thin action existed — recorded in
 `decisions/`).
 
-- **Plugin application (kept out of normal builds).** Apply the plugin in
-  `android/app/build.gradle.kts` **only when a Gradle property is set**
-  (`-PrustorePublish`), so day-to-day `flutter build` / `flutter analyze` /
-  `flutter test` do not resolve or run it. Configure a `rustorePublish` instance
-  for the `release` variant with `buildFormat = APK`, `buildFile` pointing at the
-  Flutter APK output, `credentialsPath` = a file written from the secret, and
-  `publishType`.
+- **Plugin application.** Apply `ru.cian.rustore-publish-gradle-plugin` (pinned
+  **0.5.5**) in `android/app/build.gradle.kts`'s `plugins {}` block — the
+  documented, robust pattern (conditional apply would require naming the plugin's
+  extension class, which is undocumented; not guessed). It registers only inert
+  `publishRustore*` tasks, so it changes no build output. `flutter analyze` and
+  `flutter test` are pure-Dart and never touch Gradle; only `flutter build` /
+  Gradle resolves the plugin (cached), and the upload task runs solely in the
+  guarded release step below. Configure a `rustorePublish` instance for the
+  `release` variant: `buildFormat = APK`, `buildFile` at the Flutter APK output,
+  `credentialsPath` = a file written from the secret, `publishType`,
+  `developerContacts`, and a static `ru-RU` `releaseNotes` file.
 - **Workflow step (`release.yml`).** After the existing APK build, on **stable
   tags only** and **guarded** on `RUSTORE_CREDENTIALS`:
 
@@ -103,7 +107,7 @@ opposite of the Play decision, where a thin action existed — recorded in
     run: |
       set -euo pipefail
       printf '%s' "$RUSTORE_CREDENTIALS" > rustore-credentials.json
-      ./gradlew :app:publishRustoreRelease -PrustorePublish \
+      ./gradlew :app:publishRustoreRelease \
         --buildFile="$GITHUB_WORKSPACE/build/app/outputs/flutter-apk/app-release.apk"
   ```
 
@@ -166,9 +170,9 @@ screenshots, description, age rating). No DNS.
 - **Guarded skip:** with `RUSTORE_CREDENTIALS` unset — or on a prerelease tag —
   the RuStore step is skipped with a notice and the GitHub Release still ships
   (verifiable by tagging before the secret exists).
-- **Plugin wiring:** `./gradlew :app:tasks -PrustorePublish` lists a
-  `publishRustoreRelease` task; a normal `flutter build apk --release` (no
-  `-PrustorePublish`) is unaffected — the plugin is not applied.
+- **Plugin wiring:** `./gradlew :app:tasks` (from `android/`) lists a
+  `publishRustoreRelease` task, and `./gradlew :app:help` configures cleanly with
+  the plugin applied (proving the `rustorePublish {}` block is valid).
 - **Upload proof:** RuStore Console accepting the APK after a stable tag (the
   plugin fails loudly on bad credentials or a duplicate `versionCode`).
 - **Docs:** `docs/release.md` gains a RuStore section. No `architecture/`
@@ -178,9 +182,9 @@ screenshots, description, age rating). No DNS.
 ## Risk
 
 - **Third-party plugin as a build/CI dependency (medium × medium).** The cianru
-  plugin is community-maintained. Mitigation: pin the version; apply it **only**
-  under `-PrustorePublish` so normal builds never touch it; it runs only on
-  stable-tag pushes.
+  plugin is community-maintained. Mitigation: pin the version (0.5.5); it
+  registers only inert tasks so it does not change build output, and the upload
+  runs only on guarded stable-tag pushes.
 - **RuStore auth/credential-format drift (medium × medium).** RuStore has evolved
   its API-key schemes (companyId+private-key vs key_id+client_secret).
   Mitigation: confirm the plugin's expected credential JSON and RuStore's current
