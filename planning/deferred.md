@@ -8,10 +8,12 @@ change bundle when its trigger fires.
   moves from a list to a planner.
 - **Search / filter** — find tasks across categories; filter active vs
   archived. *Revisit when* the task list grows large enough to need it.
-- **Runtime schema self-check + migration tests** — Drift's debug-only
-  `validateDatabaseSchema()` in `beforeOpen`, plus a `SchemaVerifier`
-  migration-test harness (`drift_dev schema generate`). *Revisit when* the
-  first real migration lands (`schemaVersion` reaches 2).
+- **Runtime schema self-check** — Drift's debug-only
+  `validateDatabaseSchema()` in `beforeOpen`. Not adopted with the migration
+  harness (2026-07-04.02) because it forces `drift_dev` into the app's runtime
+  dependencies for a check the CI `SchemaVerifier` harness already covers.
+  *Revisit when* a code-vs-DB schema mismatch slips past CI in practice, or if
+  drift ships a lighter runtime-only validation path.
 - **Disable OS-level device backup** — set `android:allowBackup="false"`
   (+ iOS backup-exclusion on the SQLite file) so the DB is not copied off-device
   by Android Auto Backup / iOS device backup. Trade-off: removes transparent
