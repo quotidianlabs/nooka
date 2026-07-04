@@ -80,6 +80,7 @@ class SettingsViewModel extends _$SettingsViewModel {
     try {
       await _todos.importReplace(data.categories);
       await _remembered.forget();
+      await _todos.wakeDueTasks();
       return true;
     } catch (e, st) {
       debugPrint('import apply failed: $e\n$st');

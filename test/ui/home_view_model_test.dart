@@ -8,6 +8,7 @@ import 'package:nooka/data/repositories/todo_repository.dart';
 import 'package:nooka/data/services/database/database.dart';
 import 'package:nooka/data/services/database/database_providers.dart';
 import 'package:nooka/domain/models/category_with_tasks.dart';
+import 'package:nooka/domain/recurrence.dart';
 import 'package:nooka/ui/home/home_view_model.dart';
 
 /// createTask always throws; everything else (incl. the watch stream) is the
@@ -450,6 +451,51 @@ void main() {
 
       expect(outcome, CommandOutcome.success);
       expect((await snapshot()).single.category.collapsed, isTrue);
+    });
+  });
+
+  group('recurrence', () {
+    test('editTask persists recurrence; completing goes dormant', () async {
+      final (_, vm) = await build();
+      final cat = await db.todoDao.createCategory(name: 'Home', color: 1);
+      final id = await db.todoDao.createTask(categoryId: cat, name: 'Water');
+      expect(
+        await vm.editTask(
+          id,
+          'Water',
+          cat,
+          cat,
+          recurrenceCount: 2,
+          recurrenceUnit: RecurrenceUnit.weeks,
+        ),
+        CommandOutcome.success,
+      );
+      expect(await vm.completeTask(id), CommandOutcome.success);
+      final row = await (db.select(
+        db.tasks,
+      )..where((t) => t.id.equals(id))).getSingle();
+      expect(row.nextDueAt, isNotNull);
+      expect(row.archivedAt, isNull);
+    });
+
+    test('returnTaskNow wakes a dormant task', () async {
+      final (_, vm) = await build();
+      final cat = await db.todoDao.createCategory(name: 'Home', color: 1);
+      final id = await db.todoDao.createTask(categoryId: cat, name: 'Water');
+      await vm.editTask(
+        id,
+        'Water',
+        cat,
+        cat,
+        recurrenceCount: 1,
+        recurrenceUnit: RecurrenceUnit.days,
+      );
+      await vm.completeTask(id);
+      expect(await vm.returnTaskNow(id), CommandOutcome.success);
+      final row = await (db.select(
+        db.tasks,
+      )..where((t) => t.id.equals(id))).getSingle();
+      expect(row.nextDueAt, isNull);
     });
   });
 

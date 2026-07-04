@@ -50,7 +50,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     // Rebuild on resume so the archive "auto-removes in N days" countdown
     // recomputes `now` instead of showing a value stale across midnight.
-    if (state == AppLifecycleState.resumed) setState(() {});
+    if (state == AppLifecycleState.resumed) {
+      _dispatch(_vm.wakeDueTasks());
+      setState(() {});
+    }
   }
 
   HomeViewModel get _vm => ref.read(homeViewModelProvider.notifier);
@@ -100,7 +103,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               selected: {_view},
               onSelectionChanged: (s) {
                 setState(() => _view = s.first);
-                if (s.first == _View.archive) _dispatch(_vm.purgeExpired());
+                if (s.first == _View.archive) {
+                  _dispatch(_vm.purgeExpired());
+                  _dispatch(_vm.wakeDueTasks());
+                }
               },
             ),
           ),
