@@ -117,10 +117,12 @@ The `beforeOpen` `PRAGMA foreign_keys = ON` is preserved.
 
 ### 4. DAO — `lib/data/services/database/todo_dao.dart`
 
-- **`createTask`** / **edit path** gain `int? recurrenceCount,
-  RecurrenceUnit? recurrenceUnit` and write them. Making a task recurring does
-  **not** set `nextDueAt` — a recurring task stays active until it is completed.
+- **Edit path** gains `int? recurrenceCount, RecurrenceUnit? recurrenceUnit`:
   `renameAndMove` extends to also write the recurrence fields (one transaction).
+  Making a task recurring does **not** set `nextDueAt` — a recurring task stays
+  active until it is completed. `createTask` is **unchanged**: for v1 recurrence
+  is set by editing an existing task, not at quick-add time (the quick-add flow
+  is a keep-keyboard-open rapid multi-add; a Repeat control there is deferred).
 - **`completeTask(id, now)`** branches on the row's recurrence. It reads the row
   first; if `recurrenceCount != null` it writes
   `nextDueAt = nextDueDate(now, count, unit)` and **leaves `sortOrder` and
@@ -163,14 +165,14 @@ List<Task> get archivedTasks =>          // Archive: "Auto-removes in N days"
 
 ### 6. Repository + ViewModel
 
-**`TodoRepository`**: `createTask` / `editTask` gain the recurrence params;
+**`TodoRepository`**: `renameAndMove` gains the recurrence params;
 `completeTask` keeps its signature (branching lives in the DAO, `now` from the
 `Clock` seam as today); new pass-throughs `wakeTask(int id)` and
 `wakeDueTasks()` (sourcing `now` from the injected `Clock`).
 
 **`HomeViewModel`** (`ui/home/home_view_model.dart`):
-- `addTask` / `editTask` thread the recurrence fields through, unchanged outcome
-  pattern.
+- `editTask` threads the recurrence fields through, unchanged outcome pattern;
+  `addTask` is unchanged (recurrence is set via the edit dialog).
 - **`returnTaskNow(int id)`** — `_run(() => _repo.wakeTask(id))`. Used by both
   the Archive "Return now" action and the undo of a recurring completion.
 - `completeTask` is unchanged at the VM seam (the DAO decides dormant vs
@@ -299,9 +301,9 @@ TDD — a failing test precedes each piece.
 - `architecture/archive.md` — dormant recurring tasks appear in the Archive as
   "Returns in N days"; wake runs at startup + resume alongside purge; purge /
   "Clear archive" never touch dormant rows; Return now / Delete actions.
-- `architecture/home-coordination.md` — `addTask` / `editTask` carry recurrence;
-  new `returnTaskNow` intent; completion undo routes recurring →
-  `returnTaskNow`, non-recurring → `restoreTask`.
+- `architecture/home-coordination.md` — `editTask` carries recurrence; new
+  `returnTaskNow` intent; completion undo routes recurring → `returnTaskNow`,
+  non-recurring → `restoreTask`.
 - `architecture/backup-io.md` — format v2: the three new task fields; decoder
   accepts v1 + v2; `applyImport` wakes already-due restored tasks.
 - `architecture/i18n-theming.md` — the new recurrence keys (EN + RU plurals).
