@@ -77,9 +77,11 @@ they disagree.
 ## Cutting a release
 
 1. Bump `pubspec.yaml` `version: X.Y.Z+N` and merge to `main`.
-2. (Optional) Write user-facing notes to `planning/releases/X.Y.Z.md`. If
-   present, they become the release body; GitHub's auto-generated "What's
-   Changed" PR list is appended either way.
+2. Write user-facing notes to `planning/releases/X.Y.Z.md` and merge to `main`.
+   **Required for stable tags** — the workflow aborts before building if the
+   file is missing (pre-release `-suffix` tags are exempt). The file becomes the
+   release body **verbatim**; GitHub's auto-generated "What's Changed" list is
+   only used as a fallback for a pre-release with no curated file.
 3. Tag and push — the tag `X.Y.Z` **must** match `pubspec.yaml` `X.Y.Z`:
 
    ```bash
