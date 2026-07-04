@@ -2,6 +2,7 @@ import 'package:drift/drift.dart' show OrderingTerm, Value;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nooka/data/services/database/database.dart';
+import 'package:nooka/domain/recurrence.dart';
 
 void main() {
   late AppDatabase db;
@@ -437,5 +438,92 @@ void main() {
         expect(active, [t1, t2, t3]);
       },
     );
+  });
+
+  group('recurrence', () {
+    Future<int> makeRecurring(String name) async {
+      final cat = await db.todoDao.createCategory(name: 'Home', color: 1);
+      final id = await db.todoDao.createTask(categoryId: cat, name: name);
+      await db.todoDao.renameAndMove(
+        id,
+        name,
+        null,
+        recurrenceCount: 3,
+        recurrenceUnit: RecurrenceUnit.days,
+      );
+      return id;
+    }
+
+    test(
+      'completing a recurring task sets nextDueAt, not archivedAt',
+      () async {
+        final id = await makeRecurring('Water');
+        final now = DateTime(2026, 7, 4, 9);
+        await db.todoDao.completeTask(id, now);
+        final row = await (db.select(
+          db.tasks,
+        )..where((t) => t.id.equals(id))).getSingle();
+        expect(row.archivedAt, isNull);
+        expect(row.nextDueAt, DateTime(2026, 7, 7, 9));
+        expect(row.sortOrder, 0); // slot preserved
+      },
+    );
+
+    test('completing a non-recurring task still archives', () async {
+      final cat = await db.todoDao.createCategory(name: 'Work', color: 2);
+      final id = await db.todoDao.createTask(categoryId: cat, name: 'Ship');
+      final now = DateTime(2026, 7, 4, 9);
+      await db.todoDao.completeTask(id, now);
+      final row = await (db.select(
+        db.tasks,
+      )..where((t) => t.id.equals(id))).getSingle();
+      expect(row.archivedAt, now);
+      expect(row.nextDueAt, isNull);
+    });
+
+    test('wakeDueTasks clears only past-due nextDueAt', () async {
+      final id = await makeRecurring('Water');
+      await db.todoDao.completeTask(id, DateTime(2026, 7, 4, 9)); // due Jul 7
+      final woken = await db.todoDao.wakeDueTasks(DateTime(2026, 7, 6));
+      expect(woken, 0);
+      final woken2 = await db.todoDao.wakeDueTasks(DateTime(2026, 7, 8));
+      expect(woken2, 1);
+      final row = await (db.select(
+        db.tasks,
+      )..where((t) => t.id.equals(id))).getSingle();
+      expect(row.nextDueAt, isNull);
+    });
+
+    test('wakeTask clears nextDueAt and keeps the slot', () async {
+      final id = await makeRecurring('Water');
+      await db.todoDao.completeTask(id, DateTime(2026, 7, 4, 9));
+      await db.todoDao.wakeTask(id);
+      final row = await (db.select(
+        db.tasks,
+      )..where((t) => t.id.equals(id))).getSingle();
+      expect(row.nextDueAt, isNull);
+      expect(row.sortOrder, 0);
+    });
+
+    test('a dormant task is not counted when appending active order', () async {
+      final cat = await db.todoDao.createCategory(name: 'Home', color: 1);
+      final a = await db.todoDao.createTask(
+        categoryId: cat,
+        name: 'A',
+      ); // order 0
+      await db.todoDao.renameAndMove(
+        a,
+        'A',
+        null,
+        recurrenceCount: 1,
+        recurrenceUnit: RecurrenceUnit.days,
+      );
+      await db.todoDao.completeTask(a, DateTime(2026, 7, 4)); // dormant
+      final b = await db.todoDao.createTask(categoryId: cat, name: 'B');
+      final rowB = await (db.select(
+        db.tasks,
+      )..where((t) => t.id.equals(b))).getSingle();
+      expect(rowB.sortOrder, 0); // dormant A did not occupy an active slot
+    });
   });
 }

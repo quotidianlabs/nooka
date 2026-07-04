@@ -3,6 +3,7 @@ import 'package:drift/drift.dart';
 import '../../../domain/archive.dart';
 import '../../../domain/models/backup_data.dart';
 import '../../../domain/models/category_with_tasks.dart';
+import '../../../domain/recurrence.dart';
 import 'database.dart';
 import 'tables.dart';
 
@@ -77,7 +78,10 @@ class TodoDao extends DatabaseAccessor<AppDatabase> with _$TodoDaoMixin {
   Future<int> _nextTaskOrder(int categoryId) async {
     final active =
         await (select(tasks)..where(
-              (t) => t.categoryId.equals(categoryId) & t.archivedAt.isNull(),
+              (t) =>
+                  t.categoryId.equals(categoryId) &
+                  t.archivedAt.isNull() &
+                  t.nextDueAt.isNull(),
             ))
             .get();
     return active.isEmpty
@@ -103,13 +107,25 @@ class TodoDao extends DatabaseAccessor<AppDatabase> with _$TodoDaoMixin {
     tasks,
   )..where((t) => t.id.equals(id))).write(TasksCompanion(name: Value(name)));
 
-  /// Renames [id] and, when [newCategoryId] is non-null, moves it — both in one
-  /// transaction, so a failed move rolls back the rename (no partial edit).
-  Future<void> renameAndMove(int id, String name, int? newCategoryId) =>
-      transaction(() async {
-        await renameTask(id, name);
-        if (newCategoryId != null) await moveTask(id, newCategoryId);
-      });
+  /// Renames [id], writes its recurrence ([recurrenceCount]/[recurrenceUnit],
+  /// both null to make it a one-off) and, when [newCategoryId] is non-null,
+  /// moves it — all in one transaction, so a failed move rolls back the rest.
+  Future<void> renameAndMove(
+    int id,
+    String name,
+    int? newCategoryId, {
+    int? recurrenceCount,
+    RecurrenceUnit? recurrenceUnit,
+  }) => transaction(() async {
+    await (update(tasks)..where((t) => t.id.equals(id))).write(
+      TasksCompanion(
+        name: Value(name),
+        recurrenceCount: Value(recurrenceCount),
+        recurrenceUnit: Value(recurrenceUnit),
+      ),
+    );
+    if (newCategoryId != null) await moveTask(id, newCategoryId);
+  });
 
   Future<void> moveTask(int id, int newCategoryId) async {
     await (update(tasks)..where((t) => t.id.equals(id))).write(
@@ -120,10 +136,46 @@ class TodoDao extends DatabaseAccessor<AppDatabase> with _$TodoDaoMixin {
     );
   }
 
-  Future<void> completeTask(int id, DateTime now) =>
-      (update(tasks)..where((t) => t.id.equals(id))).write(
+  /// Completes [id] as of [now]. A recurring task (non-null recurrenceCount +
+  /// recurrenceUnit) goes dormant instead of archiving: nextDueAt is set to
+  /// its next occurrence and sortOrder is left untouched (gap left open, like
+  /// delete), so it returns to its original slot when it wakes. A one-off
+  /// task archives as before.
+  Future<void> completeTask(int id, DateTime now) async {
+    final task = await (select(
+      tasks,
+    )..where((t) => t.id.equals(id))).getSingleOrNull();
+    if (task == null) return;
+    final count = task.recurrenceCount;
+    final unit = task.recurrenceUnit;
+    if (count != null && unit != null) {
+      await (update(tasks)..where((t) => t.id.equals(id))).write(
+        TasksCompanion(nextDueAt: Value(nextDueDate(now, count, unit))),
+      );
+    } else {
+      await (update(tasks)..where((t) => t.id.equals(id))).write(
         TasksCompanion(archivedAt: Value(now)),
       );
+    }
+  }
+
+  /// Wakes a dormant recurring task: clears nextDueAt, keeping sortOrder so it
+  /// returns to its original slot. Used by "Return now" and by undo of a
+  /// recurring completion.
+  Future<void> wakeTask(int id) =>
+      (update(tasks)..where((t) => t.id.equals(id))).write(
+        const TasksCompanion(nextDueAt: Value(null)),
+      );
+
+  /// Clears nextDueAt for every dormant task due as of [now], revealing them
+  /// in the active list. Returns the number woken. Runs at startup / resume.
+  Future<int> wakeDueTasks(DateTime now) =>
+      (update(tasks)..where(
+            (t) =>
+                t.nextDueAt.isNotNull() &
+                t.nextDueAt.isSmallerOrEqualValue(now),
+          ))
+          .write(const TasksCompanion(nextDueAt: Value(null)));
 
   Future<void> restoreTask(int id) async {
     final task = await (select(
