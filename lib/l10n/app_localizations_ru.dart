@@ -279,26 +279,26 @@ class AppLocalizationsRu extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count дня',
-      many: '$count дней',
-      few: '$count дня',
-      one: '$count день',
+      other: 'Каждые $count дня',
+      many: 'Каждые $count дней',
+      few: 'Каждые $count дня',
+      one: 'Каждый день',
     );
     String _temp1 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count недели',
-      many: '$count недель',
-      few: '$count недели',
-      one: '$count неделю',
+      other: 'Каждые $count недели',
+      many: 'Каждые $count недель',
+      few: 'Каждые $count недели',
+      one: 'Каждую неделю',
     );
     String _temp2 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count месяца',
-      many: '$count месяцев',
-      few: '$count месяца',
-      one: '$count месяц',
+      other: 'Каждые $count месяца',
+      many: 'Каждые $count месяцев',
+      few: 'Каждые $count месяца',
+      one: 'Каждый месяц',
     );
     String _temp3 = intl.Intl.selectLogic(unit, {
       'days': '$_temp0',
@@ -306,7 +306,7 @@ class AppLocalizationsRu extends AppLocalizations {
       'months': '$_temp2',
       'other': '',
     });
-    return 'Каждые $_temp3';
+    return '$_temp3';
   }
 
   @override
@@ -317,7 +317,7 @@ class AppLocalizationsRu extends AppLocalizations {
       other: '$count дня',
       many: '$count дней',
       few: '$count дня',
-      one: '$count день',
+      one: 'день',
     );
     String _temp1 = intl.Intl.pluralLogic(
       count,
@@ -325,7 +325,7 @@ class AppLocalizationsRu extends AppLocalizations {
       other: '$count недели',
       many: '$count недель',
       few: '$count недели',
-      one: '$count неделю',
+      one: 'неделю',
     );
     String _temp2 = intl.Intl.pluralLogic(
       count,
@@ -333,7 +333,7 @@ class AppLocalizationsRu extends AppLocalizations {
       other: '$count месяца',
       many: '$count месяцев',
       few: '$count месяца',
-      one: '$count месяц',
+      one: 'месяц',
     );
     String _temp3 = intl.Intl.selectLogic(unit, {
       'days': '$_temp0',
@@ -349,12 +349,12 @@ class AppLocalizationsRu extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count дня',
-      many: '$count дней',
-      few: '$count дня',
-      one: '$count день',
-      zero: 'меньше суток',
+      other: 'Вернётся через $count дня',
+      many: 'Вернётся через $count дней',
+      few: 'Вернётся через $count дня',
+      one: 'Вернётся через $count день',
+      zero: 'Вернётся сегодня',
     );
-    return 'Вернётся через $_temp0';
+    return '$_temp0';
   }
 }

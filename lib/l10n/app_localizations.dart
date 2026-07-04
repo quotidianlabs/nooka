@@ -491,13 +491,13 @@ abstract class AppLocalizations {
   /// No description provided for @recurrenceEvery.
   ///
   /// In en, this message translates to:
-  /// **'Every {unit, select, days{{count, plural, one{{count} day} other{{count} days}}} weeks{{count, plural, one{{count} week} other{{count} weeks}}} months{{count, plural, one{{count} month} other{{count} months}}} other{}}'**
+  /// **'{unit, select, days{{count, plural, =1{Every day} other{Every {count} days}}} weeks{{count, plural, =1{Every week} other{Every {count} weeks}}} months{{count, plural, =1{Every month} other{Every {count} months}}} other{}}'**
   String recurrenceEvery(int count, String unit);
 
   /// No description provided for @recurrenceSummary.
   ///
   /// In en, this message translates to:
-  /// **'Returns {unit, select, days{{count, plural, one{{count} day} other{{count} days}}} weeks{{count, plural, one{{count} week} other{{count} weeks}}} months{{count, plural, one{{count} month} other{{count} months}}} other{}} after you complete it.'**
+  /// **'Returns {unit, select, days{{count, plural, =1{a day} other{{count} days}}} weeks{{count, plural, =1{a week} other{{count} weeks}}} months{{count, plural, =1{a month} other{{count} months}}} other{}} after you complete it.'**
   String recurrenceSummary(int count, String unit);
 
   /// No description provided for @returnsInDays.

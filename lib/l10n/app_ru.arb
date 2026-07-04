@@ -72,7 +72,7 @@
   "recurrenceUnitWeeks": "Недели",
   "recurrenceUnitMonths": "Месяцы",
   "returnNow": "Вернуть сейчас",
-  "recurrenceEvery": "Каждые {unit, select, days{{count, plural, one{{count} день} few{{count} дня} many{{count} дней} other{{count} дня}}} weeks{{count, plural, one{{count} неделю} few{{count} недели} many{{count} недель} other{{count} недели}}} months{{count, plural, one{{count} месяц} few{{count} месяца} many{{count} месяцев} other{{count} месяца}}} other{}}",
-  "recurrenceSummary": "Вернётся через {unit, select, days{{count, plural, one{{count} день} few{{count} дня} many{{count} дней} other{{count} дня}}} weeks{{count, plural, one{{count} неделю} few{{count} недели} many{{count} недель} other{{count} недели}}} months{{count, plural, one{{count} месяц} few{{count} месяца} many{{count} месяцев} other{{count} месяца}}} other{}} после выполнения.",
-  "returnsInDays": "Вернётся через {count, plural, =0{меньше суток} one{{count} день} few{{count} дня} many{{count} дней} other{{count} дня}}"
+  "recurrenceEvery": "{unit, select, days{{count, plural, =1{Каждый день} few{Каждые {count} дня} many{Каждые {count} дней} other{Каждые {count} дня}}} weeks{{count, plural, =1{Каждую неделю} few{Каждые {count} недели} many{Каждые {count} недель} other{Каждые {count} недели}}} months{{count, plural, =1{Каждый месяц} few{Каждые {count} месяца} many{Каждые {count} месяцев} other{Каждые {count} месяца}}} other{}}",
+  "recurrenceSummary": "Вернётся через {unit, select, days{{count, plural, =1{день} few{{count} дня} many{{count} дней} other{{count} дня}}} weeks{{count, plural, =1{неделю} few{{count} недели} many{{count} недель} other{{count} недели}}} months{{count, plural, =1{месяц} few{{count} месяца} many{{count} месяцев} other{{count} месяца}}} other{}} после выполнения.",
+  "returnsInDays": "{count, plural, =0{Вернётся сегодня} one{Вернётся через {count} день} few{Вернётся через {count} дня} many{Вернётся через {count} дней} other{Вернётся через {count} дня}}"
 }
