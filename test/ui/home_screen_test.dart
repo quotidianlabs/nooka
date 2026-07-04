@@ -817,4 +817,104 @@ void main() {
       expect(find.text('Sweep'), findsOneWidget);
     },
   );
+
+  testWidgets(
+    'undo after completing a recurring task returns it to Active immediately',
+    (tester) async {
+      final cat = await db.todoDao.createCategory(
+        name: 'Home',
+        color: 0xFF009688,
+      );
+      await db.todoDao.createTask(categoryId: cat, name: 'Sweep');
+      await tester.pumpWidget(_app(db, prefs));
+      await tester.pumpAndSettle();
+
+      // Turn Repeat on for the task.
+      await tester.tap(find.byKey(const Key('task-menu-1')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Edit item'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('task-repeat-toggle')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('task-confirm')));
+      await tester.pumpAndSettle();
+
+      // Complete it: a recurring task goes dormant, with an undo toast.
+      await tester.tap(find.byIcon(Icons.radio_button_unchecked));
+      await tester.pump(); // flush the completeTask await
+      await tester.pump(const Duration(milliseconds: 300)); // snackbar enters
+      expect(find.text('Sweep'), findsNothing); // gone from Active
+
+      // Undo on a recurring task calls returnTaskNow, not restoreTask, so it
+      // comes back to Active immediately rather than sitting dormant.
+      await tester.tap(find.text('Undo'));
+      await tester.pumpAndSettle();
+      expect(find.text('Sweep'), findsOneWidget); // back in Active
+
+      await tester.tap(find.text('Archive'));
+      await tester.pumpAndSettle();
+      expect(find.text('Sweep'), findsNothing); // not dormant in Archive
+    },
+  );
+
+  testWidgets(
+    'undo after completing a non-recurring task restores it via restoreTask',
+    (tester) async {
+      final cat = await db.todoDao.createCategory(
+        name: 'Home',
+        color: 0xFF009688,
+      );
+      await db.todoDao.createTask(categoryId: cat, name: 'Sweep');
+      await tester.pumpWidget(_app(db, prefs));
+      await tester.pumpAndSettle();
+
+      // Complete a plain (non-recurring) task: it archives, with an undo
+      // toast that must call restoreTask, not returnTaskNow.
+      await tester.tap(find.byIcon(Icons.radio_button_unchecked));
+      await tester.pump(); // flush the completeTask await
+      await tester.pump(const Duration(milliseconds: 300)); // snackbar enters
+      expect(find.text('Sweep'), findsNothing); // gone from Active
+
+      await tester.tap(find.text('Undo'));
+      await tester.pumpAndSettle();
+      expect(find.text('Sweep'), findsOneWidget); // back in Active
+    },
+  );
+
+  testWidgets(
+    'Archive: deleting a dormant row removes it entirely, not restoring it',
+    (tester) async {
+      final cat = await db.todoDao.createCategory(
+        name: 'Home',
+        color: 0xFF009688,
+      );
+      final id = await db.todoDao.createTask(categoryId: cat, name: 'Sweep');
+      await db.todoDao.renameAndMove(
+        id,
+        'Sweep',
+        null,
+        recurrenceCount: 1,
+        recurrenceUnit: RecurrenceUnit.days,
+      );
+      await db.todoDao.completeTask(id, DateTime.now());
+      await tester.pumpWidget(_app(db, prefs));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Archive'));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('task-1')), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('task-1')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('dormant-return-now')), findsOneWidget);
+
+      await tester.tap(find.text('Delete'));
+      await tester.pumpAndSettle();
+      expect(find.text('Sweep'), findsNothing); // gone from Archive
+
+      await tester.tap(find.text('Active'));
+      await tester.pumpAndSettle();
+      expect(find.text('Sweep'), findsNothing); // not restored to Active
+    },
+  );
 }

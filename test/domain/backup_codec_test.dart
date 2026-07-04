@@ -255,6 +255,28 @@ void main() {
       expect(t.nextDueAt, DateTime.utc(2026, 8, 1));
     });
 
+    test('a task with a non-int recurrenceCount is rejected', () {
+      const source = '''
+      {"app":"nooka","version":2,"exportedAt":"2026-07-04T00:00:00.000Z",
+       "categories":[{"name":"Home","color":1,"emoji":null,"collapsed":false,
+       "sortOrder":0,"createdAt":"2026-01-01T00:00:00.000Z",
+       "tasks":[{"name":"Water","sortOrder":0,
+       "createdAt":"2026-01-01T00:00:00.000Z","archivedAt":null,
+       "recurrenceCount":"three"}]}]}''';
+      expect(() => decodeBackup(source), throwsA(isA<BackupFormatException>()));
+    });
+
+    test('a task with an out-of-range recurrenceUnit is rejected', () {
+      const source = '''
+      {"app":"nooka","version":2,"exportedAt":"2026-07-04T00:00:00.000Z",
+       "categories":[{"name":"Home","color":1,"emoji":null,"collapsed":false,
+       "sortOrder":0,"createdAt":"2026-01-01T00:00:00.000Z",
+       "tasks":[{"name":"Water","sortOrder":0,
+       "createdAt":"2026-01-01T00:00:00.000Z","archivedAt":null,
+       "recurrenceCount":1,"recurrenceUnit":99}]}]}''';
+      expect(() => decodeBackup(source), throwsA(isA<BackupFormatException>()));
+    });
+
     test('a v1 file (no recurrence keys) still decodes with nulls', () {
       const v1 = '''
       {"app":"nooka","version":1,"exportedAt":"2026-07-04T00:00:00.000Z",
