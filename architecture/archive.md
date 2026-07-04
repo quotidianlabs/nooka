@@ -23,3 +23,27 @@ its locale-formatted completion date. A manual "Clear archive" action
 Deleting an active task (`deleteTask`) is distinct from completing it: the row
 is hard-deleted immediately and never enters the Archive view (unlike
 completing, which sets `archivedAt` and parks the task there for 30 days).
+
+## Dormant recurring tasks share the Archive view
+
+Completing a **recurring** task (non-null `recurrenceCount`/`recurrenceUnit`)
+does not archive it: it goes dormant instead, with `archivedAt` left null and
+`nextDueAt` set to the next occurrence. The Archive view renders a category
+whenever it has archived tasks **or** dormant ones, listing dormant rows ahead
+of archived rows (`[...dormantTasks, ...archivedTasks]`). A dormant row shows a
+`schedule` icon and a "Returns in N days" subtitle instead of the archived
+row's checkmark and completion date.
+
+Tapping a dormant row opens an action sheet (`Return now` / `Delete`) rather
+than restoring it directly, since restoring an active-vs-dormant row means
+different things: `Return now` calls `returnTaskNow`, waking the task back to
+Active immediately; `Delete` hard-deletes it, same as an active task's delete.
+Tapping an archived row still restores it directly, unchanged.
+
+"Clear archive" (`clearArchive`) and its confirmation count remain scoped to
+**archived** tasks only — dormant tasks are excluded from the count in the
+widget (`home_screen.dart` `_clearArchive`, counting `archivedTasks.length`)
+and from the sweep in the DAO (`clearArchive` filters on
+`archivedAt.isNotNull()`). Dormant tasks leave the Archive view only via
+`returnTaskNow` (manual or automatic wake, see [home coordination](home-coordination.md))
+or explicit delete, never via the retention purge or "Clear archive".

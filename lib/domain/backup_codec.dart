@@ -2,9 +2,10 @@ import 'dart:convert';
 
 import 'models/backup_data.dart';
 import 'models/category_with_tasks.dart';
+import 'recurrence.dart';
 
 const String _appMarker = 'nooka';
-const int _currentVersion = 1;
+const int _currentVersion = 2;
 
 /// Serializes [data] to pretty-printed JSON.
 String encodeBackup(BackupData data) {
@@ -28,6 +29,9 @@ String encodeBackup(BackupData data) {
                 'sortOrder': t.sortOrder,
                 'createdAt': t.createdAt.toIso8601String(),
                 'archivedAt': t.archivedAt?.toIso8601String(),
+                'recurrenceCount': t.recurrenceCount,
+                'recurrenceUnit': t.recurrenceUnit?.index,
+                'nextDueAt': t.nextDueAt?.toIso8601String(),
               },
           ],
         },
@@ -36,7 +40,7 @@ String encodeBackup(BackupData data) {
   return const JsonEncoder.withIndent('  ').convert(map);
 }
 
-/// Parses and strictly validates a Nooka v1 backup. Throws
+/// Parses and strictly validates a Nooka backup (versions 1 and 2). Throws
 /// [BackupFormatException] on the first violation, before returning anything.
 BackupData decodeBackup(String source) {
   final Object? root;
@@ -52,7 +56,7 @@ BackupData decodeBackup(String source) {
     throw const BackupFormatException('Not a Nooka backup.');
   }
   final version = root['version'];
-  if (version is! int || version != _currentVersion) {
+  if (version is! int || version < 1 || version > _currentVersion) {
     throw BackupFormatException('Unsupported version: ${root['version']}.');
   }
   final exportedAt = _date(root['exportedAt'], 'exportedAt');
@@ -126,11 +130,31 @@ BackupTask _task(Object? item, String categoryName) {
   final archivedAt = archivedRaw == null
       ? null
       : _date(archivedRaw, 'task "$name" archivedAt');
+  final recurrenceCount = item['recurrenceCount'];
+  if (recurrenceCount != null && recurrenceCount is! int) {
+    throw BackupFormatException('Task "$name" has an invalid recurrenceCount.');
+  }
+  final unitIndex = item['recurrenceUnit'];
+  if (unitIndex != null &&
+      (unitIndex is! int ||
+          unitIndex < 0 ||
+          unitIndex >= RecurrenceUnit.values.length)) {
+    throw BackupFormatException('Task "$name" has an invalid recurrenceUnit.');
+  }
+  final nextDueRaw = item['nextDueAt'];
+  final nextDueAt = nextDueRaw == null
+      ? null
+      : _date(nextDueRaw, 'task "$name" nextDueAt');
   return BackupTask(
     name: name,
     sortOrder: sortOrder,
     createdAt: _date(item['createdAt'], 'task "$name" createdAt'),
     archivedAt: archivedAt,
+    recurrenceCount: recurrenceCount as int?,
+    recurrenceUnit: unitIndex == null
+        ? null
+        : RecurrenceUnit.values[unitIndex as int],
+    nextDueAt: nextDueAt,
   );
 }
 
@@ -166,6 +190,9 @@ BackupData buildBackup(List<CategoryWithTasks> rows, DateTime now) {
                 sortOrder: t.sortOrder,
                 createdAt: t.createdAt,
                 archivedAt: t.archivedAt,
+                recurrenceCount: t.recurrenceCount,
+                recurrenceUnit: t.recurrenceUnit,
+                nextDueAt: t.nextDueAt,
               ),
           ],
         ),

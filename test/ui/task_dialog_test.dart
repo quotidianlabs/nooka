@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nooka/data/services/database/database.dart';
+import 'package:nooka/domain/recurrence.dart';
 import 'package:nooka/l10n/app_localizations.dart';
 import 'package:nooka/ui/widgets/task_dialog.dart';
 
@@ -176,5 +177,107 @@ void main() {
     await tester.tap(find.text('Cancel'));
     await tester.pumpAndSettle();
     expect(sentinel, isNull);
+  });
+
+  testWidgets('toggling Repeat on reveals the stepper + unit control and '
+      'returns the default recurrence', (tester) async {
+    TaskDialogResult? result;
+    await tester.pumpWidget(
+      _host((context) async {
+        result = await showTaskDialog(
+          context,
+          categories: [_cat(1, 'Home')],
+          initialCategoryId: 1,
+          initialName: 'Water plants',
+        );
+      }),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('task-repeat-toggle')), findsOneWidget);
+    expect(find.byKey(const Key('task-repeat-stepper')), findsNothing);
+    expect(find.byKey(const Key('task-repeat-unit')), findsNothing);
+
+    await tester.tap(find.byKey(const Key('task-repeat-toggle')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('task-repeat-stepper')), findsOneWidget);
+    expect(find.byKey(const Key('task-repeat-unit')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('task-confirm')));
+    await tester.pumpAndSettle();
+
+    expect(result?.name, 'Water plants');
+    expect(result?.recurrenceCount, 1);
+    expect(result?.recurrenceUnit, RecurrenceUnit.days);
+  });
+
+  testWidgets('tapping the stepper + button increments the recurrence count', (
+    tester,
+  ) async {
+    TaskDialogResult? result;
+    await tester.pumpWidget(
+      _host((context) async {
+        result = await showTaskDialog(
+          context,
+          categories: [_cat(1, 'Home')],
+          initialCategoryId: 1,
+          initialName: 'Water plants',
+        );
+      }),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('task-repeat-toggle')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(
+      find.descendant(
+        of: find.byKey(const Key('task-repeat-stepper')),
+        matching: find.byIcon(Icons.add),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('task-confirm')));
+    await tester.pumpAndSettle();
+
+    expect(result?.recurrenceCount, 2);
+  });
+
+  testWidgets('selecting a different recurrence unit updates the result', (
+    tester,
+  ) async {
+    TaskDialogResult? result;
+    await tester.pumpWidget(
+      _host((context) async {
+        result = await showTaskDialog(
+          context,
+          categories: [_cat(1, 'Home')],
+          initialCategoryId: 1,
+          initialName: 'Water plants',
+        );
+      }),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('task-repeat-toggle')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(
+      find.descendant(
+        of: find.byKey(const Key('task-repeat-unit')),
+        matching: find.text('Weeks'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('task-confirm')));
+    await tester.pumpAndSettle();
+
+    expect(result?.recurrenceUnit, RecurrenceUnit.weeks);
   });
 }

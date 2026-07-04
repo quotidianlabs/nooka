@@ -27,8 +27,10 @@ Future<void> main() async {
   try {
     final purged = await container.read(todoRepositoryProvider).purgeExpired();
     debugPrint('Startup purge removed $purged expired item(s).');
+    final woken = await container.read(todoRepositoryProvider).wakeDueTasks();
+    debugPrint('Startup woke $woken due recurring task(s).');
   } catch (e, st) {
-    debugPrint('Startup purge failed (continuing): $e\n$st');
+    debugPrint('Startup cleanup failed (continuing): $e\n$st');
   }
 
   runZonedGuarded(

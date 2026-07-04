@@ -10,7 +10,7 @@ A backup is a UTF-8 JSON object with the following top-level fields:
 | Field        | Type   | Description                                      |
 |--------------|--------|--------------------------------------------------|
 | `app`        | String | Fixed marker `"nooka"`; used to reject alien files |
-| `version`    | Int    | Format version; currently `1`                    |
+| `version`    | Int    | Format version; currently `2` (see below)        |
 | `exportedAt` | String | ISO-8601 UTC timestamp of the export             |
 | `categories` | Array  | Ordered list of category objects (see below)     |
 
@@ -28,14 +28,29 @@ Each **category** object:
 
 Each **task** object:
 
-| Field        | Type    | Description                           |
-|--------------|---------|---------------------------------------|
-| `name`       | String  | Non-empty display name                |
-| `sortOrder`  | Int     | Display position within the category  |
-| `createdAt`  | String  | ISO-8601 UTC                          |
-| `archivedAt` | String? | ISO-8601 UTC if archived; null if active |
+| Field             | Type    | Description                              |
+|-------------------|---------|-------------------------------------------|
+| `name`            | String  | Non-empty display name                    |
+| `sortOrder`       | Int     | Display position within the category      |
+| `createdAt`       | String  | ISO-8601 UTC                              |
+| `archivedAt`      | String? | ISO-8601 UTC if archived; null if active  |
+| `recurrenceCount` | Int?    | Recurrence interval magnitude (v2+; absent/null on non-recurring tasks) |
+| `recurrenceUnit`  | Int?    | `RecurrenceUnit.index` — `0` days, `1` weeks, `2` months (v2+) |
+| `nextDueAt`       | String? | ISO-8601 UTC when the task returns from dormancy; non-null = dormant (v2+) |
 
 Row ids are never serialized; the parent–child link is implicit in nesting.
+
+### Version history and compatibility
+
+- **v1**: original format — no recurrence fields.
+- **v2**: adds `recurrenceCount` / `recurrenceUnit` / `nextDueAt` to each task,
+  produced by `buildBackup` from the `Task` row's recurrence columns.
+
+`decodeBackup` accepts any `version` in `[1, currentVersion]`. A v1 file simply
+lacks the three recurrence keys; `_task` treats missing keys as `null`, so
+every imported task decodes as non-recurring/active with those fields null —
+existing user backups keep importing unchanged. `encodeBackup` and
+`buildBackup` always emit the current version.
 
 ## Data flow
 
@@ -83,6 +98,9 @@ SettingsScreen            — two ListTiles, confirm AlertDialog, SnackBars
      atomically in a single Drift transaction.
    - `RememberedCategory.forget()` clears the stale last-used-category id from
      SharedPreferences (the old id is meaningless after replace-all).
+   - `TodoRepository.wakeDueTasks()` runs so a restored dormant task whose
+     `nextDueAt` has already elapsed appears immediately, instead of waiting
+     for the next startup/resume wake (see [archive](archive.md)).
    - Returns `false` on any failure; the VM logs the error.
 5. The screen shows `importDone(count)` on success or `actionFailed` on
    failure.

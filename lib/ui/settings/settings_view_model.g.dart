@@ -50,7 +50,7 @@ final class SettingsViewModelProvider
   }
 }
 
-String _$settingsViewModelHash() => r'5b459584f749ff47de22b41a713314fec5fb023c';
+String _$settingsViewModelHash() => r'8b0c8be8215738df02b63585a0dc638988170084';
 
 /// Owns the settings screen's backup commands: export, pick-and-decode, and
 /// apply (replace-all). Raw errors never cross the seam — they are logged and

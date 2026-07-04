@@ -1,3 +1,5 @@
+import '../recurrence.dart';
+
 /// A single task inside a backup. Row ids are never serialized; the parent
 /// link is implicit in [BackupCategory.tasks].
 class BackupTask {
@@ -6,11 +8,17 @@ class BackupTask {
     required this.sortOrder,
     required this.createdAt,
     required this.archivedAt,
+    this.recurrenceCount,
+    this.recurrenceUnit,
+    this.nextDueAt,
   });
   final String name;
   final int sortOrder;
   final DateTime createdAt;
   final DateTime? archivedAt; // null = active
+  final int? recurrenceCount;
+  final RecurrenceUnit? recurrenceUnit;
+  final DateTime? nextDueAt; // non-null = dormant
 }
 
 /// A category and its tasks inside a backup.
@@ -46,7 +54,7 @@ class BackupData {
   final List<BackupCategory> categories;
 }
 
-/// Thrown by `decodeBackup` when a file is not a valid v1 Nooka backup. The
+/// Thrown by `decodeBackup` when a file is not a valid Nooka backup. The
 /// [message] is English, for logs and tests; the UI shows a localized message.
 class BackupFormatException implements Exception {
   const BackupFormatException(this.message);

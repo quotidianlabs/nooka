@@ -7,11 +7,17 @@ class CategoryWithTasks {
   final Category category;
   final List<Task> tasks;
 
-  /// Active (not yet archived) tasks, in sortOrder.
+  /// Active tasks: not archived and not dormant, in sortOrder.
   List<Task> get activeTasks => [
     for (final t in tasks)
-      if (t.archivedAt == null) t,
+      if (t.archivedAt == null && t.nextDueAt == null) t,
   ];
+
+  /// Dormant recurring tasks (completed, waiting to return), soonest first.
+  List<Task> get dormantTasks => [
+    for (final t in tasks)
+      if (t.archivedAt == null && t.nextDueAt != null) t,
+  ]..sort((a, b) => a.nextDueAt!.compareTo(b.nextDueAt!));
 
   /// Archived tasks, newest-completed first.
   List<Task> get archivedTasks => [

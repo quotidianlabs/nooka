@@ -1,5 +1,7 @@
 import 'package:drift/drift.dart';
 
+import '../../../domain/recurrence.dart';
+
 class Categories extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get name => text()();
@@ -18,4 +20,7 @@ class Tasks extends Table {
   IntColumn get sortOrder => integer()();
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get archivedAt => dateTime().nullable()(); // null = active
+  IntColumn get recurrenceCount => integer().nullable()();
+  IntColumn get recurrenceUnit => intEnum<RecurrenceUnit>().nullable()();
+  DateTimeColumn get nextDueAt => dateTime().nullable()(); // non-null = dormant
 }

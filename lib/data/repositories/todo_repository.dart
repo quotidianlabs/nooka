@@ -3,6 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../domain/clock.dart';
 import '../../domain/models/backup_data.dart';
 import '../../domain/models/category_with_tasks.dart';
+import '../../domain/recurrence.dart';
 import '../services/database/database.dart';
 import '../services/database/database_providers.dart' show todoDaoProvider;
 import '../services/database/todo_dao.dart';
@@ -49,10 +50,23 @@ class TodoRepository {
   Future<void> renameTask(int id, String name) => _dao.renameTask(id, name);
   Future<void> moveTask(int id, int newCategoryId) =>
       _dao.moveTask(id, newCategoryId);
-  Future<void> renameAndMove(int id, String name, int? newCategoryId) =>
-      _dao.renameAndMove(id, name, newCategoryId);
+  Future<void> renameAndMove(
+    int id,
+    String name,
+    int? newCategoryId, {
+    int? recurrenceCount,
+    RecurrenceUnit? recurrenceUnit,
+  }) => _dao.renameAndMove(
+    id,
+    name,
+    newCategoryId,
+    recurrenceCount: recurrenceCount,
+    recurrenceUnit: recurrenceUnit,
+  );
   Future<void> completeTask(int id) => _dao.completeTask(id, _clock.now());
   Future<void> restoreTask(int id) => _dao.restoreTask(id);
+  Future<void> wakeTask(int id) => _dao.wakeTask(id);
+  Future<int> wakeDueTasks() => _dao.wakeDueTasks(_clock.now());
   Future<void> deleteTask(int id) => _dao.deleteTask(id);
   Future<void> insertTask(Task task) => _dao.insertTask(task);
   Future<void> reorderTasks(List<int> orderedIds) =>

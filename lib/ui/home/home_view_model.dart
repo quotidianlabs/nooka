@@ -7,6 +7,7 @@ import '../../data/services/database/database.dart';
 import '../../domain/board_reorder.dart';
 import '../../domain/default_category.dart';
 import '../../domain/models/category_with_tasks.dart';
+import '../../domain/recurrence.dart';
 import '../../domain/reorder.dart';
 import '../core/category_colors.dart';
 
@@ -131,12 +132,16 @@ class HomeViewModel extends _$HomeViewModel {
     int id,
     String name,
     int fromCategoryId,
-    int toCategoryId,
-  ) => _run(
+    int toCategoryId, {
+    int? recurrenceCount,
+    RecurrenceUnit? recurrenceUnit,
+  }) => _run(
     () => _repo.renameAndMove(
       id,
       name,
       fromCategoryId == toCategoryId ? null : toCategoryId,
+      recurrenceCount: recurrenceCount,
+      recurrenceUnit: recurrenceUnit,
     ),
   );
 
@@ -144,6 +149,15 @@ class HomeViewModel extends _$HomeViewModel {
       _run(() => _repo.completeTask(id));
   Future<CommandOutcome> restoreTask(int id) =>
       _run(() => _repo.restoreTask(id));
+
+  /// Wakes a dormant recurring task now (undo of a recurring completion, and
+  /// the Archive "Return now" action).
+  Future<CommandOutcome> returnTaskNow(int id) =>
+      _run(() => _repo.wakeTask(id));
+
+  /// Reveals any dormant task whose interval has elapsed. Called at startup
+  /// and on resume / archive open, alongside purge.
+  Future<CommandOutcome> wakeDueTasks() => _run(() => _repo.wakeDueTasks());
 
   /// Permanently deletes active task [id]. Undo is layered in the widget via
   /// [restoreDeletedTask]; the VM holds no undo state (mirrors complete/restore).
