@@ -70,3 +70,13 @@ exact `Duration`, months add calendar months with end-of-month clamping
 (completing Jan 31 + 1 month lands on Feb 28/29). `daysUntilDue(nextDueAt, now)`
 rounds a partial day up and clamps to 0, for the "Returns in N days" label,
 mirroring `domain/archive.dart`'s `daysRemaining`.
+
+## Migration testing
+
+Migrations use Drift's `stepByStep` `onUpgrade` (`database.steps.dart`), whose
+steps run against the *pinned* schema snapshot for their version, and are
+verified by `SchemaVerifier` (`test/data/migration_test.dart`) against the
+per-version snapshots in `drift_schemas/` — checking both that each version
+migrates to the declared current schema and that data survives. Per-migration
+ritual after bumping `schemaVersion` and writing a `fromNToN+1` step:
+`just schema-dump` then `just schema-gen`, and commit the regenerated files.
