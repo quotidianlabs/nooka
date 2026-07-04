@@ -2,6 +2,7 @@ import 'package:drift/drift.dart' show OrderingTerm, Value;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nooka/data/services/database/database.dart';
+import 'package:nooka/domain/models/backup_data.dart';
 import 'package:nooka/domain/recurrence.dart';
 
 void main() {
@@ -524,6 +525,34 @@ void main() {
         db.tasks,
       )..where((t) => t.id.equals(b))).getSingle();
       expect(rowB.sortOrder, 0); // dormant A did not occupy an active slot
+    });
+
+    test('importReplace round-trips recurrence + dormancy', () async {
+      await db.todoDao.importReplace([
+        BackupCategory(
+          name: 'Home',
+          color: 1,
+          emoji: null,
+          collapsed: false,
+          sortOrder: 0,
+          createdAt: DateTime(2026, 1, 1),
+          tasks: [
+            BackupTask(
+              name: 'Water',
+              sortOrder: 0,
+              createdAt: DateTime(2026, 1, 1),
+              archivedAt: null,
+              recurrenceCount: 3,
+              recurrenceUnit: RecurrenceUnit.weeks,
+              nextDueAt: DateTime(2026, 8, 1),
+            ),
+          ],
+        ),
+      ]);
+      final row = (await db.select(db.tasks).get()).single;
+      expect(row.recurrenceCount, 3);
+      expect(row.recurrenceUnit, RecurrenceUnit.weeks);
+      expect(row.nextDueAt, DateTime(2026, 8, 1));
     });
   });
 }

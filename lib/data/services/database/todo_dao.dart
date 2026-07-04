@@ -308,6 +308,9 @@ class TodoDao extends DatabaseAccessor<AppDatabase> with _$TodoDaoMixin {
               sortOrder: t.sortOrder,
               createdAt: t.createdAt,
               archivedAt: Value(t.archivedAt),
+              recurrenceCount: Value(t.recurrenceCount),
+              recurrenceUnit: Value(t.recurrenceUnit),
+              nextDueAt: Value(t.nextDueAt),
             ),
           );
         }
