@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nooka/data/services/database/database.dart';
+import 'package:nooka/domain/recurrence.dart';
 import 'package:nooka/l10n/app_localizations.dart';
 import 'package:nooka/ui/home/widgets/task_row_content.dart';
 
@@ -10,6 +11,9 @@ Task _task({
   String name =
       'A very very very long task name that would overflow the row badly',
   DateTime? archivedAt,
+  int? recurrenceCount,
+  RecurrenceUnit? recurrenceUnit,
+  DateTime? nextDueAt,
 }) => Task(
   id: id,
   categoryId: 1,
@@ -17,6 +21,9 @@ Task _task({
   sortOrder: 0,
   createdAt: DateTime(2026, 1, 1),
   archivedAt: archivedAt,
+  recurrenceCount: recurrenceCount,
+  recurrenceUnit: recurrenceUnit,
+  nextDueAt: nextDueAt,
 );
 
 Widget _host(Widget child) => MaterialApp(
@@ -123,4 +130,26 @@ void main() {
 
     expect(tapped?.id, 5);
   });
+
+  testWidgets(
+    'active recurring task shows the recurrence sub-line with the every-N text',
+    (tester) async {
+      await tester.pumpWidget(
+        _host(
+          TaskRowContent(
+            task: _task(
+              recurrenceCount: 3,
+              recurrenceUnit: RecurrenceUnit.weeks,
+            ),
+            color: const Color(0xFF009688),
+            now: DateTime(2026, 6, 20),
+            onTaskTap: (_) {},
+            onTaskMenu: null,
+          ),
+        ),
+      );
+      expect(find.textContaining('🔁'), findsOneWidget);
+      expect(find.textContaining('Every 3 weeks'), findsOneWidget);
+    },
+  );
 }

@@ -3,13 +3,18 @@ import 'package:intl/intl.dart';
 
 import '../../../data/services/database/database.dart';
 import '../../../domain/archive.dart';
+import '../../../domain/recurrence.dart';
 import '../../../l10n/app_localizations.dart';
 
 /// The task ListTile for a category section row.
 ///
 /// Archived rows show a check_circle in the category color and a subtitle with
-/// completed-on + auto-removes-in text. Active rows show a semantic
-/// radio_button_unchecked as the leading icon and no subtitle.
+/// completed-on + auto-removes-in text. Dormant rows (a recurring task
+/// awaiting its next due date) show a schedule icon in the category color and
+/// a "🔁 Returns in N days" subtitle. Active recurring rows show the default
+/// radio_button_unchecked leading icon and a "🔁 Every N …" subtitle. Plain
+/// active rows show a semantic radio_button_unchecked as the leading icon and
+/// no subtitle.
 ///
 /// The trailing ⋮ menu button is shown only when [onTaskMenu] is non-null.
 /// The [Dismissible] wrapper for active rows stays at the call site.
@@ -34,10 +39,15 @@ class TaskRowContent extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final localeName = Localizations.localeOf(context).toString();
     final archived = task.archivedAt != null;
+    final dormant = task.archivedAt == null && task.nextDueAt != null;
+    final recurring =
+        task.recurrenceCount != null && task.recurrenceUnit != null;
     return ListTile(
       key: Key('task-${task.id}'),
       leading: archived
           ? Icon(Icons.check_circle, color: color)
+          : dormant
+          ? Icon(Icons.schedule, color: color)
           : Semantics(
               button: true,
               label: l10n.markDoneLabel,
@@ -48,6 +58,13 @@ class TaskRowContent extends StatelessWidget {
           ? Text(
               '${l10n.completedOn(DateFormat.yMMMd(localeName).format(task.archivedAt!))}'
               ' · ${l10n.autoRemovesIn(daysRemaining(task.archivedAt!, now))}',
+            )
+          : dormant
+          ? Text('🔁 ${l10n.returnsInDays(daysUntilDue(task.nextDueAt!, now))}')
+          : recurring
+          ? Text(
+              '🔁 '
+              '${l10n.recurrenceEvery(task.recurrenceCount!, task.recurrenceUnit!.name)}',
             )
           : null,
       trailing: onTaskMenu == null
