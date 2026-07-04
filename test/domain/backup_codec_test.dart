@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nooka/domain/backup_codec.dart';
 import 'package:nooka/domain/models/backup_data.dart';
+import 'package:nooka/domain/recurrence.dart';
 
 void main() {
   BackupData sample() => BackupData(
@@ -74,7 +75,7 @@ void main() {
     test(
       'wrong version',
       () => rejects(
-        '{"app":"nooka","version":2,'
+        '{"app":"nooka","version":3,'
         '"exportedAt":"2026-06-25T00:00:00.000","categories":[]}',
       ),
     );
@@ -217,5 +218,56 @@ void main() {
         '"archivedAt":null}]}]}',
       ),
     );
+  });
+
+  group('v2 recurrence', () {
+    test('encodes version 2 and round-trips recurrence + dormancy', () {
+      final data = BackupData(
+        version: 2,
+        exportedAt: DateTime.utc(2026, 7, 4),
+        categories: [
+          BackupCategory(
+            name: 'Home',
+            color: 1,
+            emoji: null,
+            collapsed: false,
+            sortOrder: 0,
+            createdAt: DateTime.utc(2026, 1, 1),
+            tasks: [
+              BackupTask(
+                name: 'Water',
+                sortOrder: 0,
+                createdAt: DateTime.utc(2026, 1, 1),
+                archivedAt: null,
+                recurrenceCount: 3,
+                recurrenceUnit: RecurrenceUnit.weeks,
+                nextDueAt: DateTime.utc(2026, 8, 1),
+              ),
+            ],
+          ),
+        ],
+      );
+      final decoded = decodeBackup(encodeBackup(data));
+      final t = decoded.categories.single.tasks.single;
+      expect(decoded.version, 2);
+      expect(t.recurrenceCount, 3);
+      expect(t.recurrenceUnit, RecurrenceUnit.weeks);
+      expect(t.nextDueAt, DateTime.utc(2026, 8, 1));
+    });
+
+    test('a v1 file (no recurrence keys) still decodes with nulls', () {
+      const v1 = '''
+      {"app":"nooka","version":1,"exportedAt":"2026-07-04T00:00:00.000Z",
+       "categories":[{"name":"Home","color":1,"emoji":null,"collapsed":false,
+       "sortOrder":0,"createdAt":"2026-01-01T00:00:00.000Z",
+       "tasks":[{"name":"Water","sortOrder":0,
+       "createdAt":"2026-01-01T00:00:00.000Z","archivedAt":null}]}]}''';
+      final decoded = decodeBackup(v1);
+      final t = decoded.categories.single.tasks.single;
+      expect(decoded.version, 1);
+      expect(t.recurrenceCount, isNull);
+      expect(t.recurrenceUnit, isNull);
+      expect(t.nextDueAt, isNull);
+    });
   });
 }
