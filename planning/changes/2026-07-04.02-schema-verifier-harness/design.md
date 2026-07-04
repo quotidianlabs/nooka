@@ -74,7 +74,7 @@ Two JSON snapshots, produced by
 
 The worktree is removed after the dump; only the two JSON files are committed.
 
-### 2. Generated harness — `test/generated_migrations/` (committed, coverage-excluded)
+### 2. Generated harness — `test/generated_migrations/` (committed; under `test/`, so not coverage-instrumented)
 
 `dart run drift_dev schema generate --data-classes --companions drift_schemas/ test/generated_migrations/`
 generates:
