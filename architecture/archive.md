@@ -41,7 +41,9 @@ Active immediately; `Delete` hard-deletes it, same as an active task's delete.
 Tapping an archived row still restores it directly, unchanged.
 
 "Clear archive" (`clearArchive`) and its confirmation count remain scoped to
-**archived** tasks only — dormant tasks are excluded from both the count and
-the sweep, at the DAO layer. Dormant tasks leave the Archive view only via
+**archived** tasks only — dormant tasks are excluded from the count in the
+widget (`home_screen.dart` `_clearArchive`, counting `archivedTasks.length`)
+and from the sweep in the DAO (`clearArchive` filters on
+`archivedAt.isNotNull()`). Dormant tasks leave the Archive view only via
 `returnTaskNow` (manual or automatic wake, see [home coordination](home-coordination.md))
 or explicit delete, never via the retention purge or "Clear archive".

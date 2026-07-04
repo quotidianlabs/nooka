@@ -300,7 +300,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     if (!mounted) return;
     _showUndoToast(
       message,
-      () => task.recurrenceCount != null
+      () => task.recurrenceCount != null && task.recurrenceUnit != null
           ? _dispatch(_vm.returnTaskNow(task.id))
           : _dispatch(_vm.restoreTask(task.id)),
     );
