@@ -520,6 +520,37 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
     type: DriftSqlType.dateTime,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _recurrenceCountMeta = const VerificationMeta(
+    'recurrenceCount',
+  );
+  @override
+  late final GeneratedColumn<int> recurrenceCount = GeneratedColumn<int>(
+    'recurrence_count',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<RecurrenceUnit?, int>
+  recurrenceUnit = GeneratedColumn<int>(
+    'recurrence_unit',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  ).withConverter<RecurrenceUnit?>($TasksTable.$converterrecurrenceUnitn);
+  static const VerificationMeta _nextDueAtMeta = const VerificationMeta(
+    'nextDueAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> nextDueAt = GeneratedColumn<DateTime>(
+    'next_due_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -528,6 +559,9 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
     sortOrder,
     createdAt,
     archivedAt,
+    recurrenceCount,
+    recurrenceUnit,
+    nextDueAt,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -582,6 +616,21 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
         archivedAt.isAcceptableOrUnknown(data['archived_at']!, _archivedAtMeta),
       );
     }
+    if (data.containsKey('recurrence_count')) {
+      context.handle(
+        _recurrenceCountMeta,
+        recurrenceCount.isAcceptableOrUnknown(
+          data['recurrence_count']!,
+          _recurrenceCountMeta,
+        ),
+      );
+    }
+    if (data.containsKey('next_due_at')) {
+      context.handle(
+        _nextDueAtMeta,
+        nextDueAt.isAcceptableOrUnknown(data['next_due_at']!, _nextDueAtMeta),
+      );
+    }
     return context;
   }
 
@@ -615,6 +664,20 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
         DriftSqlType.dateTime,
         data['${effectivePrefix}archived_at'],
       ),
+      recurrenceCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}recurrence_count'],
+      ),
+      recurrenceUnit: $TasksTable.$converterrecurrenceUnitn.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.int,
+          data['${effectivePrefix}recurrence_unit'],
+        ),
+      ),
+      nextDueAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}next_due_at'],
+      ),
     );
   }
 
@@ -622,6 +685,13 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, Task> {
   $TasksTable createAlias(String alias) {
     return $TasksTable(attachedDatabase, alias);
   }
+
+  static JsonTypeConverter2<RecurrenceUnit, int, int> $converterrecurrenceUnit =
+      const EnumIndexConverter<RecurrenceUnit>(RecurrenceUnit.values);
+  static JsonTypeConverter2<RecurrenceUnit?, int?, int?>
+  $converterrecurrenceUnitn = JsonTypeConverter2.asNullable(
+    $converterrecurrenceUnit,
+  );
 }
 
 class Task extends DataClass implements Insertable<Task> {
@@ -631,6 +701,9 @@ class Task extends DataClass implements Insertable<Task> {
   final int sortOrder;
   final DateTime createdAt;
   final DateTime? archivedAt;
+  final int? recurrenceCount;
+  final RecurrenceUnit? recurrenceUnit;
+  final DateTime? nextDueAt;
   const Task({
     required this.id,
     required this.categoryId,
@@ -638,6 +711,9 @@ class Task extends DataClass implements Insertable<Task> {
     required this.sortOrder,
     required this.createdAt,
     this.archivedAt,
+    this.recurrenceCount,
+    this.recurrenceUnit,
+    this.nextDueAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -649,6 +725,17 @@ class Task extends DataClass implements Insertable<Task> {
     map['created_at'] = Variable<DateTime>(createdAt);
     if (!nullToAbsent || archivedAt != null) {
       map['archived_at'] = Variable<DateTime>(archivedAt);
+    }
+    if (!nullToAbsent || recurrenceCount != null) {
+      map['recurrence_count'] = Variable<int>(recurrenceCount);
+    }
+    if (!nullToAbsent || recurrenceUnit != null) {
+      map['recurrence_unit'] = Variable<int>(
+        $TasksTable.$converterrecurrenceUnitn.toSql(recurrenceUnit),
+      );
+    }
+    if (!nullToAbsent || nextDueAt != null) {
+      map['next_due_at'] = Variable<DateTime>(nextDueAt);
     }
     return map;
   }
@@ -663,6 +750,15 @@ class Task extends DataClass implements Insertable<Task> {
       archivedAt: archivedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(archivedAt),
+      recurrenceCount: recurrenceCount == null && nullToAbsent
+          ? const Value.absent()
+          : Value(recurrenceCount),
+      recurrenceUnit: recurrenceUnit == null && nullToAbsent
+          ? const Value.absent()
+          : Value(recurrenceUnit),
+      nextDueAt: nextDueAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(nextDueAt),
     );
   }
 
@@ -678,6 +774,11 @@ class Task extends DataClass implements Insertable<Task> {
       sortOrder: serializer.fromJson<int>(json['sortOrder']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       archivedAt: serializer.fromJson<DateTime?>(json['archivedAt']),
+      recurrenceCount: serializer.fromJson<int?>(json['recurrenceCount']),
+      recurrenceUnit: $TasksTable.$converterrecurrenceUnitn.fromJson(
+        serializer.fromJson<int?>(json['recurrenceUnit']),
+      ),
+      nextDueAt: serializer.fromJson<DateTime?>(json['nextDueAt']),
     );
   }
   @override
@@ -690,6 +791,11 @@ class Task extends DataClass implements Insertable<Task> {
       'sortOrder': serializer.toJson<int>(sortOrder),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'archivedAt': serializer.toJson<DateTime?>(archivedAt),
+      'recurrenceCount': serializer.toJson<int?>(recurrenceCount),
+      'recurrenceUnit': serializer.toJson<int?>(
+        $TasksTable.$converterrecurrenceUnitn.toJson(recurrenceUnit),
+      ),
+      'nextDueAt': serializer.toJson<DateTime?>(nextDueAt),
     };
   }
 
@@ -700,6 +806,9 @@ class Task extends DataClass implements Insertable<Task> {
     int? sortOrder,
     DateTime? createdAt,
     Value<DateTime?> archivedAt = const Value.absent(),
+    Value<int?> recurrenceCount = const Value.absent(),
+    Value<RecurrenceUnit?> recurrenceUnit = const Value.absent(),
+    Value<DateTime?> nextDueAt = const Value.absent(),
   }) => Task(
     id: id ?? this.id,
     categoryId: categoryId ?? this.categoryId,
@@ -707,6 +816,13 @@ class Task extends DataClass implements Insertable<Task> {
     sortOrder: sortOrder ?? this.sortOrder,
     createdAt: createdAt ?? this.createdAt,
     archivedAt: archivedAt.present ? archivedAt.value : this.archivedAt,
+    recurrenceCount: recurrenceCount.present
+        ? recurrenceCount.value
+        : this.recurrenceCount,
+    recurrenceUnit: recurrenceUnit.present
+        ? recurrenceUnit.value
+        : this.recurrenceUnit,
+    nextDueAt: nextDueAt.present ? nextDueAt.value : this.nextDueAt,
   );
   Task copyWithCompanion(TasksCompanion data) {
     return Task(
@@ -720,6 +836,13 @@ class Task extends DataClass implements Insertable<Task> {
       archivedAt: data.archivedAt.present
           ? data.archivedAt.value
           : this.archivedAt,
+      recurrenceCount: data.recurrenceCount.present
+          ? data.recurrenceCount.value
+          : this.recurrenceCount,
+      recurrenceUnit: data.recurrenceUnit.present
+          ? data.recurrenceUnit.value
+          : this.recurrenceUnit,
+      nextDueAt: data.nextDueAt.present ? data.nextDueAt.value : this.nextDueAt,
     );
   }
 
@@ -731,14 +854,26 @@ class Task extends DataClass implements Insertable<Task> {
           ..write('name: $name, ')
           ..write('sortOrder: $sortOrder, ')
           ..write('createdAt: $createdAt, ')
-          ..write('archivedAt: $archivedAt')
+          ..write('archivedAt: $archivedAt, ')
+          ..write('recurrenceCount: $recurrenceCount, ')
+          ..write('recurrenceUnit: $recurrenceUnit, ')
+          ..write('nextDueAt: $nextDueAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, categoryId, name, sortOrder, createdAt, archivedAt);
+  int get hashCode => Object.hash(
+    id,
+    categoryId,
+    name,
+    sortOrder,
+    createdAt,
+    archivedAt,
+    recurrenceCount,
+    recurrenceUnit,
+    nextDueAt,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -748,7 +883,10 @@ class Task extends DataClass implements Insertable<Task> {
           other.name == this.name &&
           other.sortOrder == this.sortOrder &&
           other.createdAt == this.createdAt &&
-          other.archivedAt == this.archivedAt);
+          other.archivedAt == this.archivedAt &&
+          other.recurrenceCount == this.recurrenceCount &&
+          other.recurrenceUnit == this.recurrenceUnit &&
+          other.nextDueAt == this.nextDueAt);
 }
 
 class TasksCompanion extends UpdateCompanion<Task> {
@@ -758,6 +896,9 @@ class TasksCompanion extends UpdateCompanion<Task> {
   final Value<int> sortOrder;
   final Value<DateTime> createdAt;
   final Value<DateTime?> archivedAt;
+  final Value<int?> recurrenceCount;
+  final Value<RecurrenceUnit?> recurrenceUnit;
+  final Value<DateTime?> nextDueAt;
   const TasksCompanion({
     this.id = const Value.absent(),
     this.categoryId = const Value.absent(),
@@ -765,6 +906,9 @@ class TasksCompanion extends UpdateCompanion<Task> {
     this.sortOrder = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.archivedAt = const Value.absent(),
+    this.recurrenceCount = const Value.absent(),
+    this.recurrenceUnit = const Value.absent(),
+    this.nextDueAt = const Value.absent(),
   });
   TasksCompanion.insert({
     this.id = const Value.absent(),
@@ -773,6 +917,9 @@ class TasksCompanion extends UpdateCompanion<Task> {
     required int sortOrder,
     required DateTime createdAt,
     this.archivedAt = const Value.absent(),
+    this.recurrenceCount = const Value.absent(),
+    this.recurrenceUnit = const Value.absent(),
+    this.nextDueAt = const Value.absent(),
   }) : categoryId = Value(categoryId),
        name = Value(name),
        sortOrder = Value(sortOrder),
@@ -784,6 +931,9 @@ class TasksCompanion extends UpdateCompanion<Task> {
     Expression<int>? sortOrder,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? archivedAt,
+    Expression<int>? recurrenceCount,
+    Expression<int>? recurrenceUnit,
+    Expression<DateTime>? nextDueAt,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -792,6 +942,9 @@ class TasksCompanion extends UpdateCompanion<Task> {
       if (sortOrder != null) 'sort_order': sortOrder,
       if (createdAt != null) 'created_at': createdAt,
       if (archivedAt != null) 'archived_at': archivedAt,
+      if (recurrenceCount != null) 'recurrence_count': recurrenceCount,
+      if (recurrenceUnit != null) 'recurrence_unit': recurrenceUnit,
+      if (nextDueAt != null) 'next_due_at': nextDueAt,
     });
   }
 
@@ -802,6 +955,9 @@ class TasksCompanion extends UpdateCompanion<Task> {
     Value<int>? sortOrder,
     Value<DateTime>? createdAt,
     Value<DateTime?>? archivedAt,
+    Value<int?>? recurrenceCount,
+    Value<RecurrenceUnit?>? recurrenceUnit,
+    Value<DateTime?>? nextDueAt,
   }) {
     return TasksCompanion(
       id: id ?? this.id,
@@ -810,6 +966,9 @@ class TasksCompanion extends UpdateCompanion<Task> {
       sortOrder: sortOrder ?? this.sortOrder,
       createdAt: createdAt ?? this.createdAt,
       archivedAt: archivedAt ?? this.archivedAt,
+      recurrenceCount: recurrenceCount ?? this.recurrenceCount,
+      recurrenceUnit: recurrenceUnit ?? this.recurrenceUnit,
+      nextDueAt: nextDueAt ?? this.nextDueAt,
     );
   }
 
@@ -834,6 +993,17 @@ class TasksCompanion extends UpdateCompanion<Task> {
     if (archivedAt.present) {
       map['archived_at'] = Variable<DateTime>(archivedAt.value);
     }
+    if (recurrenceCount.present) {
+      map['recurrence_count'] = Variable<int>(recurrenceCount.value);
+    }
+    if (recurrenceUnit.present) {
+      map['recurrence_unit'] = Variable<int>(
+        $TasksTable.$converterrecurrenceUnitn.toSql(recurrenceUnit.value),
+      );
+    }
+    if (nextDueAt.present) {
+      map['next_due_at'] = Variable<DateTime>(nextDueAt.value);
+    }
     return map;
   }
 
@@ -845,7 +1015,10 @@ class TasksCompanion extends UpdateCompanion<Task> {
           ..write('name: $name, ')
           ..write('sortOrder: $sortOrder, ')
           ..write('createdAt: $createdAt, ')
-          ..write('archivedAt: $archivedAt')
+          ..write('archivedAt: $archivedAt, ')
+          ..write('recurrenceCount: $recurrenceCount, ')
+          ..write('recurrenceUnit: $recurrenceUnit, ')
+          ..write('nextDueAt: $nextDueAt')
           ..write(')'))
         .toString();
   }
@@ -1208,6 +1381,9 @@ typedef $$TasksTableCreateCompanionBuilder =
       required int sortOrder,
       required DateTime createdAt,
       Value<DateTime?> archivedAt,
+      Value<int?> recurrenceCount,
+      Value<RecurrenceUnit?> recurrenceUnit,
+      Value<DateTime?> nextDueAt,
     });
 typedef $$TasksTableUpdateCompanionBuilder =
     TasksCompanion Function({
@@ -1217,6 +1393,9 @@ typedef $$TasksTableUpdateCompanionBuilder =
       Value<int> sortOrder,
       Value<DateTime> createdAt,
       Value<DateTime?> archivedAt,
+      Value<int?> recurrenceCount,
+      Value<RecurrenceUnit?> recurrenceUnit,
+      Value<DateTime?> nextDueAt,
     });
 
 final class $$TasksTableReferences
@@ -1271,6 +1450,22 @@ class $$TasksTableFilterComposer extends Composer<_$AppDatabase, $TasksTable> {
 
   ColumnFilters<DateTime> get archivedAt => $composableBuilder(
     column: $table.archivedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get recurrenceCount => $composableBuilder(
+    column: $table.recurrenceCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<RecurrenceUnit?, RecurrenceUnit, int>
+  get recurrenceUnit => $composableBuilder(
+    column: $table.recurrenceUnit,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<DateTime> get nextDueAt => $composableBuilder(
+    column: $table.nextDueAt,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -1332,6 +1527,21 @@ class $$TasksTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get recurrenceCount => $composableBuilder(
+    column: $table.recurrenceCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get recurrenceUnit => $composableBuilder(
+    column: $table.recurrenceUnit,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get nextDueAt => $composableBuilder(
+    column: $table.nextDueAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$CategoriesTableOrderingComposer get categoryId {
     final $$CategoriesTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -1381,6 +1591,20 @@ class $$TasksTableAnnotationComposer
     column: $table.archivedAt,
     builder: (column) => column,
   );
+
+  GeneratedColumn<int> get recurrenceCount => $composableBuilder(
+    column: $table.recurrenceCount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumnWithTypeConverter<RecurrenceUnit?, int> get recurrenceUnit =>
+      $composableBuilder(
+        column: $table.recurrenceUnit,
+        builder: (column) => column,
+      );
+
+  GeneratedColumn<DateTime> get nextDueAt =>
+      $composableBuilder(column: $table.nextDueAt, builder: (column) => column);
 
   $$CategoriesTableAnnotationComposer get categoryId {
     final $$CategoriesTableAnnotationComposer composer = $composerBuilder(
@@ -1440,6 +1664,9 @@ class $$TasksTableTableManager
                 Value<int> sortOrder = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime?> archivedAt = const Value.absent(),
+                Value<int?> recurrenceCount = const Value.absent(),
+                Value<RecurrenceUnit?> recurrenceUnit = const Value.absent(),
+                Value<DateTime?> nextDueAt = const Value.absent(),
               }) => TasksCompanion(
                 id: id,
                 categoryId: categoryId,
@@ -1447,6 +1674,9 @@ class $$TasksTableTableManager
                 sortOrder: sortOrder,
                 createdAt: createdAt,
                 archivedAt: archivedAt,
+                recurrenceCount: recurrenceCount,
+                recurrenceUnit: recurrenceUnit,
+                nextDueAt: nextDueAt,
               ),
           createCompanionCallback:
               ({
@@ -1456,6 +1686,9 @@ class $$TasksTableTableManager
                 required int sortOrder,
                 required DateTime createdAt,
                 Value<DateTime?> archivedAt = const Value.absent(),
+                Value<int?> recurrenceCount = const Value.absent(),
+                Value<RecurrenceUnit?> recurrenceUnit = const Value.absent(),
+                Value<DateTime?> nextDueAt = const Value.absent(),
               }) => TasksCompanion.insert(
                 id: id,
                 categoryId: categoryId,
@@ -1463,6 +1696,9 @@ class $$TasksTableTableManager
                 sortOrder: sortOrder,
                 createdAt: createdAt,
                 archivedAt: archivedAt,
+                recurrenceCount: recurrenceCount,
+                recurrenceUnit: recurrenceUnit,
+                nextDueAt: nextDueAt,
               ),
           withReferenceMapper: (p0) => p0
               .map(
