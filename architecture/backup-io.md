@@ -98,6 +98,9 @@ SettingsScreen            — two ListTiles, confirm AlertDialog, SnackBars
      atomically in a single Drift transaction.
    - `RememberedCategory.forget()` clears the stale last-used-category id from
      SharedPreferences (the old id is meaningless after replace-all).
+   - `TodoRepository.wakeDueTasks()` runs so a restored dormant task whose
+     `nextDueAt` has already elapsed appears immediately, instead of waiting
+     for the next startup/resume wake (see [archive](archive.md)).
    - Returns `false` on any failure; the VM logs the error.
 5. The screen shows `importDone(count)` on success or `actionFailed` on
    failure.
