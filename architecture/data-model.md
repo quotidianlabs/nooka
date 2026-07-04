@@ -79,4 +79,7 @@ verified by `SchemaVerifier` (`test/data/migration_test.dart`) against the
 per-version snapshots in `drift_schemas/` — checking both that each version
 migrates to the declared current schema and that data survives. Per-migration
 ritual after bumping `schemaVersion` and writing a `fromNToN+1` step:
-`just schema-dump` then `just schema-gen`, and commit the regenerated files.
+`just schema-dump` then `just schema-gen`, and commit the regenerated files. CI
+enforces this via `just schema-check` (a `schema` job in `ci.yml`): it re-dumps
+and regenerates, then fails if any snapshot or generated file is stale — so a
+bump that skips the ritual (or an un-dumped new snapshot) cannot merge.

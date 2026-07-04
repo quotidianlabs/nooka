@@ -41,3 +41,20 @@ schema-dump:
 schema-gen:
     dart run drift_dev schema steps drift_schemas/ lib/data/services/database/database.steps.dart
     dart run drift_dev schema generate --data-classes --companions drift_schemas/ test/generated_migrations/
+
+# CI gate: re-dump + regenerate, then fail if any schema artifact is stale —
+# catches a schemaVersion bump with no committed snapshot (a new untracked
+# drift_schema_vN.json) or generated files not regenerated from the snapshots.
+# Uses porcelain (not `git diff`) so untracked new snapshots are caught too.
+schema-check: schema-dump schema-gen
+    #!/usr/bin/env bash
+    set -euo pipefail
+    paths="drift_schemas/ lib/data/services/database/database.steps.dart test/generated_migrations/"
+    dirty=$(git status --porcelain -- $paths)
+    if [ -n "$dirty" ]; then
+      echo "::error::Schema artifacts are stale. Run 'just schema-dump' && 'just schema-gen' and commit the result."
+      echo "$dirty"
+      git --no-pager diff -- $paths
+      exit 1
+    fi
+    echo "Schema artifacts are current."
