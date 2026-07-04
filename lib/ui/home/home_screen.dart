@@ -137,7 +137,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final visible = archived
         ? [
             for (final cwt in cats)
-              if (cwt.archivedTasks.isNotEmpty) cwt,
+              if (cwt.archivedTasks.isNotEmpty || cwt.dormantTasks.isNotEmpty)
+                cwt,
           ]
         : cats;
     if (archived && visible.isEmpty) {
@@ -149,14 +150,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           for (final cwt in visible)
             CategorySection(
               category: cwt.category,
-              tasks: cwt.archivedTasks,
+              tasks: [...cwt.dormantTasks, ...cwt.archivedTasks],
               archived: true,
               now: now,
               onToggleCollapsed: () => _dispatch(
                 _vm.toggleCollapsed(cwt.category.id, !cwt.category.collapsed),
               ),
               onHeaderMenu: () => _categoryMenu(cwt),
-              onTaskTap: _restore,
+              onTaskTap: (t) =>
+                  t.nextDueAt != null ? _dormantActions(t) : _restore(t),
               onTaskMenu: null,
             ),
           const SizedBox(height: 80),
@@ -296,7 +298,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       return;
     }
     if (!mounted) return;
-    _showUndoToast(message, () => _dispatch(_vm.restoreTask(task.id)));
+    _showUndoToast(
+      message,
+      () => task.recurrenceCount != null
+          ? _dispatch(_vm.returnTaskNow(task.id))
+          : _dispatch(_vm.restoreTask(task.id)),
+    );
   }
 
   Future<void> _restore(Task task) async {
@@ -443,16 +450,59 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           categories: [for (final c in cats) c.category],
           initialCategoryId: task.categoryId,
           initialName: task.name,
+          initialRecurrenceCount: task.recurrenceCount,
+          initialRecurrenceUnit: task.recurrenceUnit,
         );
         if (r != null) {
           // Pass the seed category (task.categoryId at dialog open) as `from`,
           // so a concurrent move is not silently undone.
           await _dispatch(
-            _vm.editTask(task.id, r.name, task.categoryId, r.categoryId),
+            _vm.editTask(
+              task.id,
+              r.name,
+              task.categoryId,
+              r.categoryId,
+              recurrenceCount: r.recurrenceCount,
+              recurrenceUnit: r.recurrenceUnit,
+            ),
           );
         }
       case 'delete':
         await _deleteTask(task);
+    }
+  }
+
+  /// Bottom-sheet actions for a dormant row (a recurring task awaiting its
+  /// next due date): return it to Active immediately, or delete it outright.
+  Future<void> _dormantActions(Task task) async {
+    final l10n = AppLocalizations.of(context);
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              key: const Key('dormant-return-now'),
+              leading: const Icon(Icons.undo),
+              title: Text(l10n.returnNow),
+              onTap: () => Navigator.pop(context, 'return'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete),
+              title: Text(l10n.delete),
+              onTap: () => Navigator.pop(context, 'delete'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (!mounted) return;
+    switch (choice) {
+      case 'return':
+        await _dispatch(_vm.returnTaskNow(task.id));
+      case 'delete':
+        await _dispatch(_vm.deleteTask(task.id));
     }
   }
 }

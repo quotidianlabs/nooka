@@ -19,15 +19,26 @@ The intents:
 
 - `addCategory` / `updateCategory` / `deleteCategory` / `toggleCollapsed`.
 - `addTask` — remembers its category as the quick-add default **on success**.
-- `editTask(id, name, fromCategoryId, toCategoryId)` — renames, and moves only
-  when `fromCategoryId != toCategoryId`. The move decision uses the dialog's
-  seed (`fromCategoryId`, captured when the dialog opened), not live state, so a
-  concurrent move is not silently undone. Atomic via the DAO's `renameAndMove`
-  (one transaction), so a failed move never leaves a half-applied edit.
+- `editTask(id, name, fromCategoryId, toCategoryId, {recurrenceCount,
+  recurrenceUnit})` — renames, and moves only when `fromCategoryId !=
+  toCategoryId`. The move decision uses the dialog's seed (`fromCategoryId`,
+  captured when the dialog opened), not live state, so a concurrent move is not
+  silently undone. Atomic via the DAO's `renameAndMove` (one transaction), so a
+  failed move never leaves a half-applied edit. The edit dialog seeds its Repeat
+  control from the task's current `recurrenceCount`/`recurrenceUnit`, so editing
+  a recurring task keeps it recurring unless the user turns Repeat off.
 - `completeTask` / `restoreTask` — plain inverse intents. The undo toast is pure
   widget UX layered over them; the VM has no undo concept. Routing complete
   through the outcome path means a failed complete surfaces `actionFailed` and
-  simply skips offering undo.
+  simply skips offering undo. For a **recurring** task the widget routes the
+  undo to `returnTaskNow` instead of `restoreTask` — completing a recurring task
+  makes it dormant, not archived, so its inverse is waking it, not restoring an
+  archived row (see [archive](archive.md)). The routing decision reads
+  `task.recurrenceCount` on the pre-completion `Task` captured by the closure,
+  not live state.
+- `returnTaskNow(id)` — wakes a dormant recurring task immediately (clears its
+  `nextDueAt`), used both as the recurring-complete undo and as the Archive's
+  "Return now" action on a dormant row.
 - `deleteTask(id)` / `restoreDeletedTask(task)` — plain inverse intents,
   identical pattern to complete/restore. The undo toast is pure widget UX; the
   VM has no undo concept. The widget captures the full `Task` before the delete

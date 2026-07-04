@@ -10,6 +10,7 @@ import 'package:nooka/data/repositories/todo_repository.dart';
 import 'package:nooka/data/services/database/database.dart';
 import 'package:nooka/data/services/database/database_providers.dart';
 import 'package:nooka/domain/models/category_with_tasks.dart';
+import 'package:nooka/domain/recurrence.dart';
 import 'package:nooka/l10n/app_localizations.dart';
 import 'package:nooka/ui/home/home_screen.dart';
 
@@ -741,6 +742,79 @@ void main() {
       // Category dialog opened; cancel it with the Cancel button.
       await tester.tap(find.text('Cancel'));
       await tester.pumpAndSettle();
+    },
+  );
+
+  testWidgets(
+    'editing a task to repeat, then completing it, shows a Returns-in row '
+    'in Archive',
+    (tester) async {
+      final cat = await db.todoDao.createCategory(
+        name: 'Home',
+        color: 0xFF009688,
+      );
+      await db.todoDao.createTask(categoryId: cat, name: 'Sweep');
+      await tester.pumpWidget(_app(db, prefs));
+      await tester.pumpAndSettle();
+
+      // Edit the task and turn Repeat on.
+      await tester.tap(find.byKey(const Key('task-menu-1')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Edit item'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('task-repeat-toggle')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('task-confirm')));
+      await tester.pumpAndSettle();
+
+      // Complete it: a recurring task goes dormant, not archived.
+      await tester.tap(find.byIcon(Icons.radio_button_unchecked));
+      await tester.pumpAndSettle();
+      expect(find.text('Sweep'), findsNothing); // gone from Active
+
+      await tester.tap(find.text('Archive'));
+      await tester.pumpAndSettle();
+      expect(find.text('Sweep'), findsOneWidget);
+      expect(find.textContaining('Returns in'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'Archive: tapping a dormant row offers Return now, which restores it '
+    'to Active',
+    (tester) async {
+      final cat = await db.todoDao.createCategory(
+        name: 'Home',
+        color: 0xFF009688,
+      );
+      final id = await db.todoDao.createTask(categoryId: cat, name: 'Sweep');
+      await db.todoDao.renameAndMove(
+        id,
+        'Sweep',
+        null,
+        recurrenceCount: 1,
+        recurrenceUnit: RecurrenceUnit.days,
+      );
+      await db.todoDao.completeTask(id, DateTime.now());
+      await tester.pumpWidget(_app(db, prefs));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Archive'));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('task-1')), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('task-1')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('dormant-return-now')), findsOneWidget);
+      expect(find.text('Delete'), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('dormant-return-now')));
+      await tester.pumpAndSettle();
+      expect(find.text('Sweep'), findsNothing); // gone from Archive
+
+      await tester.tap(find.text('Active'));
+      await tester.pumpAndSettle();
+      expect(find.text('Sweep'), findsOneWidget);
     },
   );
 }
