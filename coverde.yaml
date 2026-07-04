@@ -17,6 +17,8 @@ transformations:
     - type: skip-by-glob
       glob: "**/data/services/database/tables.dart"
     - type: skip-by-glob
+      glob: "**/data/services/database/database.steps.dart"
+    - type: skip-by-glob
       glob: "**/data/services/backup/platform_backup_io.dart"
     - type: skip-by-glob
       glob: "**/data/services/backup/google_drive_backup_io.dart"
