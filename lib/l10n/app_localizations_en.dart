@@ -267,20 +267,20 @@ class AppLocalizationsEn extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count days',
-      one: '$count day',
+      other: 'Every $count days',
+      one: 'Every day',
     );
     String _temp1 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count weeks',
-      one: '$count week',
+      other: 'Every $count weeks',
+      one: 'Every week',
     );
     String _temp2 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count months',
-      one: '$count month',
+      other: 'Every $count months',
+      one: 'Every month',
     );
     String _temp3 = intl.Intl.selectLogic(unit, {
       'days': '$_temp0',
@@ -288,7 +288,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'months': '$_temp2',
       'other': '',
     });
-    return 'Every $_temp3';
+    return '$_temp3';
   }
 
   @override
@@ -297,19 +297,19 @@ class AppLocalizationsEn extends AppLocalizations {
       count,
       locale: localeName,
       other: '$count days',
-      one: '$count day',
+      one: 'a day',
     );
     String _temp1 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
       other: '$count weeks',
-      one: '$count week',
+      one: 'a week',
     );
     String _temp2 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
       other: '$count months',
-      one: '$count month',
+      one: 'a month',
     );
     String _temp3 = intl.Intl.selectLogic(unit, {
       'days': '$_temp0',
