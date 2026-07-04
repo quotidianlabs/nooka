@@ -1,47 +1,68 @@
-import 'package:drift/native.dart';
+import 'package:drift_dev/api/migrations_native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nooka/data/services/database/database.dart';
-import 'package:sqlite3/sqlite3.dart';
+
+import '../generated_migrations/schema.dart';
+import '../generated_migrations/schema_v1.dart' as v1;
+import '../generated_migrations/schema_v2.dart' as v2;
 
 void main() {
-  test('v1 database upgrades to v2 with null recurrence columns', () async {
-    // Build a v1-shaped database on a raw connection (snake_case column
-    // names, DateTime stored as int seconds, user_version = 1).
-    final raw = sqlite3.openInMemory();
-    raw.execute('''
-      CREATE TABLE categories (
-        id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL, color INTEGER NOT NULL, emoji TEXT NULL,
-        collapsed INTEGER NOT NULL DEFAULT 0, sort_order INTEGER NOT NULL,
-        created_at INTEGER NOT NULL);
-    ''');
-    raw.execute('''
-      CREATE TABLE tasks (
-        id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-        category_id INTEGER NOT NULL REFERENCES categories (id) ON DELETE CASCADE,
-        name TEXT NOT NULL, sort_order INTEGER NOT NULL,
-        created_at INTEGER NOT NULL, archived_at INTEGER NULL);
-    ''');
-    raw.execute('PRAGMA user_version = 1;');
-    raw.execute(
-      "INSERT INTO categories (name, color, sort_order, created_at) "
-      "VALUES ('Home', 1, 0, 1000000000);",
-    );
-    raw.execute(
-      "INSERT INTO tasks (category_id, name, sort_order, created_at) "
-      "VALUES (1, 'Water plants', 0, 1000000000);",
-    );
+  late SchemaVerifier verifier;
 
-    // Opening AppDatabase on the same connection runs onUpgrade(1 -> 2).
-    final db = AppDatabase(NativeDatabase.opened(raw));
-    addTearDown(db.close);
+  setUpAll(() => verifier = SchemaVerifier(GeneratedHelper()));
 
-    final tasks = await db.select(db.tasks).get();
-    expect(tasks, hasLength(1));
-    expect(tasks.single.name, 'Water plants');
-    expect(tasks.single.recurrenceCount, isNull);
-    expect(tasks.single.recurrenceUnit, isNull);
-    expect(tasks.single.nextDueAt, isNull);
-    expect(db.schemaVersion, 2);
+  test('migrates v1 -> v2 to the declared schema', () async {
+    final connection = await verifier.startAt(1);
+    final db = AppDatabase(connection);
+    // Fails if the migrated database does not match the declared v2 schema.
+    await verifier.migrateAndValidate(db, 2);
+    await db.close();
+  });
+
+  test('v1 -> v2 preserves rows and defaults recurrence to null', () async {
+    final schema = await verifier.schemaAt(1);
+    // Generated v1/v2 schema classes model raw column storage (no type
+    // converters), so DateTime columns surface as unix-seconds ints here.
+    final createdAt = DateTime.utc(2026, 1, 1).millisecondsSinceEpoch ~/ 1000;
+
+    // Seed a category + task using the v1 schema.
+    final oldDb = v1.DatabaseAtV1(schema.newConnection());
+    final catId = await oldDb
+        .into(oldDb.categories)
+        .insert(
+          v1.CategoriesCompanion.insert(
+            name: 'Home',
+            color: 1,
+            sortOrder: 0,
+            createdAt: createdAt,
+          ),
+        );
+    await oldDb
+        .into(oldDb.tasks)
+        .insert(
+          v1.TasksCompanion.insert(
+            categoryId: catId,
+            name: 'Water plants',
+            sortOrder: 0,
+            createdAt: createdAt,
+          ),
+        );
+    await oldDb.close();
+
+    // Run the migration through the real AppDatabase.
+    final db = AppDatabase(schema.newConnection());
+    await verifier.migrateAndValidate(db, 2);
+    await db.close();
+
+    // Read back with the v2 schema: row survived, recurrence columns null.
+    final migrated = v2.DatabaseAtV2(schema.newConnection());
+    final t = await migrated.select(migrated.tasks).getSingle();
+    expect(t.name, 'Water plants');
+    expect(t.categoryId, catId);
+    expect(t.createdAt, createdAt);
+    expect(t.recurrenceCount, isNull);
+    expect(t.recurrenceUnit, isNull);
+    expect(t.nextDueAt, isNull);
+    await migrated.close();
   });
 }
