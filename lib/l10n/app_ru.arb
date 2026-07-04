@@ -66,5 +66,13 @@
   "cloudBackupDone": "Копия сохранена в Drive.",
   "cloudRestore": "Восстановить из Drive",
   "cloudNoBackups": "Резервные копии в Drive не найдены.",
-  "cloudLatest": "Последняя"
+  "cloudLatest": "Последняя",
+  "repeatLabel": "Повтор",
+  "recurrenceUnitDays": "Дни",
+  "recurrenceUnitWeeks": "Недели",
+  "recurrenceUnitMonths": "Месяцы",
+  "returnNow": "Вернуть сейчас",
+  "recurrenceEvery": "Каждые {unit, select, days{{count, plural, one{{count} день} few{{count} дня} many{{count} дней} other{{count} дня}}} weeks{{count, plural, one{{count} неделю} few{{count} недели} many{{count} недель} other{{count} недели}}} months{{count, plural, one{{count} месяц} few{{count} месяца} many{{count} месяцев} other{{count} месяца}}} other{}}",
+  "recurrenceSummary": "Вернётся через {unit, select, days{{count, plural, one{{count} день} few{{count} дня} many{{count} дней} other{{count} дня}}} weeks{{count, plural, one{{count} неделю} few{{count} недели} many{{count} недель} other{{count} недели}}} months{{count, plural, one{{count} месяц} few{{count} месяца} many{{count} месяцев} other{{count} месяца}}} other{}} после выполнения.",
+  "returnsInDays": "Вернётся через {count, plural, =0{меньше суток} one{{count} день} few{{count} дня} many{{count} дней} other{{count} дня}}"
 }

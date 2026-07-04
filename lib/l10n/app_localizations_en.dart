@@ -246,4 +246,89 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cloudLatest => 'Latest';
+
+  @override
+  String get repeatLabel => 'Repeat';
+
+  @override
+  String get recurrenceUnitDays => 'Days';
+
+  @override
+  String get recurrenceUnitWeeks => 'Weeks';
+
+  @override
+  String get recurrenceUnitMonths => 'Months';
+
+  @override
+  String get returnNow => 'Return now';
+
+  @override
+  String recurrenceEvery(int count, String unit) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days',
+      one: '$count day',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count weeks',
+      one: '$count week',
+    );
+    String _temp2 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count months',
+      one: '$count month',
+    );
+    String _temp3 = intl.Intl.selectLogic(unit, {
+      'days': '$_temp0',
+      'weeks': '$_temp1',
+      'months': '$_temp2',
+      'other': '',
+    });
+    return 'Every $_temp3';
+  }
+
+  @override
+  String recurrenceSummary(int count, String unit) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days',
+      one: '$count day',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count weeks',
+      one: '$count week',
+    );
+    String _temp2 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count months',
+      one: '$count month',
+    );
+    String _temp3 = intl.Intl.selectLogic(unit, {
+      'days': '$_temp0',
+      'weeks': '$_temp1',
+      'months': '$_temp2',
+      'other': '',
+    });
+    return 'Returns $_temp3 after you complete it.';
+  }
+
+  @override
+  String returnsInDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days',
+      one: '$count day',
+      zero: 'under a day',
+    );
+    return 'Returns in $_temp0';
+  }
 }

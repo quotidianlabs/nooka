@@ -258,4 +258,103 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get cloudLatest => 'Последняя';
+
+  @override
+  String get repeatLabel => 'Повтор';
+
+  @override
+  String get recurrenceUnitDays => 'Дни';
+
+  @override
+  String get recurrenceUnitWeeks => 'Недели';
+
+  @override
+  String get recurrenceUnitMonths => 'Месяцы';
+
+  @override
+  String get returnNow => 'Вернуть сейчас';
+
+  @override
+  String recurrenceEvery(int count, String unit) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count дня',
+      many: '$count дней',
+      few: '$count дня',
+      one: '$count день',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count недели',
+      many: '$count недель',
+      few: '$count недели',
+      one: '$count неделю',
+    );
+    String _temp2 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count месяца',
+      many: '$count месяцев',
+      few: '$count месяца',
+      one: '$count месяц',
+    );
+    String _temp3 = intl.Intl.selectLogic(unit, {
+      'days': '$_temp0',
+      'weeks': '$_temp1',
+      'months': '$_temp2',
+      'other': '',
+    });
+    return 'Каждые $_temp3';
+  }
+
+  @override
+  String recurrenceSummary(int count, String unit) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count дня',
+      many: '$count дней',
+      few: '$count дня',
+      one: '$count день',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count недели',
+      many: '$count недель',
+      few: '$count недели',
+      one: '$count неделю',
+    );
+    String _temp2 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count месяца',
+      many: '$count месяцев',
+      few: '$count месяца',
+      one: '$count месяц',
+    );
+    String _temp3 = intl.Intl.selectLogic(unit, {
+      'days': '$_temp0',
+      'weeks': '$_temp1',
+      'months': '$_temp2',
+      'other': '',
+    });
+    return 'Вернётся через $_temp3 после выполнения.';
+  }
+
+  @override
+  String returnsInDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count дня',
+      many: '$count дней',
+      few: '$count дня',
+      one: '$count день',
+      zero: 'меньше суток',
+    );
+    return 'Вернётся через $_temp0';
+  }
 }

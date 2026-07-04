@@ -457,6 +457,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Latest'**
   String get cloudLatest;
+
+  /// No description provided for @repeatLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeat'**
+  String get repeatLabel;
+
+  /// No description provided for @recurrenceUnitDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Days'**
+  String get recurrenceUnitDays;
+
+  /// No description provided for @recurrenceUnitWeeks.
+  ///
+  /// In en, this message translates to:
+  /// **'Weeks'**
+  String get recurrenceUnitWeeks;
+
+  /// No description provided for @recurrenceUnitMonths.
+  ///
+  /// In en, this message translates to:
+  /// **'Months'**
+  String get recurrenceUnitMonths;
+
+  /// No description provided for @returnNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Return now'**
+  String get returnNow;
+
+  /// No description provided for @recurrenceEvery.
+  ///
+  /// In en, this message translates to:
+  /// **'Every {unit, select, days{{count, plural, one{{count} day} other{{count} days}}} weeks{{count, plural, one{{count} week} other{{count} weeks}}} months{{count, plural, one{{count} month} other{{count} months}}} other{}}'**
+  String recurrenceEvery(int count, String unit);
+
+  /// No description provided for @recurrenceSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Returns {unit, select, days{{count, plural, one{{count} day} other{{count} days}}} weeks{{count, plural, one{{count} week} other{{count} weeks}}} months{{count, plural, one{{count} month} other{{count} months}}} other{}} after you complete it.'**
+  String recurrenceSummary(int count, String unit);
+
+  /// No description provided for @returnsInDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Returns in {count, plural, =0{under a day} one{{count} day} other{{count} days}}'**
+  String returnsInDays(int count);
 }
 
 class _AppLocalizationsDelegate
