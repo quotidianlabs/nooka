@@ -5,6 +5,7 @@ import '../../data/services/database/database.dart';
 import '../../domain/recurrence.dart';
 import '../../l10n/app_localizations.dart';
 import 'dialog_constants.dart';
+import 'repeat_field.dart';
 
 /// Result of creating/editing a task: the name, the chosen category id, and
 /// the chosen recurrence (null/null when Repeat is off).
@@ -113,59 +114,17 @@ class _TaskDialogState extends State<_TaskDialog> {
             onChanged: (v) => setState(() => _categoryId = v ?? _categoryId),
           ),
           const SizedBox(height: 8),
-          SwitchListTile(
-            key: const Key('task-repeat-toggle'),
-            contentPadding: EdgeInsets.zero,
-            title: Text(l10n.repeatLabel),
-            value: _repeat,
-            onChanged: (v) => setState(() => _repeat = v),
+          RepeatField(
+            repeat: _repeat,
+            count: _count,
+            unit: _unit,
+            onChanged: (bool repeat, int count, RecurrenceUnit unit) =>
+                setState(() {
+                  _repeat = repeat;
+                  _count = count;
+                  _unit = unit;
+                }),
           ),
-          if (_repeat) ...[
-            Row(
-              key: const Key('task-repeat-stepper'),
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.remove),
-                  onPressed: _count > 1 ? () => setState(() => _count--) : null,
-                ),
-                Text('$_count'),
-                IconButton(
-                  icon: const Icon(Icons.add),
-                  onPressed: () => setState(() => _count++),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: SegmentedButton<RecurrenceUnit>(
-                    key: const Key('task-repeat-unit'),
-                    segments: [
-                      ButtonSegment(
-                        value: RecurrenceUnit.days,
-                        label: Text(l10n.recurrenceUnitDays),
-                      ),
-                      ButtonSegment(
-                        value: RecurrenceUnit.weeks,
-                        label: Text(l10n.recurrenceUnitWeeks),
-                      ),
-                      ButtonSegment(
-                        value: RecurrenceUnit.months,
-                        label: Text(l10n.recurrenceUnitMonths),
-                      ),
-                    ],
-                    selected: {_unit},
-                    showSelectedIcon: false,
-                    onSelectionChanged: (s) => setState(() => _unit = s.first),
-                  ),
-                ),
-              ],
-            ),
-            Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: Text(
-                l10n.recurrenceSummary(_count, _unit.name),
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-            ),
-          ],
         ],
       ),
       actions: [
