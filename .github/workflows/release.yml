@@ -15,7 +15,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
+      # Full history: the RuStore what's-new guard below diffs against the
+      # previous stable tag.
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
 
       - uses: subosito/flutter-action@v2
         with:
@@ -54,6 +58,32 @@ jobs:
             exit 1
           fi
           echo "Found curated release notes: ${notes}"
+
+      # The RuStore "what's new" text is uploaded verbatim from
+      # android/app/rustore-release-notes-ru.txt on every stable release. A
+      # stale file silently ships the previous release's notes to the store,
+      # so a stable tag requires the file to have changed since the last
+      # stable tag (first stable release is exempt; pre-releases skip RuStore
+      # entirely).
+      - name: Require fresh RuStore what's-new (stable tags)
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_REF_NAME" == *-* ]]; then
+            echo "Pre-release ${GITHUB_REF_NAME}: RuStore notes not required."
+            exit 0
+          fi
+          prev="$(git tag --list '[0-9]*.[0-9]*.[0-9]*' \
+            | grep -v -- - | grep -vx "$GITHUB_REF_NAME" | sort -V | tail -1 || true)"
+          if [ -z "$prev" ]; then
+            echo "No previous stable tag; skipping freshness check."
+            exit 0
+          fi
+          notes="android/app/rustore-release-notes-ru.txt"
+          if git diff --quiet "$prev" "$GITHUB_REF_NAME" -- "$notes"; then
+            echo "::error::RuStore what's-new (${notes}) is unchanged since ${prev}. Update it for ${GITHUB_REF_NAME}, merge to main, and re-tag." >&2
+            exit 1
+          fi
+          echo "RuStore what's-new updated since ${prev}."
 
       # Reconstruct the signing keystore from secrets (see docs/release.md).
       - name: Decode signing keystore
