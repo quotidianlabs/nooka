@@ -159,12 +159,20 @@ class _TaskDialogState extends State<_TaskDialog> {
 /// Keep-keyboard-open quick add. Calls [onAdd] for each item; the field clears
 /// and refocuses after every Add so several items can be entered in a row. The
 /// dialog stays open until the user taps Done. [onAdd] receives the chosen
-/// category so the caller can remember it as the new default.
+/// category so the caller can remember it as the new default, plus the chosen
+/// recurrence (null/null when Repeat is off). Repeat resets to off after each
+/// add — recurrence is per-item, never sticky — while the category persists.
 Future<void> showQuickAddDialog(
   BuildContext context, {
   required List<Category> categories,
   required int initialCategoryId,
-  required Future<void> Function(String name, int categoryId) onAdd,
+  required Future<void> Function(
+    String name,
+    int categoryId,
+    int? recurrenceCount,
+    RecurrenceUnit? recurrenceUnit,
+  )
+  onAdd,
 }) {
   return showDialog<void>(
     context: context,
@@ -184,7 +192,13 @@ class _QuickAddDialog extends StatefulWidget {
   });
   final List<Category> categories;
   final int initialCategoryId;
-  final Future<void> Function(String name, int categoryId) onAdd;
+  final Future<void> Function(
+    String name,
+    int categoryId,
+    int? recurrenceCount,
+    RecurrenceUnit? recurrenceUnit,
+  )
+  onAdd;
 
   @override
   State<_QuickAddDialog> createState() => _QuickAddDialogState();
@@ -194,6 +208,9 @@ class _QuickAddDialogState extends State<_QuickAddDialog> {
   final TextEditingController _name = TextEditingController();
   final FocusNode _focus = FocusNode();
   late int _categoryId = widget.initialCategoryId;
+  bool _repeat = false;
+  int _count = 1;
+  RecurrenceUnit _unit = RecurrenceUnit.days;
   bool _busy = false;
 
   @override
@@ -214,9 +231,19 @@ class _QuickAddDialogState extends State<_QuickAddDialog> {
     final name = _name.text.trim();
     if (name.isEmpty) return;
     _busy = true;
-    _name.clear(); // clear synchronously, before the await
+    final recurrenceCount = _repeat ? _count : null;
+    final recurrenceUnit = _repeat ? _unit : null;
+    // Clear + reset synchronously, before the await: the name so the next
+    // item can be typed immediately, Repeat so it never sticks to the next
+    // item (recurring is the exception, not the default).
+    _name.clear();
+    setState(() {
+      _repeat = false;
+      _count = 1;
+      _unit = RecurrenceUnit.days;
+    });
     try {
-      await widget.onAdd(name, _categoryId);
+      await widget.onAdd(name, _categoryId, recurrenceCount, recurrenceUnit);
     } finally {
       _busy = false;
     }
@@ -252,6 +279,18 @@ class _QuickAddDialogState extends State<_QuickAddDialog> {
                 DropdownMenuItem(value: c.id, child: Text(c.name)),
             ],
             onChanged: (v) => setState(() => _categoryId = v ?? _categoryId),
+          ),
+          const SizedBox(height: 8),
+          RepeatField(
+            repeat: _repeat,
+            count: _count,
+            unit: _unit,
+            onChanged: (bool repeat, int count, RecurrenceUnit unit) =>
+                setState(() {
+                  _repeat = repeat;
+                  _count = count;
+                  _unit = unit;
+                }),
           ),
         ],
       ),
