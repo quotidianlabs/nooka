@@ -1,5 +1,5 @@
 ---
-summary: Let recurrence be set when creating a task (not only in edit) by adding a shared, touch-friendly repeat control to the quick-add dialog and the edit dialog, and threading recurrence through the create path.
+summary: Recurrence is now settable at creation — the quick-add dialog embeds the shared RepeatField (full-width rows, 48px targets, reset per add; same control replaces the edit dialog's cramped repeat row) and createTask carries the pair through VM → repository → DAO. No schema change.
 ---
 
 # Design: Recurrence at creation
