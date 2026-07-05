@@ -22,8 +22,8 @@ The intents:
   the task, recurring when the pair is given, and remembers its category as
   the quick-add default **on success**. The quick-add dialog's Repeat control
   (the shared `RepeatField`, also used by the edit dialog) resets to off
-  after each successful add — recurrence is per-item, never sticky — while
-  the chosen category persists for the next item.
+  after each add, success or failure — recurrence is per-item, never sticky —
+  while the chosen category persists for the next item.
 - `editTask(id, name, fromCategoryId, toCategoryId, {recurrenceCount,
   recurrenceUnit})` — renames, and moves only when `fromCategoryId !=
   toCategoryId`. The move decision uses the dialog's seed (`fromCategoryId`,
