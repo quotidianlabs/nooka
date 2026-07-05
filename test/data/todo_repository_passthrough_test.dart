@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:nooka/data/repositories/todo_repository.dart';
 import 'package:nooka/data/services/database/database.dart';
 import 'package:nooka/domain/models/backup_data.dart';
+import 'package:nooka/domain/recurrence.dart';
 
 void main() {
   late AppDatabase db;
@@ -72,5 +73,21 @@ void main() {
 
     final snapshot = await repo.exportSnapshot();
     expect(snapshot.single.category.name, 'Imported');
+  });
+
+  test('createTask passes recurrence through to the DAO', () async {
+    final cat = await repo.createCategory(name: 'Home', color: 1);
+    final t = await repo.createTask(
+      categoryId: cat,
+      name: 'Water plants',
+      recurrenceCount: 2,
+      recurrenceUnit: RecurrenceUnit.weeks,
+    );
+
+    final row = await (db.select(
+      db.tasks,
+    )..where((r) => r.id.equals(t))).getSingle();
+    expect(row.recurrenceCount, 2);
+    expect(row.recurrenceUnit, RecurrenceUnit.weeks);
   });
 }

@@ -113,9 +113,19 @@ class HomeViewModel extends _$HomeViewModel {
 
   /// Adds a task and, on success, remembers its category as the quick-add
   /// default. A failed add never persists the remembered category.
-  Future<CommandOutcome> addTask(int categoryId, String name) async {
+  Future<CommandOutcome> addTask(
+    int categoryId,
+    String name, {
+    int? recurrenceCount,
+    RecurrenceUnit? recurrenceUnit,
+  }) async {
     final outcome = await _run(
-      () => _repo.createTask(categoryId: categoryId, name: name),
+      () => _repo.createTask(
+        categoryId: categoryId,
+        name: name,
+        recurrenceCount: recurrenceCount,
+        recurrenceUnit: recurrenceUnit,
+      ),
     );
     if (outcome == CommandOutcome.success) {
       await _bestEffort(() => _remembered.write(categoryId));
