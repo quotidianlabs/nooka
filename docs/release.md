@@ -82,14 +82,19 @@ they disagree.
    file is missing (pre-release `-suffix` tags are exempt). The file becomes the
    release body **verbatim**; GitHub's auto-generated "What's Changed" list is
    only used as a fallback for a pre-release with no curated file.
-3. Tag and push — the tag `X.Y.Z` **must** match `pubspec.yaml` `X.Y.Z`:
+3. Update `android/app/rustore-release-notes-ru.txt` — the Russian "Что
+   нового" text RuStore shows for this version (uploaded verbatim by the
+   publish task). **Required for stable tags**: the workflow fails if the file
+   is unchanged since the previous stable tag, so last release's notes can
+   never silently ship again. Steps 1–3 normally ride in one release PR.
+4. Tag and push — the tag `X.Y.Z` **must** match `pubspec.yaml` `X.Y.Z`:
 
    ```bash
    git tag 1.0.0
    git push origin 1.0.0
    ```
 
-4. The workflow builds `nooka-X.Y.Z.apk` and publishes the GitHub Release.
+5. The workflow builds `nooka-X.Y.Z.apk` and publishes the GitHub Release.
 
 ### Pre-releases (alpha / beta / rc)
 
@@ -116,8 +121,10 @@ On a **stable** tag, the release job uploads the same signed universal APK to
 RuStore via `ru.cian.rustore-publish-gradle-plugin` (task
 `publishRustoreRelease`). The upload is **guarded**: it runs only when the
 `RUSTORE_CREDENTIALS` secret is set and the tag is not a prerelease, so tags
-still cut a GitHub Release otherwise. RuStore has no Play-style app signing —
-the APK's own signature (the existing upload keystore) is the app identity.
+still cut a GitHub Release otherwise. The store's "Что нового" text comes
+verbatim from `android/app/rustore-release-notes-ru.txt` (see step 3 above).
+RuStore has no Play-style app signing — the APK's own signature (the existing
+upload keystore) is the app identity.
 
 Account signup, API-key generation, and the Russian store listing are in
 [`rustore-release.md`](rustore-release.md).
