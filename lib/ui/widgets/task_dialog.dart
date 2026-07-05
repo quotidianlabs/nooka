@@ -92,40 +92,46 @@ class _TaskDialogState extends State<_TaskDialog> {
     final isEdit = widget.initialName.isNotEmpty;
     return AlertDialog(
       title: Text(isEdit ? l10n.editTask : l10n.addTask),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextField(
-            key: const Key('task-name-field'),
-            controller: _name,
-            autofocus: true,
-            decoration: InputDecoration(labelText: l10n.taskNameLabel),
-            inputFormatters: [LengthLimitingTextInputFormatter(kMaxNameLength)],
-          ),
-          const SizedBox(height: 8),
-          DropdownButtonFormField<int>(
-            key: const Key('task-category-dropdown'),
-            initialValue: _categoryId,
-            decoration: InputDecoration(labelText: l10n.categoryLabel),
-            items: [
-              for (final c in widget.categories)
-                DropdownMenuItem(value: c.id, child: Text(c.name)),
-            ],
-            onChanged: (v) => setState(() => _categoryId = v ?? _categoryId),
-          ),
-          const SizedBox(height: 8),
-          RepeatField(
-            repeat: _repeat,
-            count: _count,
-            unit: _unit,
-            onChanged: (bool repeat, int count, RecurrenceUnit unit) =>
-                setState(() {
-                  _repeat = repeat;
-                  _count = count;
-                  _unit = unit;
-                }),
-          ),
-        ],
+      // Scrollable: with Repeat expanded and the keyboard up, the content is
+      // taller than a small phone's remaining viewport.
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              key: const Key('task-name-field'),
+              controller: _name,
+              autofocus: true,
+              decoration: InputDecoration(labelText: l10n.taskNameLabel),
+              inputFormatters: [
+                LengthLimitingTextInputFormatter(kMaxNameLength),
+              ],
+            ),
+            const SizedBox(height: 8),
+            DropdownButtonFormField<int>(
+              key: const Key('task-category-dropdown'),
+              initialValue: _categoryId,
+              decoration: InputDecoration(labelText: l10n.categoryLabel),
+              items: [
+                for (final c in widget.categories)
+                  DropdownMenuItem(value: c.id, child: Text(c.name)),
+              ],
+              onChanged: (v) => setState(() => _categoryId = v ?? _categoryId),
+            ),
+            const SizedBox(height: 8),
+            RepeatField(
+              repeat: _repeat,
+              count: _count,
+              unit: _unit,
+              onChanged: (bool repeat, int count, RecurrenceUnit unit) =>
+                  setState(() {
+                    _repeat = repeat;
+                    _count = count;
+                    _unit = unit;
+                  }),
+            ),
+          ],
+        ),
       ),
       actions: [
         TextButton(
@@ -256,43 +262,49 @@ class _QuickAddDialogState extends State<_QuickAddDialog> {
     final l10n = AppLocalizations.of(context);
     return AlertDialog(
       title: Text(l10n.addTask),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextField(
-            key: const Key('quick-add-field'),
-            controller: _name,
-            focusNode: _focus,
-            autofocus: true,
-            textInputAction: TextInputAction.done,
-            onSubmitted: (_) => _submit(),
-            decoration: InputDecoration(labelText: l10n.taskNameLabel),
-            inputFormatters: [LengthLimitingTextInputFormatter(kMaxNameLength)],
-          ),
-          const SizedBox(height: 8),
-          DropdownButtonFormField<int>(
-            key: const Key('quick-add-category'),
-            initialValue: _categoryId,
-            decoration: InputDecoration(labelText: l10n.categoryLabel),
-            items: [
-              for (final c in widget.categories)
-                DropdownMenuItem(value: c.id, child: Text(c.name)),
-            ],
-            onChanged: (v) => setState(() => _categoryId = v ?? _categoryId),
-          ),
-          const SizedBox(height: 8),
-          RepeatField(
-            repeat: _repeat,
-            count: _count,
-            unit: _unit,
-            onChanged: (bool repeat, int count, RecurrenceUnit unit) =>
-                setState(() {
-                  _repeat = repeat;
-                  _count = count;
-                  _unit = unit;
-                }),
-          ),
-        ],
+      // Scrollable: with Repeat expanded and the keyboard up, the content is
+      // taller than a small phone's remaining viewport.
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              key: const Key('quick-add-field'),
+              controller: _name,
+              focusNode: _focus,
+              autofocus: true,
+              textInputAction: TextInputAction.done,
+              onSubmitted: (_) => _submit(),
+              decoration: InputDecoration(labelText: l10n.taskNameLabel),
+              inputFormatters: [
+                LengthLimitingTextInputFormatter(kMaxNameLength),
+              ],
+            ),
+            const SizedBox(height: 8),
+            DropdownButtonFormField<int>(
+              key: const Key('quick-add-category'),
+              initialValue: _categoryId,
+              decoration: InputDecoration(labelText: l10n.categoryLabel),
+              items: [
+                for (final c in widget.categories)
+                  DropdownMenuItem(value: c.id, child: Text(c.name)),
+              ],
+              onChanged: (v) => setState(() => _categoryId = v ?? _categoryId),
+            ),
+            const SizedBox(height: 8),
+            RepeatField(
+              repeat: _repeat,
+              count: _count,
+              unit: _unit,
+              onChanged: (bool repeat, int count, RecurrenceUnit unit) =>
+                  setState(() {
+                    _repeat = repeat;
+                    _count = count;
+                    _unit = unit;
+                  }),
+            ),
+          ],
+        ),
       ),
       actions: [
         TextButton(
