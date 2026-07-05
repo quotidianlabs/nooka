@@ -24,7 +24,9 @@ A task derives one of three states — there is no status column:
 
 `recurrenceCount` + `recurrenceUnit` are set together (both null ⇒ a
 non-recurring task) and mark a task as recurring independent of its current
-state; `nextDueAt` alone drives the active/dormant split. Completing a
+state; they can be written at creation (`createTask` takes the optional
+pair) or by a later edit (`renameAndMove`). `nextDueAt` alone drives the
+active/dormant split. Completing a
 recurring task (`completeTask`) writes `nextDueAt` to the next occurrence and
 leaves `sortOrder` and `archivedAt` untouched — the row keeps its slot with a
 gap left open, exactly like `deleteTask` — instead of archiving. Waking it

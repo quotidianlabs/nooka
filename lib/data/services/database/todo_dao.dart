@@ -92,6 +92,8 @@ class TodoDao extends DatabaseAccessor<AppDatabase> with _$TodoDaoMixin {
   Future<int> createTask({
     required int categoryId,
     required String name,
+    int? recurrenceCount,
+    RecurrenceUnit? recurrenceUnit,
   }) async {
     return into(tasks).insert(
       TasksCompanion.insert(
@@ -99,6 +101,8 @@ class TodoDao extends DatabaseAccessor<AppDatabase> with _$TodoDaoMixin {
         name: name,
         sortOrder: await _nextTaskOrder(categoryId),
         createdAt: DateTime.now(),
+        recurrenceCount: Value(recurrenceCount),
+        recurrenceUnit: Value(recurrenceUnit),
       ),
     );
   }

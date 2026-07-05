@@ -336,7 +336,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       categories: [for (final c in cats) c.category],
       initialCategoryId: initial,
       // addTask remembers the category on success; nothing to persist here.
-      onAdd: (name, categoryId) => _dispatch(_vm.addTask(categoryId, name)),
+      onAdd: (name, categoryId, recurrenceCount, recurrenceUnit) => _dispatch(
+        _vm.addTask(
+          categoryId,
+          name,
+          recurrenceCount: recurrenceCount,
+          recurrenceUnit: recurrenceUnit,
+        ),
+      ),
     );
   }
 
@@ -407,7 +414,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           context,
           categories: [cwt.category],
           initialCategoryId: cwt.category.id,
-          onAdd: (name, categoryId) => _dispatch(_vm.addTask(categoryId, name)),
+          onAdd: (name, categoryId, recurrenceCount, recurrenceUnit) =>
+              _dispatch(
+                _vm.addTask(
+                  categoryId,
+                  name,
+                  recurrenceCount: recurrenceCount,
+                  recurrenceUnit: recurrenceUnit,
+                ),
+              ),
         );
       case 'delete':
         final ok = await confirmDeleteCategory(

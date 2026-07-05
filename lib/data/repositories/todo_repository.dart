@@ -45,8 +45,17 @@ class TodoRepository {
       _dao.reorderCategories(orderedIds);
   Future<void> deleteCategory(int id) => _dao.deleteCategory(id);
 
-  Future<int> createTask({required int categoryId, required String name}) =>
-      _dao.createTask(categoryId: categoryId, name: name);
+  Future<int> createTask({
+    required int categoryId,
+    required String name,
+    int? recurrenceCount,
+    RecurrenceUnit? recurrenceUnit,
+  }) => _dao.createTask(
+    categoryId: categoryId,
+    name: name,
+    recurrenceCount: recurrenceCount,
+    recurrenceUnit: recurrenceUnit,
+  );
   Future<void> renameTask(int id, String name) => _dao.renameTask(id, name);
   Future<void> moveTask(int id, int newCategoryId) =>
       _dao.moveTask(id, newCategoryId);

@@ -45,7 +45,7 @@ void main() {
           context,
           categories: [_cat(1, 'Home')],
           initialCategoryId: 1,
-          onAdd: (name, categoryId) async {
+          onAdd: (name, categoryId, recurrenceCount, recurrenceUnit) async {
             calls++;
             await gate.future; // hold the await open
           },
@@ -79,7 +79,7 @@ void main() {
           context,
           categories: [_cat(1, 'Home')],
           initialCategoryId: 1,
-          onAdd: (name, categoryId) async {},
+          onAdd: (name, categoryId, recurrenceCount, recurrenceUnit) async {},
         ),
       ),
     );
@@ -116,7 +116,8 @@ void main() {
             context,
             categories: [_cat(1, 'Home')],
             initialCategoryId: 1,
-            onAdd: (name, categoryId) async => gate.future,
+            onAdd: (name, categoryId, recurrenceCount, recurrenceUnit) async =>
+                gate.future,
           ),
         ),
       );
@@ -138,6 +139,88 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  testWidgets('quick-add passes recurrence and resets Repeat after each add', (
+    tester,
+  ) async {
+    final added = <(String, int?, RecurrenceUnit?)>[];
+    await tester.pumpWidget(
+      _host(
+        (context) => showQuickAddDialog(
+          context,
+          categories: [_cat(1, 'Home')],
+          initialCategoryId: 1,
+          onAdd:
+              (
+                String name,
+                int categoryId,
+                int? recurrenceCount,
+                RecurrenceUnit? recurrenceUnit,
+              ) async {
+                added.add((name, recurrenceCount, recurrenceUnit));
+              },
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    // Repeat every 2 weeks.
+    await tester.tap(find.byKey(const Key('task-repeat-toggle')));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.descendant(
+        of: find.byKey(const Key('task-repeat-stepper')),
+        matching: find.byIcon(Icons.add),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.descendant(
+        of: find.byKey(const Key('task-repeat-unit')),
+        matching: find.text('Weeks'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const Key('quick-add-field')),
+      'Water plants',
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('quick-add-confirm')));
+    await tester.pumpAndSettle();
+
+    expect(added.single, ('Water plants', 2, RecurrenceUnit.weeks));
+    // Repeat reset to off for the next entry: the stepper is gone again.
+    expect(find.byKey(const Key('task-repeat-stepper')), findsNothing);
+
+    // A second add without touching Repeat passes nulls.
+    await tester.enterText(find.byKey(const Key('quick-add-field')), 'Milk');
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('quick-add-confirm')));
+    await tester.pumpAndSettle();
+    expect(added.last, ('Milk', null, null));
+
+    // Repeat's own controls reset to the defaults too, not just the toggle.
+    await tester.tap(find.byKey(const Key('task-repeat-toggle')));
+    await tester.pumpAndSettle();
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('task-repeat-stepper')),
+        matching: find.text('1'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      tester
+          .widget<SegmentedButton<RecurrenceUnit>>(
+            find.byKey(const Key('task-repeat-unit')),
+          )
+          .selected,
+      {RecurrenceUnit.days},
+    );
+  });
 
   testWidgets('showTaskDialog returns the result on confirm', (tester) async {
     TaskDialogResult? result;
@@ -178,6 +261,44 @@ void main() {
     await tester.pumpAndSettle();
     expect(sentinel, isNull);
   });
+
+  testWidgets(
+    'showTaskDialog seeded with an existing recurrence opens with Repeat on',
+    (tester) async {
+      TaskDialogResult? result;
+      await tester.pumpWidget(
+        _host((context) async {
+          result = await showTaskDialog(
+            context,
+            categories: [_cat(1, 'Home')],
+            initialCategoryId: 1,
+            initialName: 'Water plants',
+            initialRecurrenceCount: 2,
+            initialRecurrenceUnit: RecurrenceUnit.weeks,
+          );
+        }),
+      );
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+
+      // Repeat is already on -- no toggle tap needed.
+      expect(find.byKey(const Key('task-repeat-stepper')), findsOneWidget);
+      expect(find.byKey(const Key('task-repeat-unit')), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('task-repeat-stepper')),
+          matching: find.text('2'),
+        ),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.byKey(const Key('task-confirm')));
+      await tester.pumpAndSettle();
+
+      expect(result?.recurrenceCount, 2);
+      expect(result?.recurrenceUnit, RecurrenceUnit.weeks);
+    },
+  );
 
   testWidgets('toggling Repeat on reveals the stepper + unit control and '
       'returns the default recurrence', (tester) async {

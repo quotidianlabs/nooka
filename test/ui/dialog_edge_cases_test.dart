@@ -92,7 +92,7 @@ void main() {
           context,
           categories: [_cat(1, 'A'), _cat(2, 'B')],
           initialCategoryId: 1,
-          onAdd: (name, categoryId) async {
+          onAdd: (name, categoryId, recurrenceCount, recurrenceUnit) async {
             addedName = name;
             addedCategory = categoryId;
           },

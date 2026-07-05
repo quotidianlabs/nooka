@@ -16,8 +16,12 @@ import 'package:nooka/ui/home/home_view_model.dart';
 class _ThrowingCreateTaskRepo extends TodoRepository {
   _ThrowingCreateTaskRepo(super.dao);
   @override
-  Future<int> createTask({required int categoryId, required String name}) =>
-      Future.error(Exception('db locked'));
+  Future<int> createTask({
+    required int categoryId,
+    required String name,
+    int? recurrenceCount,
+    RecurrenceUnit? recurrenceUnit,
+  }) => Future.error(Exception('db locked'));
 }
 
 /// purgeExpired always throws.
@@ -94,6 +98,24 @@ void main() {
 
       expect(outcome, CommandOutcome.failure);
       expect(container.read(rememberedCategoryProvider).read(), isNull);
+    });
+
+    test('addTask forwards recurrence to the repository', () async {
+      final cat = await db.todoDao.createCategory(name: 'Home', color: 1);
+      final (_, vm) = await build();
+
+      final outcome = await vm.addTask(
+        cat,
+        'Water plants',
+        recurrenceCount: 2,
+        recurrenceUnit: RecurrenceUnit.weeks,
+      );
+
+      expect(outcome, CommandOutcome.success);
+      final cats = await snapshot();
+      final task = cats.single.tasks.single;
+      expect(task.recurrenceCount, 2);
+      expect(task.recurrenceUnit, RecurrenceUnit.weeks);
     });
   });
 
