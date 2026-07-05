@@ -441,6 +441,33 @@ void main() {
     );
   });
 
+  group('createTask recurrence', () {
+    test('persists count and unit when given', () async {
+      final cat = await db.todoDao.createCategory(name: 'Home', color: 1);
+      final id = await db.todoDao.createTask(
+        categoryId: cat,
+        name: 'Water plants',
+        recurrenceCount: 2,
+        recurrenceUnit: RecurrenceUnit.weeks,
+      );
+      final row = await (db.select(
+        db.tasks,
+      )..where((t) => t.id.equals(id))).getSingle();
+      expect(row.recurrenceCount, 2);
+      expect(row.recurrenceUnit, RecurrenceUnit.weeks);
+    });
+
+    test('leaves both null when omitted', () async {
+      final cat = await db.todoDao.createCategory(name: 'Home', color: 1);
+      final id = await db.todoDao.createTask(categoryId: cat, name: 'Sweep');
+      final row = await (db.select(
+        db.tasks,
+      )..where((t) => t.id.equals(id))).getSingle();
+      expect(row.recurrenceCount, isNull);
+      expect(row.recurrenceUnit, isNull);
+    });
+  });
+
   group('recurrence', () {
     Future<int> makeRecurring(String name) async {
       final cat = await db.todoDao.createCategory(name: 'Home', color: 1);
