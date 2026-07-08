@@ -42,9 +42,9 @@ Drift SQLite database, plus preferences). Generated code is committed.
 
 The design and implementation history for every change lives in
 [`planning/`](planning/) — see, e.g., the
-[to-do list foundation](planning/changes/archive/2026-06-17.01-todo-list/design.md)
+[to-do list foundation](planning/changes/2026-06-17.01-todo-list.md)
 and the
-[planning-convention adoption](planning/changes/archive/2026-06-18.01-adopt-planning-convention/design.md).
+[planning-convention adoption](planning/changes/2026-06-18.01-adopt-planning-convention.md).
 The living capability docs are in [`architecture/`](architecture/README.md).
 
 ## Getting started
