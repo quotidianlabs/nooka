@@ -1,7 +1,7 @@
 # Deferred
 
 Real-but-unscheduled items. Each has a revisit trigger. Promote one into a
-change bundle when its trigger fires.
+change file when its trigger fires.
 
 - **Due dates + reminders** — per-task due dates and on-device local
   notifications (habbits ships per-habit reminders). *Revisit when* nooka
