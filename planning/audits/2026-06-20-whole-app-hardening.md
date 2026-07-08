@@ -1,6 +1,6 @@
 # Audit: Whole-app hardening sweep — 2026-06-20
 
-Spec: [hardening-audit-and-tests](../changes/2026-06-20.01-hardening-audit-and-tests/design.md).
+Spec: [hardening-audit-and-tests](../changes/2026-06-20.01-hardening-audit-and-tests.md).
 Method: six parallel read-only agents, one per area (data, domain, UI/view-model,
 controllers, i18n, cross-cutting), synthesized and deduped here. Severities are the
 auditors'; the **Disposition** column is the recommended triage for review.
