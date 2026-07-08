@@ -29,8 +29,8 @@ the affected doc in the task.
 
 Design + plan for every non-trivial change live in `planning/`. Start at the
 [Quick path](planning/README.md#quick-path-start-here) in `planning/README.md`
-to choose a lane (Full / Lightweight / Tiny) and create a bundle. The change
-listing is generated — run `just index`; validate bundles with
+to choose a lane (Full / Lightweight / Tiny) and create a change file. The
+change listing is generated — run `just index`; validate changes with
 `just check-planning`.
 
 ## Commands
