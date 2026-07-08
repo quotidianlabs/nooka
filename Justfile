@@ -27,7 +27,7 @@ coverage:
 index:
     python3 planning/index.py
 
-# Validate planning bundles + decisions; CI runs this via lint-ci.
+# Validate planning changes + decisions; CI runs this via lint-ci.
 check-planning:
     python3 planning/index.py --check
 
