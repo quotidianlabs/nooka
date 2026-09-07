@@ -40,12 +40,9 @@ Layered MVVM with Riverpod: **UI** (views + per-feature view models) →
 **domain** (pure functions + models) → **data** (a `TodoRepository` over a
 Drift SQLite database, plus preferences). Generated code is committed.
 
-The design and implementation history for every change lives in
-[`planning/`](planning/) — see, e.g., the
-[to-do list foundation](planning/changes/2026-06-17.01-todo-list.md)
-and the
-[planning-convention adoption](planning/changes/2026-06-18.01-adopt-planning-convention.md).
-The living capability docs are in [`architecture/`](architecture/README.md).
+[`CONTEXT.md`](CONTEXT.md) defines the vocabulary; the decisions behind the
+design, and the alternatives rejected along the way, are recorded in
+[`docs/adr/`](docs/adr/).
 
 ## Getting started
 
