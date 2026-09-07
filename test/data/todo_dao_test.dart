@@ -150,7 +150,16 @@ void main() {
       expect(await orderOf(s2), 1);
     });
 
-    test('duplicate sortOrder orders deterministically by id', () async {
+    test('the list order is total even when sort orders collide', () async {
+      // INVARIANT: two reads of the same data return the same order, whatever
+      // the sort orders happen to be.
+      //
+      // Broken by ordering on sortOrder alone and letting SQLite decide the
+      // rest, which is stable right up until it is not: a collision is normal
+      // here, because a dormant task holds no active slot and a task created
+      // while it sleeps takes the same number. Without the id tiebreak the list
+      // could reshuffle between two rebuilds of the same unchanged data.
+
       final cat = await db.todoDao.createCategory(name: 'Home', color: 1);
       final t1 = await db.todoDao.createTask(categoryId: cat, name: 't1');
       final t2 = await db.todoDao.createTask(categoryId: cat, name: 't2');
@@ -286,17 +295,38 @@ void main() {
       expect(active, [b, c, a]);
     });
 
-    test('clearArchive deletes all archived but keeps active', () async {
+    test('clearing the archive spares active and dormant tasks', () async {
+      // INVARIANT: only a task carrying a completion instant is archived, and
+      // only those are swept. A dormant task is waiting, not finished.
+      //
+      // Broken by sweeping on "not active" rather than on archivedAt: dormant
+      // rows have no completion instant but are absent from the active list, so
+      // the wrong predicate looks correct against every test that has no
+      // recurring task in it, and silently deletes work the user expects back.
+
       final cat = await db.todoDao.createCategory(name: 'Home', color: 1);
       final done = await db.todoDao.createTask(categoryId: cat, name: 'done');
       await db.todoDao.createTask(categoryId: cat, name: 'active');
       await db.todoDao.completeTask(done, DateTime(2026, 6, 1));
 
+      final sleeping = await db.todoDao.createTask(
+        categoryId: cat,
+        name: 'sleeping',
+      );
+      await db.todoDao.renameAndMove(
+        sleeping,
+        'sleeping',
+        null,
+        recurrenceCount: 3,
+        recurrenceUnit: RecurrenceUnit.days,
+      );
+      await db.todoDao.completeTask(sleeping, DateTime(2026, 6, 1));
+
       final deleted = await db.todoDao.clearArchive();
 
       expect(deleted, 1);
       final remaining = await db.select(db.tasks).get();
-      expect(remaining.map((t) => t.name), ['active']);
+      expect(remaining.map((t) => t.name), ['active', 'sleeping']);
     });
 
     test('renameAndMove applies rename and move together', () async {
@@ -522,7 +552,15 @@ void main() {
       expect(row.nextDueAt, isNull);
     });
 
-    test('wakeTask clears nextDueAt and keeps the slot', () async {
+    test('a woken task returns to the position it left', () async {
+      // INVARIANT: going dormant and coming back is not a round trip through
+      // the end of the list.
+      //
+      // Broken by renumbering on wake the way restoring an archived task does,
+      // which appends to the tail. For a recurring task that is wrong: it never
+      // left the user's plan, so reappearing at the bottom of the category reads
+      // as a new task rather than the same one coming back.
+
       final id = await makeRecurring('Water');
       await db.todoDao.completeTask(id, DateTime(2026, 7, 4, 9));
       await db.todoDao.wakeTask(id);
@@ -533,7 +571,15 @@ void main() {
       expect(row.sortOrder, 0);
     });
 
-    test('a dormant task is not counted when appending active order', () async {
+    test('a dormant task holds no slot in the active order', () async {
+      // INVARIANT: appending to a category numbers past its active tasks only,
+      // never past the ones that are archived or asleep.
+      //
+      // Broken by numbering from the row count or the highest sortOrder in the
+      // category: every completed recurring task would then push new tasks
+      // further down forever, and a category that had cycled through many
+      // recurrences would start numbering new work in the hundreds.
+
       final cat = await db.todoDao.createCategory(name: 'Home', color: 1);
       final a = await db.todoDao.createTask(
         categoryId: cat,
