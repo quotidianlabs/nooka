@@ -8,7 +8,7 @@ narrower than the usual formulation:
 - `lib/domain/` depends on no Flutter- or Drift-ecosystem package.
 - Its only `lib/data/` dependency is the generated database library.
 - Nothing under `lib/domain/` or `lib/data/` depends on `lib/ui/`.
-- Nothing under `lib/ui/` depends on a DAO, and the shared widgets in `lib/ui/widgets/` read no
+- Nothing under `lib/ui/` names a DAO, and the shared widgets in `lib/ui/widgets/` read no
   providers.
 
 The alternative is a mapper layer: hand-written entities plus conversions at every boundary.
@@ -34,6 +34,11 @@ database, at the cost of pushing the dependency into `domain/` instead. Neither 
 neither is drifting; they moved the same unavoidable dependency to different places. The rules
 above are written to what is true here, which is why the sibling has one invariant this repo
 does not.
+
+A repository or a service is a different matter and is not covered by that last rule: the
+Settings screen reaches the cloud-backup service directly, because the alternative is threading
+a connect-and-authorize flow through a view model that has nothing else to do with it. The line
+drawn here is about queries, not about every `lib/data/` type.
 
 **Revisit trigger:** a second dependency from `lib/data/` appears in `lib/domain/`, or a widget
 needs a value no column holds and starts computing it inline. Either makes a projection type

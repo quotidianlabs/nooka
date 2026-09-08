@@ -25,7 +25,7 @@ Russian.
 
 ## Features
 
-- 🗂️ Colored categories holding to-do items, each with a single-emoji icon
+- 🗂️ Colored categories holding tasks, each with a single-emoji icon
 - ✅ Complete an item to archive it; archived items show a 30-day auto-delete countdown
 - ↩️ Restore an archived item to active, or clear the whole archive at once
 - ↕️ Drag-to-reorder categories and items

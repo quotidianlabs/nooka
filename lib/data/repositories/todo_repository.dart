@@ -10,7 +10,7 @@ import '../services/database/todo_dao.dart';
 
 part 'todo_repository.g.dart';
 
-/// The data-layer seam (port) for all to-do data. View models depend on this,
+/// The data-layer seam (port) for all task data. View models depend on this,
 /// never on the DAO directly; it is also the substitution point test doubles
 /// use to inject failures. It sources archive-lifecycle time
 /// (`archivedAt`, the purge cutoff) from the injectable [Clock] seam, so those

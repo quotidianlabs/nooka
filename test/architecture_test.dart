@@ -52,6 +52,10 @@ List<String> _violations(
   return violations;
 }
 
+/// The DAO reached by name rather than by import: the type itself, or the field
+/// the generated database exposes it as.
+final _daoName = RegExp(r'\bTodoDao\b|\.todoDao\b');
+
 bool _isUnder(String target, String dir) =>
     target.contains('/$dir/') || target.endsWith('/$dir');
 
@@ -61,11 +65,11 @@ void main() {
     // library, so it can be read and tested without either.
     //
     // Broken by reaching for a Flutter type in a domain file because it is
-    // convenient: Color for a habit swatch, TimeOfDay for a reminder, or Drift's
-    // expression builders to push a computation into SQL. Each one is
-    // individually reasonable and collectively turns the date and streak logic
-    // into something that only runs inside a widget test with a database
-    // attached. The whole ecosystem is excluded, not just the two root packages,
+    // convenient: Color for a category swatch, TimeOfDay for a due time, or
+    // Drift's expression builders to push a computation into SQL. Each one is
+    // individually reasonable and collectively turns the recurrence and
+    // retention math into something that only runs inside a widget test with a
+    // database attached. The whole ecosystem is excluded, not just the two root packages,
     // because flutter_riverpod in a pure function is the same mistake wearing a
     // different name. Drift still arrives transitively through the generated
     // database library, which docs/adr/0001 permits; a direct dependency is the
@@ -118,7 +122,7 @@ void main() {
     );
   });
 
-  test('the ui layer reaches the database through no DAO', () {
+  test('the ui layer never names the DAO', () {
     // INVARIANT: a screen may name a row type, but never the object that queries
     // for one.
     //
@@ -128,10 +132,22 @@ void main() {
     // deliberate here and docs/adr/0001 says why, so this is the line that
     // remains: rows yes, queries no. The sibling repo draws it further out and
     // keeps rows out of the UI entirely.
-    expect(
-      _violations(['lib/ui'], (target) => target.contains('_dao.dart')),
-      isEmpty,
-    );
+    //
+    // Two ways in, so two checks. Importing the DAO library is the obvious one.
+    // The other is invisible to an import rule: six files under lib/ui/ already
+    // import the generated database library for row types, and
+    // `AppDatabase.todoDao` is a field on it, so a screen reaches the DAO with
+    // no new directive at all. A rule shaped only like the first would pass
+    // while the thing it forbids was happening.
+    final offenders = _violations(['lib/ui'], (t) => t.contains('_dao.dart'));
+    for (final entity in Directory('lib/ui').listSync(recursive: true)) {
+      if (entity is! File || !entity.path.endsWith('.dart')) continue;
+      if (entity.path.endsWith('.g.dart')) continue;
+      if (_daoName.hasMatch(entity.readAsStringSync())) {
+        offenders.add(entity.path);
+      }
+    }
+    expect(offenders, isEmpty);
   });
 
   test('shared widgets read no providers', () {

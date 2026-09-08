@@ -22,7 +22,7 @@ class TaskDialogResult {
   final RecurrenceUnit? recurrenceUnit;
 }
 
-/// Shows a dialog to create or edit a to-do item. [categories] must be
+/// Shows a dialog to create or edit a task. [categories] must be
 /// non-empty. Returns null on cancel. [initialRecurrenceCount] and
 /// [initialRecurrenceUnit] seed the Repeat control (both non-null means an
 /// already-recurring task, so the dialog opens with Repeat on).

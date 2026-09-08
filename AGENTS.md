@@ -34,8 +34,8 @@ enforces:
   the two root packages.
 - Its only `lib/data/` dependency is the generated database library.
 - Nothing under `lib/domain/` or `lib/data/` depends on `lib/ui/`.
-- Nothing under `lib/ui/` depends on a DAO, and the shared widgets in `lib/ui/widgets/` read no
-  providers.
+- Nothing under `lib/ui/` names a DAO, by import or by reaching the field the generated database
+  exposes it as, and the shared widgets in `lib/ui/widgets/` read no providers.
 
 `lib/main.dart` is the composition root and sits outside all of it. Those checks read `export` as
 well as `import`, because a re-export propagates the same coupling.

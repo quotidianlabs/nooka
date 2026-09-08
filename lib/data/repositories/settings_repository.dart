@@ -26,7 +26,7 @@ class SettingsRepository {
   Future<void> writeThemeToken(String token) =>
       _prefs.setString(_themeKey, token);
 
-  /// The category id last used when adding a to-do, or null if none stored.
+  /// The category id last used when adding a task, or null if none stored.
   int? readLastCategoryId() => _prefs.getInt(_lastCategoryKey);
   Future<void> writeLastCategoryId(int id) =>
       _prefs.setInt(_lastCategoryKey, id);

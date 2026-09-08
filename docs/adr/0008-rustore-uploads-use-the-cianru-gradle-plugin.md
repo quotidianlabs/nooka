@@ -14,9 +14,8 @@ multi-call upload flow by hand is fragile and a poor use of a single maintainer'
 offsetting benefit. Manual upload was rejected because releases are frequent enough to be worth
 automating.
 
-The plugin's one real cost is that it couples publishing into the Gradle build, which is the very
-thing the Play Store approach avoids by using a thin action instead. That is mitigated by how it
-is applied: it registers only inert `publishRustore*` tasks, changes no build output, and the
+The plugin's one real cost is that it couples publishing into the Gradle build, which a thin
+upload action would avoid. That is mitigated by how it is applied: it registers only inert `publishRustore*` tasks, changes no build output, and the
 upload runs solely in the guarded stable-tag release step. Applying it conditionally behind a
 Gradle property was considered and rejected, because configuring its extension that way requires
 naming the plugin's extension class, which is undocumented. Neither `flutter analyze` nor
@@ -24,4 +23,6 @@ naming the plugin's extension class, which is undocumented. Neither `flutter ana
 
 **Revisit trigger:** the plugin becomes unmaintained or breaks against a RuStore API change, or
 RuStore ships a first-party Action or a token-exchange auth needing no local key signing. Either
-makes a thin CI script the lighter option, matching the Play approach.
+makes a thin CI script the lighter option. Note that this is the only store upload there is:
+`docs/adr/0009-google-play-is-not-a-target.md` records why there is no Play pipeline to compare
+against.
