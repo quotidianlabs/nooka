@@ -266,7 +266,13 @@ void main() {
   // applyImport
   // -------------------------------------------------------------------------
 
-  test('applyImport returns true and forgets remembered category', () async {
+  test('an import forgets the remembered category', () async {
+    // INVARIANT: nothing survives a replace-all pointing at data it replaced.
+    //
+    // Broken by forgetting only when the remembered category is absent from the
+    // incoming backup, which looks more careful and is wrong: ids are reassigned
+    // on import, so a surviving id silently addresses a different category and
+    // the quick-add default lands new tasks somewhere the user did not choose.
     final c = makeContainer(io: FakeBackupIo(pickResult: null));
     addTearDown(c.dispose);
 

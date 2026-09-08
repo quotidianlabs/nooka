@@ -417,44 +417,50 @@ void main() {
   });
 
   // -------------------------------------------------------------------------
-  // Test 7: Import → Ready → dialog appears → tap Cancel → no change, no snackbar
   // -------------------------------------------------------------------------
 
-  testWidgets(
-    'import ready shows confirm dialog; Cancel leaves data unchanged',
-    (WidgetTester tester) async {
-      final validJson = encodeBackup(_oneCategory());
-      final todoRepo = TodoRepository(db.todoDao);
-      final backup = BackupRepository(
-        todoRepo,
-        FakeBackupIo(pickResult: '/tmp/ok.json', pickContents: validJson),
-      );
-      final container = _makeContainer(
-        prefs: prefs,
-        backupRepo: backup,
-        todoRepo: todoRepo,
-      );
+  testWidgets('no import replaces anything without an explicit confirmation', (
+    WidgetTester tester,
+  ) async {
+    // INVARIANT: the destructive step of an import is always reached through a
+    // dialog the user answered, never through decoding a file successfully.
+    //
+    // Broken by treating a valid file as intent, which is the natural shape
+    // once decoding already returns a ready result: picking the wrong file in
+    // the system picker would then wipe every category and task with no way
+    // back, since import is replace-all by docs/adr/0003 and the app keeps no
+    // undo for it.
+    final validJson = encodeBackup(_oneCategory());
+    final todoRepo = TodoRepository(db.todoDao);
+    final backup = BackupRepository(
+      todoRepo,
+      FakeBackupIo(pickResult: '/tmp/ok.json', pickContents: validJson),
+    );
+    final container = _makeContainer(
+      prefs: prefs,
+      backupRepo: backup,
+      todoRepo: todoRepo,
+    );
 
-      await tester.pumpWidget(_buildScreen(container));
-      await tester.pumpAndSettle();
+    await tester.pumpWidget(_buildScreen(container));
+    await tester.pumpAndSettle();
 
-      await tester.tap(find.byKey(const Key('import-tile')));
-      await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('import-tile')));
+    await tester.pumpAndSettle();
 
-      expect(find.text('Replace all data?'), findsOneWidget);
-      expect(find.byType(AlertDialog), findsOneWidget);
+    expect(find.text('Replace all data?'), findsOneWidget);
+    expect(find.byType(AlertDialog), findsOneWidget);
 
-      await tester.tap(find.text('Cancel'));
-      await tester.pumpAndSettle();
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
 
-      expect(find.byType(AlertDialog), findsNothing);
-      expect(find.byType(SnackBar), findsNothing);
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.byType(SnackBar), findsNothing);
 
-      // Data unchanged (DB is empty)
-      final snapshot = await todoRepo.exportSnapshot();
-      expect(snapshot, isEmpty);
-    },
-  );
+    // Data unchanged (DB is empty)
+    final snapshot = await todoRepo.exportSnapshot();
+    expect(snapshot, isEmpty);
+  });
 
   // -------------------------------------------------------------------------
   // Test 8: Import → Ready → Replace → success → importDone snackbar + data replaced

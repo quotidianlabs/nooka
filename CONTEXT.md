@@ -11,8 +11,9 @@ and docs must agree on it. General programming vocabulary does not belong here.
 
 **Nooka**:
 The product. The thing it tracks is a **task**.
-_Avoid_: to-do item. The persistence types are named `TodoDao` and `TodoRepository`, which
-predates this vocabulary and is not a reason to reintroduce the word anywhere else.
+_Avoid_: to-do item, for the thing itself. "To-do list" is fine for the product category, which
+is what the app is and how it is described. The persistence types are named `TodoDao` and
+`TodoRepository`, which predates this vocabulary and is not a reason to reintroduce the word.
 
 **Task**:
 One item of work, belonging to exactly one category. Its state is not stored: it is derived

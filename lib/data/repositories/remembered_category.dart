@@ -4,7 +4,7 @@ import 'settings_repository.dart';
 
 part 'remembered_category.g.dart';
 
-/// Persists the category last used when adding a to-do, so the quick-add
+/// Persists the category last used when adding a task, so the quick-add
 /// default survives restarts. A thin module over [SettingsRepository]; the
 /// pure pick rule lives in `domain/default_category.dart`.
 class RememberedCategory {
