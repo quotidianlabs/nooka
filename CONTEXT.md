@@ -2,7 +2,8 @@
 
 A local-first to-do list for iOS and Android, in English and Russian. Categories and tasks live
 in a SQLite database on the device, with an optional manual backup to the user's own Google
-Drive. There is no account, no server and no sync.
+Drive. There is no account, no server and no sync. The operating system's own device backup is
+left on, so the database also travels with the user's device backup.
 
 ## Language
 
@@ -64,6 +65,13 @@ the moment of completion rather than in calendar days. Dormant tasks are never s
 A single JSON document holding every category and task, written either to a file the user
 keeps or to their own Google Drive. Restoring one is replace-all: it discards the current
 contents entirely rather than merging.
+
+**Device backup**:
+The operating system's own copy of the app's data (Android Auto Backup, iOS device backup),
+made and restored by the OS, not by the app. It is not a **Backup**: there is no JSON document,
+the user never triggers it from the app, and it is restored onto a fresh install before the app
+first runs.
+_Avoid_: backup, unqualified, for this.
 
 **Clock**:
 The injected source of the instants that decide a task's lifecycle, so archive and recurrence
